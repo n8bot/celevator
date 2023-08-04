@@ -284,7 +284,7 @@ elseif event.type == "ui" then
 			mem.editingfloor = mem.editingfloor - 1
 		end
 	elseif mem.screenstate == "oobe_floortable_edit" or mem.screenstate == "floortable_edit" then
-		if event.fields.back then
+		if event.fields.back or event.fields.save then
 			mem.screenstate = (mem.screenstate == "oobe_floortable_edit" and "oobe_floortable" or "floortable")
 			local height = tonumber(event.fields.height)
 			if height then
@@ -709,5 +709,27 @@ if mem.drive.type then
 else
 	mem.showrunning = false
 end
+
+mem.pifloor = mem.params.floornames[getpos()]
+local hidepi = {
+	bfdemand = true,
+	uninit = true,
+	stop = true,
+	fault = true,
+	mrinspect = true,
+	carinspect = true,
+	inspconflict = true,
+}
+if hidepi[mem.carstate] then mem.pifloor = "--" end
+local arrowenabled = {
+	normal = true,
+	fs1 = true,
+	fs2 = true,
+	indep = true,
+	capture = true,
+	test = true,
+}
+mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
+mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
 return pos,mem

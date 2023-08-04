@@ -4,6 +4,7 @@ local components = {
 	"controller",
 	"callbuttons",
 	"pairingtool",
+	"pilantern",
 }
 
 for _,v in ipairs(components) do

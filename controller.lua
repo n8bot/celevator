@@ -433,6 +433,33 @@ function celevator.controller.finish(pos,mem)
 				celevator.callbutton.setlight(minetest.get_position_from_hash(hash),"down",newdownbuttonlights[landing])
 			end
 		end
+		local oldpitext = oldmem.pifloor or "--"
+		local newpitext = mem.pifloor or "--"
+		if oldpitext ~= newpitext then
+			local pis = minetest.deserialize(meta:get_string("pis")) or {}
+			for hash in pairs(pis) do
+				local pipos = minetest.get_position_from_hash(hash)
+				celevator.pi.settext(pipos,newpitext)
+			end
+		end
+		local oldpiuparrow = oldmem.piuparrow
+		local newpiuparrow = mem.piuparrow
+		local oldpidownarrow = oldmem.pidownarrow
+		local newpidownarrow = mem.pidownarrow
+		if oldpiuparrow ~= newpiuparrow then
+			local pis = minetest.deserialize(meta:get_string("pis")) or {}
+			for hash in pairs(pis) do
+				local pipos = minetest.get_position_from_hash(hash)
+				celevator.pi.setarrow(pipos,"up",newpiuparrow)
+			end
+		end
+		if oldpidownarrow ~= newpidownarrow then
+			local pis = minetest.deserialize(meta:get_string("pis")) or {}
+			for hash in pairs(pis) do
+				local pipos = minetest.get_position_from_hash(hash)
+				celevator.pi.setarrow(pipos,"down",newpidownarrow)
+			end
+		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:controller_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")

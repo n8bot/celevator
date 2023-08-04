@@ -69,8 +69,49 @@ minetest.register_tool("celevator:pairingtool",{
 			else
 				minetest.chat_send_player(name,"Controller or dispatcher has been removed. Punch a new controller or dispatcher to pair to that one.")
 			end
+		elseif minetest.get_item_group(node.name,"_celevator_pi") then
+			local stackmeta = itemstack:get_meta()
+			local nodemeta = minetest.get_meta(pos)
+			local oldpairing = minetest.string_to_pos(nodemeta:get_string("controllerpos"))
+			local controllerpos = minetest.string_to_pos(stackmeta:get_string("controllerpos"))
+			if not controllerpos then
+				minetest.chat_send_player(name,"Nothing has been selected to pair with! Punch a controller or dispatcher first.")
+			elseif oldpairing then
+				local controllermeta = minetest.get_meta(oldpairing)
+				local pairings = minetest.deserialize(controllermeta:get_string("pis"))
+				if pairings then
+					local hash = minetest.hash_node_position(pos)
+					pairings[hash] = nil
+					controllermeta:set_string("pis",minetest.serialize(pairings))
+				end
+				nodemeta:set_string("controllerpos","")
+				nodemeta:set_int("uparrow",0)
+				nodemeta:set_int("downarrow",0)
+				nodemeta:set_int("flash_fs",0)
+				nodemeta:set_int("flash_is",0)
+				nodemeta:set_string("text","")
+				celevator.pi.updatedisplay(pos)
+				minetest.chat_send_player(player:get_player_name(),"Unpaired from "..minetest.pos_to_string(oldpairing))
+			elseif celevator.controller.iscontroller(controllerpos) then
+				if minetest.is_protected(controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+					minetest.chat_send_player(name,"Unable to pair - controller at "..minetest.pos_to_string(controllerpos).." is protected!")
+					minetest.record_protection_violation(controllerpos,name)
+				elseif minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+					minetest.chat_send_player(name,"Unable to pair - item to be paired is protected!")
+					minetest.record_protection_violation(pos,name)
+				else
+					local controllermeta = minetest.get_meta(controllerpos)
+					nodemeta:set_string("controllerpos",minetest.pos_to_string(controllerpos))
+					local pairings = minetest.deserialize(controllermeta:get_string("pis")) or {}
+					local hash = minetest.hash_node_position(pos)
+					pairings[hash] = true
+					controllermeta:set_string("pis",minetest.serialize(pairings))
+					minetest.chat_send_player(player:get_player_name(),"Paired to "..minetest.pos_to_string(controllerpos))
+				end
+			else
+				minetest.chat_send_player(name,"Controller or dispatcher has been removed. Punch a new controller or dispatcher to pair to that one.")
+			end
 		end
 		return itemstack
 	end,
 })
-
