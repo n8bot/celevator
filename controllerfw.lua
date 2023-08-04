@@ -732,4 +732,9 @@ local arrowenabled = {
 mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
 mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
+mem.lanterns = {}
+if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then
+	mem.lanterns[getpos()] = mem.direction
+end
+
 return pos,mem

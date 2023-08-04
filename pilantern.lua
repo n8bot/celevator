@@ -1,4 +1,5 @@
 celevator.pi = {}
+celevator.lantern = {}
 
 local boringside = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png"
 local displaytex = boringside..":16,40=celevator_pi_background.png"
@@ -13,7 +14,10 @@ minetest.register_entity("celevator:pi_entity",{
 })
 
 local function removeentity(pos)
-	local entitiesnearby = minetest.get_objects_inside_radius(pos,1.5)
+	local node = minetest.get_node(pos)
+	local facedir = vector.rotate_around_axis(minetest.facedir_to_dir(node.param2),vector.new(0,-1,0),math.pi)
+	local epos = vector.add(pos,facedir)
+	local entitiesnearby = minetest.get_objects_inside_radius(epos,0.5)
 	for _,i in pairs(entitiesnearby) do
 		if i:get_luaentity() and i:get_luaentity().name == "celevator:pi_entity" then
 			i:remove()
@@ -21,14 +25,16 @@ local function removeentity(pos)
 	end
 end
 
-local function generatetexture(text,uparrow,downarrow)
+local function generatetexture(text,uparrow,downarrow,lanternoffset)
 	local out = "[combine:600x600:0,0=celevator_transparent.png"
+	local yp = 440
+	if lanternoffset then yp = 290 end
 	for i=1,string.len(text),1 do
 		local char = string.byte(string.sub(text,i,i))
-		if char ~= " " then out = out..string.format(":%d,%d=celevator_pi_%02X.png",(i-1)*50+260,440,(char >= 0x20 and char < 0x7F and char or 0x2A)) end
+		if char ~= " " then out = out..string.format(":%d,%d=celevator_pi_%02X.png",(i-1)*50+260,yp,(char >= 0x20 and char < 0x7F and char or 0x2A)) end
 	end
-	if uparrow then out = out..":200,440=celevator_pi_arrow.png"
-	elseif downarrow then out = out..":200,440=(celevator_pi_arrow.png^[transformFY)" end
+	if uparrow then out = out..string.format(":200,%d=celevator_pi_arrow.png",yp)
+	elseif downarrow then out = out..string.format(":200,%d=(celevator_pi_arrow.png^[transformFY)",yp) end
 	return out
 end
 
@@ -43,7 +49,8 @@ function celevator.pi.updatedisplay(pos)
 	local flash_fs = meta:get_int("flash_fs") > 0
 	local flash_is = meta:get_int("flash_is") > 0
 	local flashtimer = meta:get_int("flashtimer") > 0
-	local etex = generatetexture(text,uparrow,downarrow)
+	local islantern = minetest.get_item_group(minetest.get_node(pos).name,"_celevator_lantern") == 1
+	local etex = generatetexture(text,uparrow,downarrow,islantern)
 	if flash_fs then
 		if flashtimer then etex = generatetexture(" FS",uparrow,downarrow) end
 		entity:set_properties({_flash_fs = true,_flash_is = false,})
@@ -55,7 +62,7 @@ function celevator.pi.updatedisplay(pos)
 	end
 	entity:set_properties({textures={etex}})
 	entity:set_yaw((fdir.x ~= 0) and math.pi/2 or 0)
-	entity:setpos(vector.add(pos,vector.multiply(fdir,-0.61)))
+	entity:set_pos(vector.add(pos,vector.multiply(fdir,-0.61)))
 end
 
 function celevator.pi.flash(pos,what)
@@ -122,10 +129,194 @@ minetest.register_node("celevator:pi",{
 	on_destruct = removeentity,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("text","621")
+		meta:set_string("text","--")
 		celevator.pi.updatedisplay(pos)
 	end,
 })
+
+function celevator.lantern.setlight(pos,dir,newstate)
+	local node = minetest.get_node(pos)
+	if minetest.get_item_group(node.name,"_celevator_lantern") ~= 1 then return end
+	if dir == "up" then
+		if minetest.get_item_group(node.name,"_celevator_lantern_has_up") ~= 1 then return end
+		local lit = minetest.get_item_group(node.name,"_celevator_lantern_up_lit") == 1
+		if lit == newstate then return end
+		local newname = "celevator:lantern_"
+		if minetest.get_item_group(node.name,"_celevator_pi") == 1 then newname = "celevator:pilantern_" end
+		if minetest.get_item_group(node.name,"_celevator_lantern_has_down") == 1 then
+			newname = newname.."both"
+		else
+			newname = newname.."up"
+		end
+		if newstate then
+			newname = newname.."_upon"
+			minetest.sound_play("celevator_chime_up",{pos = pos},true)
+		end
+		if minetest.get_item_group(node.name,"_celevator_lantern_down_lit") == 1 then
+			newname = newname.."_downon"
+		end
+		node.name = newname
+		minetest.swap_node(pos,node)
+	elseif dir == "down" then
+		if minetest.get_item_group(node.name,"_celevator_lantern_has_down") ~= 1 then return end
+		local lit = minetest.get_item_group(node.name,"_celevator_lantern_down_lit") == 1
+		if lit == newstate then return end
+		local newname = "celevator:lantern_"
+		if minetest.get_item_group(node.name,"_celevator_pi") == 1 then newname = "celevator:pilantern_" end
+		if minetest.get_item_group(node.name,"_celevator_lantern_has_up") == 1 then
+			newname = newname.."both"
+		else
+			newname = newname.."down"
+		end
+		if minetest.get_item_group(node.name,"_celevator_lantern_up_lit") == 1 then
+			newname = newname.."_upon"
+		end
+		if newstate then
+			newname = newname.."_downon"
+			minetest.sound_play("celevator_chime_down",{pos = pos},true)
+		end
+		node.name = newname
+		minetest.swap_node(pos,node)
+	end
+end
+
+local function makepilanterntex(dir,upon,downon)
+	local tex = boringside
+	if dir == "up" then
+		tex = tex..":16,24=celevator_pi_lantern_background_up.png"
+		if upon then
+			tex = tex..":26,49=celevator_lantern_up.png"
+		end
+	elseif dir == "down" then
+		tex = tex..":16,24=celevator_pi_lantern_background_down.png"
+		if downon then
+			tex = tex..":27,49=celevator_lantern_down.png"
+		end
+	elseif dir == "both" then
+		tex = tex..":16,24=celevator_pi_lantern_background_updown.png"
+		if upon then
+			tex = tex..":20,49=celevator_lantern_up.png"
+		end
+		if downon then
+			tex = tex..":33,49=celevator_lantern_down.png"
+		end
+	end
+	return(tex)
+end
+
+local function makelanterntex(dir,upon,downon)
+	local tex = boringside
+	if dir == "up" then
+		tex = tex..":16,32=celevator_lantern_background_up.png"
+		if upon then
+			tex = tex..":26,36=celevator_lantern_up.png"
+		end
+	elseif dir == "down" then
+		tex = tex..":16,32=celevator_lantern_background_down.png"
+		if downon then
+			tex = tex..":27,36=celevator_lantern_down.png"
+		end
+	elseif dir == "both" then
+		tex = tex..":16,32=celevator_lantern_background_updown.png"
+		if upon then
+			tex = tex..":20,36=celevator_lantern_up.png"
+		end
+		if downon then
+			tex = tex..":33,36=celevator_lantern_down.png"
+		end
+	end
+	return(tex)
+end
+
+local validstates = {
+	{"up",false,false,"Up"},
+	{"up",true,false,"Up"},
+	{"down",false,false,"Down"},
+	{"down",false,true,"Down"},
+	{"both",false,false,"Up and Down"},
+	{"both",true,false,"Up and Down"},
+	{"both",false,true,"Up and Down"},
+	{"both",true,true,"Up and Down"},
+}
+
+for _,state in ipairs(validstates) do
+	local nname = "celevator:pilantern_"..state[1]
+	local dropname = nname
+	if state[2] then nname = nname.."_upon" end
+	if state[3] then nname = nname.."_downon" end
+	local idle = not (state[2] or state[3])
+	local description = string.format("%s Position Indicator/Lantern Combo%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	minetest.register_node(nname,{
+		description = description,
+		groups = {
+			dig_immediate = 2,
+			not_in_creative_inventory = (idle and 0 or 1),
+			_celevator_lantern = 1,
+			_celevator_lantern_has_up = (state[1] == "down" and 0 or 1),
+			_celevator_lantern_has_down = (state[1] == "up" and 0 or 1),
+			_celevator_lantern_up_lit = (state[2] and 1 or 0),
+			_celevator_lantern_down_lit = (state[3] and 1 or 0),
+			_celevator_pi = 1,
+		},
+		drop = dropname,
+		tiles = {
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			makepilanterntex(state[1],state[2],state[3])
+		},
+		paramtype = "light",
+		paramtype2 = "facedir",
+		on_destruct = removeentity,
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = {
+				{-0.5,  -0.5, -0.5,  0.5,  0.5,  0.5 },
+				{-0.25, -0.5,-0.59, 0.25,0.125, -0.5 },
+			},
+		},
+	})
+	nname = "celevator:lantern_"..state[1]
+	dropname = nname
+	if state[2] then nname = nname.."_upon" end
+	if state[3] then nname = nname.."_downon" end
+	idle = not (state[2] or state[3])
+	description = string.format("%s Lantern%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	minetest.register_node(nname,{
+		description = description,
+		groups = {
+			dig_immediate = 2,
+			not_in_creative_inventory = (idle and 0 or 1),
+			_celevator_lantern = 1,
+			_celevator_lantern_has_up = (state[1] == "down" and 0 or 1),
+			_celevator_lantern_has_down = (state[1] == "up" and 0 or 1),
+			_celevator_lantern_up_lit = (state[2] and 1 or 0),
+			_celevator_lantern_down_lit = (state[3] and 1 or 0),
+		},
+		drop = dropname,
+		tiles = {
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			makelanterntex(state[1],state[2],state[3])
+		},
+		paramtype = "light",
+		paramtype2 = "facedir",
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = {
+				{-0.5,   -0.5, -0.5,  0.5, 0.5,  0.5 },
+				{-0.25,-0.328,-0.59, 0.25,   0, -0.5 },
+			},
+		},
+	})
+end
 
 minetest.register_abm({
 	label = "Respawn / Flash PI displays",

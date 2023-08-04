@@ -460,6 +460,15 @@ function celevator.controller.finish(pos,mem)
 				celevator.pi.setarrow(pipos,"down",newpidownarrow)
 			end
 		end
+		local oldlanterns = oldmem.lanterns or {}
+		local newlanterns = mem.lanterns or {}
+		local lanterns = minetest.deserialize(meta:get_string("lanterns")) or {}
+		for hash,landing in pairs(lanterns) do
+			if oldlanterns[landing] ~= newlanterns[landing] then
+				celevator.lantern.setlight(minetest.get_position_from_hash(hash),"up",newlanterns[landing] == "up")
+				celevator.lantern.setlight(minetest.get_position_from_hash(hash),"down",newlanterns[landing] == "down")
+			end
+		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:controller_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")
