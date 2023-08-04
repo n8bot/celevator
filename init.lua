@@ -3,6 +3,7 @@ local components = {
 	"drive_null",
 	"controller",
 	"callbuttons",
+	"pairingtool",
 }
 
 for _,v in ipairs(components) do

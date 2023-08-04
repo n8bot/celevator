@@ -419,6 +419,20 @@ function celevator.controller.finish(pos,mem)
 		end
 		local meta = minetest.get_meta(pos)
 		local node = minetest.get_node(pos)
+		local oldmem = minetest.deserialize(meta:get_string("mem")) or {}
+		local oldupbuttonlights = oldmem.upcalls or {}
+		local olddownbuttonlights = oldmem.dncalls or {}
+		local newupbuttonlights = mem.upcalls or {}
+		local newdownbuttonlights = mem.dncalls or {}
+		local callbuttons = minetest.deserialize(meta:get_string("callbuttons")) or {}
+		for hash,landing in pairs(callbuttons) do
+			if oldupbuttonlights[landing] ~= newupbuttonlights[landing] then
+				celevator.callbutton.setlight(minetest.get_position_from_hash(hash),"up",newupbuttonlights[landing])
+			end
+			if olddownbuttonlights[landing] ~= newdownbuttonlights[landing] then
+				celevator.callbutton.setlight(minetest.get_position_from_hash(hash),"down",newdownbuttonlights[landing])
+			end
+		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:controller_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")
@@ -459,7 +473,7 @@ function celevator.controller.run(pos,event)
 		local mem = minetest.deserialize(meta:get_string("mem"))
 		if not mem then
 			minetest.log("error","[celevator] [controller] Failed to load controller memory at "..minetest.pos_to_string(pos))
-			mem = {}
+			return
 		end
 		mem.drive = {}
 		mem.drive.commands = {}
@@ -470,6 +484,21 @@ function celevator.controller.run(pos,event)
 		end
 		mem.interrupts = celevator.controller.iqueue[minetest.hash_node_position(pos)] or {}
 		minetest.handle_async(fw,celevator.controller.finish,pos,event,mem)
+	end
+end
+
+function celevator.controller.handlecallbutton(controllerpos,buttonpos,dir)
+	local buttonhash = minetest.hash_node_position(buttonpos)
+	local controllermeta = minetest.get_meta(controllerpos)
+	local pairings = minetest.deserialize(controllermeta:get_string("callbuttons")) or {}
+	if pairings[buttonhash] then
+		local landing = pairings[buttonhash]
+		local event = {
+			type = "callbutton",
+			landing = landing,
+			dir = dir,
+		}
+		celevator.controller.run(controllerpos,event)
 	end
 end
 

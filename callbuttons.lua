@@ -1,3 +1,5 @@
+celevator.callbutton = {}
+
 local function makebuttontex(dir,upon,downon)
 	local tex = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png:22,24=celevator_callbutton_panel.png"
 	if dir == "up" then
@@ -33,7 +35,7 @@ local validstates = {
 	{"both",true,true,"Up and Down"},
 }
 
-local function setlight(pos,dir,newstate)
+function celevator.callbutton.setlight(pos,dir,newstate)
 	local node = minetest.get_node(pos)
 	if minetest.get_item_group(node.name,"_celevator_callbutton") ~= 1 then return end
 	if dir == "up" then
@@ -135,16 +137,19 @@ for _,state in ipairs(validstates) do
 			},
 		},
 		on_rightclick = function(pos,_,clicker)
+			local meta = minetest.get_meta(pos)
+			local controllerpos = minetest.string_to_pos(meta:get_string("controllerpos"))
+			if not controllerpos then return end
 			if state[1] == "up" then
-				setlight(pos,"up",not state[2])
+				celevator.controller.handlecallbutton(controllerpos,pos,"up")
 			elseif state[1] == "down" then
-				setlight(pos,"down",not state[3])
+				celevator.controller.handlecallbutton(controllerpos,pos,"down")
 			elseif state[1] == "both" then
 				local dir = disambiguatedir(pos,clicker)
 				if dir == "up" then
-					setlight(pos,"up",not state[2])
+					celevator.controller.handlecallbutton(controllerpos,pos,"up")
 				elseif dir == "down" then
-					setlight(pos,"down",not state[3])
+					celevator.controller.handlecallbutton(controllerpos,pos,"down")
 				end
 			end
 		end,

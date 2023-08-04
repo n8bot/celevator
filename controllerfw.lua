@@ -395,6 +395,12 @@ elseif event.iid == "closed" and (mem.doorstate == "closing" or mem.doorstate ==
 			mem.carmotion = true
 			juststarted = true
 	end
+elseif event.type == "callbutton" and mem.carstate == "normal" then
+	if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+		mem.upcalls[event.landing] = true
+	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+		mem.dncalls[event.landing] = true
+	end
 end
 
 local oldstate = mem.carstate
