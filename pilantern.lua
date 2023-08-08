@@ -14,10 +14,7 @@ minetest.register_entity("celevator:pi_entity",{
 })
 
 local function removeentity(pos)
-	local node = minetest.get_node(pos)
-	local facedir = vector.rotate_around_axis(minetest.facedir_to_dir(node.param2),vector.new(0,-1,0),math.pi)
-	local epos = vector.add(pos,facedir)
-	local entitiesnearby = minetest.get_objects_inside_radius(epos,0.5)
+	local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
 	for _,i in pairs(entitiesnearby) do
 		if i:get_luaentity() and i:get_luaentity().name == "celevator:pi_entity" then
 			i:remove()
@@ -62,7 +59,7 @@ function celevator.pi.updatedisplay(pos)
 	end
 	entity:set_properties({textures={etex}})
 	entity:set_yaw((fdir.x ~= 0) and math.pi/2 or 0)
-	entity:set_pos(vector.add(pos,vector.multiply(fdir,-0.61)))
+	entity:set_pos(vector.add(pos,vector.multiply(fdir,0.47)))
 end
 
 function celevator.pi.flash(pos,what)
@@ -122,8 +119,7 @@ minetest.register_node("celevator:pi",{
 	node_box = {
 		type = "fixed",
 		fixed = {
-			{ -0.5,  -0.5,  -0.5, 0.5,   0.5,  0.5 },
-			{-0.25,-0.453,  -0.6,0.25,-0.125, -0.5 },
+			{-0.25,-0.453,0.475,0.25,-0.125,0.5},
 		},
 	},
 	on_destruct = removeentity,
@@ -274,8 +270,7 @@ for _,state in ipairs(validstates) do
 		node_box = {
 			type = "fixed",
 			fixed = {
-				{-0.5,  -0.5, -0.5,  0.5,  0.5,  0.5 },
-				{-0.25, -0.5,-0.59, 0.25,0.125, -0.5 },
+				{-0.25,-0.5,0.475,0.25,0.125,0.5},
 			},
 		},
 	})
@@ -311,8 +306,7 @@ for _,state in ipairs(validstates) do
 		node_box = {
 			type = "fixed",
 			fixed = {
-				{-0.5,   -0.5, -0.5,  0.5, 0.5,  0.5 },
-				{-0.25,-0.328,-0.59, 0.25,   0, -0.5 },
+				{-0.25,-0.328,0.475,0.25,0,0.5},
 			},
 		},
 	})

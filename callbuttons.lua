@@ -132,8 +132,7 @@ for _,state in ipairs(validstates) do
 		node_box = {
 			type = "fixed",
 			fixed = {
-				{-0.5,  -0.5, -0.5,  0.5,  0.5,  0.5 },
-				{-0.16, -0.37,-0.59, 0.17, 0.13,-0.5 },
+				{-0.16,-0.37,0.475,0.17,0.13,0.5},
 			},
 		},
 		on_rightclick = function(pos,_,clicker)
