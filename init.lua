@@ -2,6 +2,7 @@ local components = {
 	"framework",
 	"car",
 	"drive_null",
+	"drive_entity",
 	"controller",
 	"callbuttons",
 	"pairingtool",
