@@ -19,6 +19,10 @@ if not mem.drive.status then
 	}
 end
 
+if mem.drive.state == "uninit" then
+	fault("driveuninit",true)
+end
+
 local juststarted = false
 
 local modenames = {
@@ -48,6 +52,7 @@ local doorstates = {
 
 local faultnames = {
 	drivecomm = "Lost Communication With Drive",
+	driveuninit = "Drive Not Configured",
 }
 
 local function drivecmd(command)

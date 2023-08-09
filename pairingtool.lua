@@ -50,6 +50,49 @@ minetest.register_tool("celevator:pairingtool",{
 			local stackmeta = itemstack:get_meta()
 			stackmeta:set_string("controllerpos",minetest.pos_to_string(pos))
 			minetest.chat_send_player(name,"Now pairing with controller at "..minetest.pos_to_string(pos))
+		elseif minetest.get_item_group(node.name,"_celevator_drive") == 1 then
+			local stackmeta = itemstack:get_meta()
+			stackmeta:set_string("drivepos",minetest.pos_to_string(pos))
+			minetest.chat_send_player(name,"Now pairing with drive at "..minetest.pos_to_string(pos))
+		elseif minetest.get_item_group(node.name,"_celevator_machine") == 1 then
+			local stackmeta = itemstack:get_meta()
+			local nodemeta = minetest.get_meta(pos)
+			local oldpairing = minetest.string_to_pos(nodemeta:get_string("drivepos"))
+			local drivepos = minetest.string_to_pos(stackmeta:get_string("drivepos"))
+			local origin = minetest.string_to_pos(nodemeta:get_string("origin"))
+			if not origin then
+				minetest.chat_send_player(name,"Car has not been located! Try punching the machine to search for one.")
+			elseif not drivepos then
+				minetest.chat_send_player(name,"Nothing has been selected to pair with! Punch a drive first.")
+			elseif oldpairing then
+				local drivemeta = minetest.get_meta(oldpairing)
+				drivemeta:set_string("machinepos","")
+				drivemeta:set_string("apos","0")
+				drivemeta:set_string("dpos","0")
+				drivemeta:set_string("vel","0")
+				drivemeta:set_string("maxvel","0.2")
+				drivemeta:set_string("state","uninit")
+				drivemeta:set_string("startpos","0")
+				drivemeta:set_string("origin",minetest.pos_to_string(origin))
+				nodemeta:set_string("drivepos","")
+				minetest.chat_send_player(player:get_player_name(),"Unpaired from "..minetest.pos_to_string(oldpairing))
+			elseif minetest.get_item_group(minetest.get_node(drivepos).name,"_celevator_drive") ~= 1 then
+				minetest.chat_send_player(name,"Drive has been removed. Punch a new drive to pair to that one.")
+			else
+				if minetest.is_protected(drivepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+					minetest.chat_send_player(name,"Unable to pair - drive at "..minetest.pos_to_string(drivepos).." is protected!")
+					minetest.record_protection_violation(drivepos,name)
+				elseif minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+					minetest.chat_send_player(name,"Unable to pair - item to be paired is protected!")
+					minetest.record_protection_violation(pos,name)
+				else
+					local drivemeta = minetest.get_meta(drivepos)
+					nodemeta:set_string("drivepos",minetest.pos_to_string(drivepos))
+					drivemeta:set_string("machinepos",minetest.pos_to_string(pos))
+					drivemeta:set_string("state","stopped")
+					minetest.chat_send_player(player:get_player_name(),"Machine paired to "..minetest.pos_to_string(drivepos))
+				end
+			end
 		elseif minetest.get_item_group(node.name,"_celevator_callbutton") == 1 then
 			local stackmeta = itemstack:get_meta()
 			local nodemeta = minetest.get_meta(pos)

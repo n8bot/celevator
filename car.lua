@@ -314,11 +314,33 @@ local pieces = {
 for _,def in ipairs(pieces) do
 	def.groups = {
 		dig_immediate = 2,
+		_celevator_car = 1,
 	}
+	local xp = tonumber(string.sub(def._position,1,1))
+	local yp = tonumber(string.sub(def._position,2,2))
+	local zp = tonumber(string.sub(def._position,3,3))
+	if xp > 0 then
+		def.groups._connects_xm = 1
+	end
+	if xp < 1 then
+		def.groups._connects_xp = 1
+	end
+	if yp > 0 then
+		def.groups._connects_ym = 1
+	end
+	if yp < 2 then
+		def.groups._connects_yp = 1
+	end
+	if zp > 0 then
+		def.groups._connects_zm = 1
+	end
+	if zp < 2 then
+		def.groups._connects_zp = 1
+	end
 	def.paramtype = "light"
 	def.paramtype2 = "4dir"
 	def.drawtype = "nodebox"
 	def.description = "Car "..def._position
-	def.light_source = minetest.LIGHT_MAX
+	def.light_source = 9
 	minetest.register_node("celevator:car_"..def._position,def)
 end

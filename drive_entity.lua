@@ -57,6 +57,7 @@ minetest.register_node("celevator:drive",{
 	description = celevator.drives.entity.name,
 	groups = {
 		cracky = 1,
+		_celevator_drive = 1,
 	},
 	tiles = {
 		"celevator_cabinet_sides.png",
@@ -84,9 +85,8 @@ minetest.register_node("celevator:drive",{
 		meta:set_string("dpos","0")
 		meta:set_string("vel","0")
 		meta:set_string("maxvel","0.2")
-		meta:set_string("state","stopped")
+		meta:set_string("state","uninit")
 		meta:set_string("startpos","0")
-		meta:set_string("origin",minetest.pos_to_string(vector.new(-726,9,77)))
 		update_ui(pos)
 	end,
 	on_destruct = stopbuzz,
@@ -98,8 +98,35 @@ minetest.register_entity("celevator:car_moving",{
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "default:dirt",
 		static_save = false,
+		glow = minetest.LIGHT_MAX,
 	},
 })
+
+function celevator.drives.entity.gathercar(pos,yaw,nodes)
+	if not nodes then nodes = {} end
+	local hash = minetest.hash_node_position(pos)
+	if nodes[hash] then return nodes end
+	nodes[hash] = true
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_xp") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(1,0,0),vector.new(0,1,0),yaw)),yaw,nodes)
+	end
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_xm") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(-1,0,0),vector.new(0,1,0),yaw)),yaw,nodes)
+	end
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_yp") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.new(0,1,0)),yaw,nodes)
+	end
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_ym") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.new(0,-1,0)),yaw,nodes)
+	end
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_zp") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),yaw)),yaw,nodes)
+	end
+	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_zm") == 1 then
+		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(0,0,-1),vector.new(0,1,0),yaw)),yaw,nodes)
+	end
+	return nodes
+end
 
 function celevator.drives.entity.nodestoentities(nodes)
 	local refs = {}
@@ -156,7 +183,18 @@ function celevator.drives.entity.step()
 				end
 				if state == "start" then
 					sound = true
-					local handles = celevator.drives.entity.nodestoentities({vector.add(origin,vector.new(0,startpos,0))})
+					local startv = vector.add(origin,vector.new(0,startpos,0))
+					local hashes = celevator.drives.entity.gathercar(startv,minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(startv).param2)))
+					local nodes = {}
+					for carhash in pairs(hashes) do
+						local carpos = minetest.get_position_from_hash(carhash)
+						if vector.equals(startv,carpos) then
+							table.insert(nodes,1,carpos) --0,0,0 node must be first in the list
+						else
+							table.insert(nodes,carpos)
+						end
+					end
+					local handles = celevator.drives.entity.nodestoentities(nodes)
 					celevator.drives.entity.entityinfo[hash] = {
 						handles = handles,
 					}
@@ -207,6 +245,7 @@ minetest.register_globalstep(celevator.drives.entity.step)
 
 function celevator.drives.entity.moveto(pos,target)
 	local meta = minetest.get_meta(pos)
+	if meta:get_string("state") ~= "stopped" then return end
 	meta:set_string("dpos",tostring(target))
 	meta:set_string("state","start")
 	meta:set_string("startpos",meta:get_string("apos"))
@@ -233,7 +272,7 @@ end
 
 function celevator.drives.entity.estop(pos)
 	local meta = minetest.get_meta(pos)
-	if meta:get_string("state") == "stopped" then return end
+	if meta:get_string("state") ~= "running" then return end
 	local apos = math.floor(tonumber(meta:get_string("apos"))+0.5)
 	meta:set_string("dpos",tostring(apos))
 	local hash = minetest.hash_node_position(pos)
@@ -270,6 +309,61 @@ function celevator.drives.entity.getstatus(pos,call2)
 		ret.dpos = tonumber(meta:get_string("dpos")) or 0
 		ret.vel = tonumber(meta:get_string("vel")) or 0
 		ret.maxvel = tonumber(meta:get_string("maxvel")) or 0.2
+		ret.state = meta:get_string("state")
 		return ret
 	end
 end
+
+local function carsearch(pos)
+	for i=1,500,1 do
+		local searchpos = vector.subtract(pos,vector.new(0,i,0))
+		local node = minetest.get_node(searchpos)
+		if minetest.get_item_group(node.name,"_celevator_car") == 1 then
+			local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+			local offsettext = minetest.registered_nodes[node.name]._position
+			local xoffset = tonumber(string.sub(offsettext,1,1))
+			local yoffset = tonumber(string.sub(offsettext,2,2))
+			local zoffset = tonumber(string.sub(offsettext,3,3))
+			local offset = vector.new(xoffset,yoffset,zoffset)
+			offset = vector.rotate_around_axis(offset,vector.new(0,1,0),yaw)
+			return vector.subtract(searchpos,offset)
+		end
+	end
+end
+
+local function updatecarpos(pos)
+	local meta = minetest.get_meta(pos)
+	local carpos = carsearch(pos)
+	if carpos then
+		meta:set_string("origin",minetest.pos_to_string(carpos))
+		meta:set_string("infotext",string.format("Using car with origin %s",minetest.pos_to_string(carpos)))
+	else
+		meta:set_string("infotext","No car found! Punch to try again")
+	end
+end
+
+minetest.register_node("celevator:machine",{
+	description = "Hoist Machine",
+	groups = {
+		dig_immediate = 2,
+		_celevator_machine = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"default_dirt.png",
+	},
+	after_place_node = updatecarpos,
+	on_punch = function(pos,_,player)
+		if not player:is_player() then
+			return
+		end
+		local name = player:get_player_name()
+		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			minetest.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
+			minetest.record_protection_violation(pos,name)
+			return
+		end
+		updatecarpos(pos)
+	end,
+})
