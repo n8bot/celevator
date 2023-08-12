@@ -132,12 +132,12 @@ function celevator.drives.entity.gathercar(pos,yaw,nodes)
 	return nodes
 end
 
-function celevator.drives.entity.nodestoentities(nodes)
+function celevator.drives.entity.nodestoentities(nodes,ename)
 	local refs = {}
 	for _,pos in ipairs(nodes) do
 		local node = minetest.get_node(pos)
 		local attachobjs = minetest.get_objects_inside_radius(pos,0.9)
-		local eref = minetest.add_entity(pos,"celevator:car_moving")
+		local eref = minetest.add_entity(pos,(ename or "celevator:car_moving"))
 		eref:set_properties({
 			wield_item = node.name,
 		})
