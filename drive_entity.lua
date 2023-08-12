@@ -154,15 +154,22 @@ function celevator.drives.entity.nodestoentities(nodes)
 end
 
 function celevator.drives.entity.entitiestonodes(refs)
+	local ok = true
 	for _,eref in ipairs(refs) do
-		local pos = vector.round(eref:get_pos())
-		local node = {
-			name = eref:get_properties().wield_item,
-			param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(eref:get_yaw()))
-		}
-		minetest.set_node(pos,node)
-		eref:remove()
+		local pos = eref:get_pos()
+		if pos then
+			pos = vector.round(pos)
+			local node = {
+				name = eref:get_properties().wield_item,
+				param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(eref:get_yaw()))
+			}
+			minetest.set_node(pos,node)
+			eref:remove()
+		else
+			ok = false
+		end
 	end
+	return ok
 end
 
 function celevator.drives.entity.step(dtime)
@@ -228,7 +235,11 @@ function celevator.drives.entity.step(dtime)
 					if dremain < 0.05 then
 						vel = 0
 						meta:set_string("state","stopped")
-						celevator.drives.entity.entitiestonodes(handles)
+						local ok = celevator.drives.entity.entitiestonodes(handles)
+						if not ok then
+							local carparam2 = meta:get_int("carparam2")
+							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)))
+						end
 						apos = math.floor(apos+0.5)
 					elseif dremain < 0.2 then
 						vel = 0.2
@@ -399,16 +410,10 @@ minetest.register_node("celevator:machine",{
 		"default_dirt.png",
 	},
 	after_place_node = updatecarpos,
-	on_punch = function(pos,_,player)
-		if not player:is_player() then
-			return
+	on_punch = function(pos)
+		local meta = minetest.get_meta(pos)
+		if not minetest.pos_to_string(meta:get_string("origin")) then
+			updatecarpos(pos)
 		end
-		local name = player:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			minetest.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
-			minetest.record_protection_violation(pos,name)
-			return
-		end
-		updatecarpos(pos)
 	end,
 })
