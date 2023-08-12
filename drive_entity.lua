@@ -16,6 +16,10 @@ local function update_ui(pos)
 		status = string.format("Running: Up, %0.02f m/s",vel)
 	elseif state == "running" and vel < 0 then
 		status = string.format("Running: Down, %0.02f m/s",math.abs(vel))
+	elseif state == "fakerunning" and vel > 0 then
+		status = string.format("Running (simulated): Up, %0.02f m/s",vel)
+	elseif state == "fakerunning" and vel < 0 then
+		status = string.format("Running (simulated): Down, %0.02f m/s",math.abs(vel))
 	end
 	meta:set_string("infotext",string.format("Drive - %s - Position: %0.02f m",status,apos))
 end
@@ -132,11 +136,17 @@ function celevator.drives.entity.nodestoentities(nodes)
 	local refs = {}
 	for _,pos in ipairs(nodes) do
 		local node = minetest.get_node(pos)
+		local attachobjs = minetest.get_objects_inside_radius(pos,0.9)
 		local eref = minetest.add_entity(pos,"celevator:car_moving")
 		eref:set_properties({
 			wield_item = node.name,
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
+		for _,attachref in ipairs(attachobjs) do
+			local attachpos = attachref:get_pos()
+			local attachoffset = vector.subtract(pos,attachpos)
+			attachref:set_attach(eref,"",attachoffset)
+		end
 		minetest.remove_node(pos)
 		table.insert(refs,eref)
 	end
@@ -155,7 +165,7 @@ function celevator.drives.entity.entitiestonodes(refs)
 	end
 end
 
-function celevator.drives.entity.step()
+function celevator.drives.entity.step(dtime)
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
 	local save = false
 	for i,hash in ipairs(entitydrives_running) do
@@ -170,7 +180,7 @@ function celevator.drives.entity.step()
 		else
 			local meta = minetest.get_meta(pos)
 			local state = meta:get_string("state")
-			if not (state == "running" or state == "start") then
+			if not (state == "running" or state == "start" or state == "fakerunning") then
 				table.remove(entitydrives_running,i)
 			else
 				local dpos = tonumber(meta:get_string("dpos")) or 0
@@ -194,13 +204,23 @@ function celevator.drives.entity.step()
 							table.insert(nodes,carpos)
 						end
 					end
+					local carparam2 = minetest.get_node(nodes[1]).param2
+					meta:set_int("carparam2",carparam2)
 					local handles = celevator.drives.entity.nodestoentities(nodes)
 					celevator.drives.entity.entityinfo[hash] = {
 						handles = handles,
 					}
 					meta:set_string("state","running")
 				elseif state == "running" then
+					if not celevator.drives.entity.entityinfo[hash] then
+						meta:set_string("state","fakerunning")
+						return
+					end
 					local handles = celevator.drives.entity.entityinfo[hash].handles
+					if (not handles) or (not handles[1]:get_pos()) then
+						meta:set_string("state","fakerunning")
+						return
+					end
 					local apos = handles[1]:get_pos().y - origin.y
 					local dremain = math.abs(dpos-apos)
 					local dmoved = math.abs(apos-startpos)
@@ -223,6 +243,31 @@ function celevator.drives.entity.step()
 					for _,eref in ipairs(handles) do
 						eref:set_velocity(vector.new(0,vel,0))
 					end
+					meta:set_string("apos",tostring(apos))
+					sound = vel ~= 0
+					meta:set_string("vel",tostring(vel))
+				elseif state == "fakerunning" then
+					local apos = tonumber(meta:get_string("apos")) or 0
+					local dremain = math.abs(dpos-apos)
+					local dmoved = math.abs(apos-startpos)
+					local vel
+					if dremain < 0.05 then
+						vel = 0
+						meta:set_string("state","stopped")
+						local carparam2 = meta:get_int("carparam2")
+						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)))
+						apos = math.floor(apos+0.5)
+					elseif dremain < 0.2 then
+						vel = 0.2
+					elseif dremain < maxvel and dremain < dmoved then
+						vel = dremain
+					elseif dmoved+0.1 > maxvel then
+						vel = maxvel
+					else
+						vel = dmoved+0.1
+					end
+					if dpos < apos then vel = 0-vel end
+					apos = apos+(vel*dtime)
 					meta:set_string("apos",tostring(apos))
 					sound = vel ~= 0
 					meta:set_string("vel",tostring(vel))

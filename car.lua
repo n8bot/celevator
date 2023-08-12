@@ -1,3 +1,5 @@
+celevator.car = {}
+
 local pieces = {
 	{
 		_position = "000",
@@ -343,4 +345,25 @@ for _,def in ipairs(pieces) do
 	def.description = "Car "..def._position
 	def.light_source = 9
 	minetest.register_node("celevator:car_"..def._position,def)
+end
+
+function celevator.car.spawncar(origin,yaw)
+	local right = vector.rotate_around_axis(vector.new(1,0,0),vector.new(0,1,0),yaw)
+	local back = vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),yaw)
+	local up = vector.new(0,1,0)
+	for x=0,1,1 do
+		for y=0,2,1 do
+			for z=0,2,1 do
+				local pos = vector.copy(origin)
+				pos = vector.add(pos,vector.multiply(right,x))
+				pos = vector.add(pos,vector.multiply(back,z))
+				pos = vector.add(pos,vector.multiply(up,y))
+				local node = {
+					name = string.format("celevator:car_%d%d%d",x,y,z),
+					param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(yaw)),
+				}
+				minetest.set_node(pos,node)
+			end
+		end
+	end
 end
