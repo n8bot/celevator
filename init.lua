@@ -1,6 +1,7 @@
 local components = {
 	"framework",
 	"car",
+	"doors",
 	"drive_null",
 	"drive_entity",
 	"controller",
