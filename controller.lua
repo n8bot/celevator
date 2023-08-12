@@ -149,6 +149,7 @@ minetest.register_node("celevator:controller",{
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("mem",minetest.serialize({}))
+		meta:mark_as_private("mem")
 		local event = {}
 		event.type = "program"
 		celevator.controller.run(pos,event)
@@ -504,7 +505,8 @@ function celevator.controller.run(pos,event)
 			table.insert(celevator.controller.equeue[hash],event)
 			celevator.storage:set_string("controller_equeue",minetest.serialize(celevator.controller.equeue))
 			if #celevator.controller.equeue[hash] > 5 then
-				minetest.log("warning","[celevator] [controller] Async process for controller at %s is falling behind, %d events in queue",minetest.pos_to_string(pos),#celevator.controller.equeue[hash])
+				local message = "[celevator] [controller] Async process for controller at %s is falling behind, %d events in queue"
+				minetest.log("warning",string.format(message,minetest.pos_to_string(pos),#celevator.controller.equeue[hash]))
 			end
 			return
 		end
