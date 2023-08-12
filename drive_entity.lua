@@ -91,6 +91,7 @@ minetest.register_node("celevator:drive",{
 		meta:set_string("maxvel","0.2")
 		meta:set_string("state","uninit")
 		meta:set_string("startpos","0")
+		meta:set_string("doorstate","closed")
 		update_ui(pos)
 	end,
 	on_destruct = stopbuzz,
@@ -142,10 +143,12 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 			wield_item = node.name,
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
-		for _,attachref in ipairs(attachobjs) do
-			local attachpos = attachref:get_pos()
-			local attachoffset = vector.subtract(pos,attachpos)
-			attachref:set_attach(eref,"",attachoffset)
+		if not ename then --If ename is set, something other than the car is moving
+			for _,attachref in ipairs(attachobjs) do
+				local attachpos = attachref:get_pos()
+				local attachoffset = vector.multiply(vector.subtract(pos,attachpos),1/0.667)
+				attachref:set_attach(eref,"",attachoffset)
+			end
 		end
 		minetest.remove_node(pos)
 		table.insert(refs,eref)
@@ -331,6 +334,7 @@ function celevator.drives.entity.estop(pos)
 	if meta:get_string("state") ~= "running" then return end
 	local apos = math.floor(tonumber(meta:get_string("apos"))+0.5)
 	meta:set_string("dpos",tostring(apos))
+	meta:set_string("apos",tostring(apos))
 	local hash = minetest.hash_node_position(pos)
 	local handles = celevator.drives.entity.entityinfo[hash].handles
 	meta:set_string("state","stopped")
@@ -366,7 +370,35 @@ function celevator.drives.entity.getstatus(pos,call2)
 		ret.vel = tonumber(meta:get_string("vel")) or 0
 		ret.maxvel = tonumber(meta:get_string("maxvel")) or 0.2
 		ret.state = meta:get_string("state")
+		ret.doorstate = meta:get_string("doorstate")
 		return ret
+	end
+end
+
+function celevator.drives.entity.movedoors(drivepos,direction)
+	local drivehash = minetest.hash_node_position(drivepos)
+	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
+	for _,hash in pairs(entitydrives_running) do
+		if drivehash == hash then return end
+	end
+	local drivemeta = minetest.get_meta(drivepos)
+	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
+	local apos = tonumber(drivemeta:get_string("apos")) or 0
+	local carpos = vector.add(origin,vector.new(0,apos,0))
+	local carnode = minetest.get_node(carpos)
+	local hwdoorpos = vector.add(carpos,vector.rotate_around_axis(minetest.fourdir_to_dir(carnode.param2),vector.new(0,1,0),math.pi))
+	if direction == "open" and minetest.get_item_group(minetest.get_node(hwdoorpos).name,"_celevator_hwdoor_root") == 1 then
+		celevator.doors.hwopen(hwdoorpos)
+		drivemeta:set_string("doorstate","opening")
+		minetest.after(math.pi+0.5,function()
+			minetest.get_meta(drivepos):set_string("doorstate","open")
+		end)
+	elseif direction == "close" and minetest.get_node(hwdoorpos).name == "celevator:hwdoor_placeholder" then
+		celevator.doors.hwclose(hwdoorpos)
+		drivemeta:set_string("doorstate","closing")
+		minetest.after((math.pi/0.66)+0.5,function()
+			minetest.get_meta(drivepos):set_string("doorstate","closed")
+		end)
 	end
 end
 

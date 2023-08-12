@@ -160,15 +160,15 @@ local function gethighestdowncall()
 end
 
 local function open()
-	--TODO: Door operator interface
 	mem.doorstate = "opening"
-	interrupt(2,"opened")
+	drivecmd({command = "open"})
+	interrupt(0.2,"checkopen")
 end
 
 local function close()
-	--TODO: Door operator interface
 	mem.doorstate = "closing"
-	interrupt(2,"closed")
+	drivecmd({command = "close"})
+	interrupt(0.2,"checkclosed")
 end
 
 mem.formspec = ""
@@ -405,6 +405,18 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 		mem.upcalls[event.landing] = true
 	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
 		mem.dncalls[event.landing] = true
+	end
+elseif event.iid == "checkopen" then
+	if mem.drive.status.doorstate == "open" then
+		interrupt(0,"opened")
+	else
+		interrupt(0.2,"checkopen")
+	end
+elseif event.iid == "checkclosed" then
+	if mem.drive.status.doorstate == "closed" then
+		interrupt(0,"closed")
+	else
+		interrupt(0.2,"checkclosed")
 	end
 end
 

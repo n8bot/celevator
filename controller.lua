@@ -414,6 +414,10 @@ function celevator.controller.finish(pos,mem)
 					celevator.drives[drivetype].resetpos(drivepos)
 				elseif command.command == "estop" then
 					celevator.drives[drivetype].estop(drivepos)
+				elseif command.command == "open" then
+					celevator.drives[drivetype].movedoors(drivepos,"open")
+				elseif command.command == "close" then
+					celevator.drives[drivetype].movedoors(drivepos,"close")
 				end
 			end
 		end

@@ -82,6 +82,7 @@ minetest.register_node("celevator:drive_null",{
 		meta:set_string("dpos","0")
 		meta:set_string("vel","0")
 		meta:set_string("maxvel","0.2")
+		meta:set_string("doorstate","closed")
 		update_ui(pos)
 	end,
 	on_destruct = stopbuzz,
@@ -185,6 +186,26 @@ function celevator.drives.null.rezero(pos)
 	celevator.drives.null.moveto(pos,0)
 end
 
+function celevator.drives.null.movedoors(drivepos,direction)
+	local drivehash = minetest.hash_node_position(drivepos)
+	local nulldrives_running = minetest.deserialize(celevator.storage:get_string("nulldrives_running")) or {}
+	for _,hash in pairs(nulldrives_running) do
+		if drivehash == hash then return end
+	end
+	local drivemeta = minetest.get_meta(drivepos)
+	if direction == "open" then
+		drivemeta:set_string("doorstate","opening")
+		minetest.after(math.pi+0.5,function()
+			minetest.get_meta(drivepos):set_string("doorstate","open")
+		end)
+	elseif direction == "close" then
+		drivemeta:set_string("doorstate","closing")
+		minetest.after((math.pi/0.66)+0.5,function()
+			minetest.get_meta(drivepos):set_string("doorstate","closed")
+		end)
+	end
+end
+
 function celevator.drives.null.getstatus(pos,call2)
 	local node = minetest.get_node(pos)
 	if node.name == "ignore" and not call2 then
@@ -200,7 +221,7 @@ function celevator.drives.null.getstatus(pos,call2)
 		ret.dpos = tonumber(meta:get_string("dpos")) or 0
 		ret.vel = tonumber(meta:get_string("vel")) or 0
 		ret.maxvel = tonumber(meta:get_string("maxvel")) or 0.2
-		ret.neareststop = ret.apos
+		ret.doorstate = meta:get_string("doorstate")
 		return ret
 	end
 end

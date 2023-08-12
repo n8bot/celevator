@@ -14,6 +14,7 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 	},
 	groups = {
 		dig_immediate = 2,
+		_celevator_hwdoor_root = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -159,6 +160,18 @@ minetest.register_node("celevator:hwdoor_placeholder",{
 	},
 	paramtype = "light",
 	drawtype = "airlike",
+	collision_box = {
+		type = "fixed",
+		fixed = {
+			{0,0,0,0,0,0}
+		}
+	},
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{0,0,0,0,0,0}
+		}
+	},
 })
 
 minetest.register_entity("celevator:hwdoor_moving",{
@@ -190,7 +203,7 @@ function celevator.doors.hwopen(pos)
 	for i,position in ipairs(positions) do
 		oldnodes[i] = minetest.get_node(position)
 	end
-	local erefs = celevator.drives.entity.nodestoentities(positions)
+	local erefs = celevator.drives.entity.nodestoentities(positions,"celevator:hwdoor_moving")
 	hwdoors_moving[hash] = {
 		direction = "open",
 		positions = positions,
@@ -285,11 +298,19 @@ function celevator.doors.step(dtime)
 				end
 			end
 		else
-			for i=1,6,1 do
-				celevator.doors.erefs[hash][i]:remove()
+			if data.direction == "open" then
+				for i=1,6,1 do
+					celevator.doors.erefs[hash][i]:remove()
+				end
+				minetest.get_meta(data.positions[1]):set_string("state","open")
+				hwdoors_moving[hash] = nil
+			elseif data.direction == "close" then
+				for i=1,6,1 do
+					minetest.set_node(data.positions[i],data.nodes[i])
+				end
+				minetest.get_meta(data.positions[1]):set_string("state","closed")
+				hwdoors_moving[hash] = nil
 			end
-			minetest.get_meta(data.positions[1]):set_string("state","open")
-			hwdoors_moving[hash] = nil
 		end
 	end
 	if save then
