@@ -367,3 +367,26 @@ function celevator.car.spawncar(origin,yaw)
 		end
 	end
 end
+
+minetest.register_abm({
+	label = "Respawn in-car PI displays",
+	nodenames = {"celevator:car_020"},
+	interval = 1,
+	chance = 1,
+	action = function(pos)
+		local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+		for _,i in pairs(entitiesnearby) do
+			if i:get_luaentity() and i:get_luaentity().name == "celevator:incar_pi_entity" then
+				return
+			end
+		end
+		local entity = minetest.add_entity(pos,"celevator:incar_pi_entity")
+		local fdir = vector.rotate_around_axis(minetest.facedir_to_dir(minetest.get_node(pos).param2),vector.new(0,1,0),math.pi/2)
+		local etex = celevator.pi.generatetexture(" --",false,false,false,true)
+		entity:set_properties({
+			textures = {etex},
+		})
+		entity:set_yaw(minetest.dir_to_yaw(fdir))
+		entity:set_pos(vector.add(pos,vector.multiply(fdir,0.44)))
+	end,
+})

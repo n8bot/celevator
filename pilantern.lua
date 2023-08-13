@@ -10,20 +10,34 @@ minetest.register_entity("celevator:pi_entity",{
 		physical = false,
 		collisionbox = {0,0,0,0,0,0,},
 		textures = {"celevator_transparent.png",},
+		static_save = false,
 	},
 })
 
-local function removeentity(pos)
+minetest.register_entity("celevator:incar_pi_entity",{
+	initial_properties = {
+		visual = "upright_sprite",
+		physical = false,
+		collisionbox = {0,0,0,0,0,0,},
+		textures = {"celevator_transparent.png",},
+		_flashtimer = 0,
+		_machinepos = "",
+		static_save = false,
+	},
+})
+
+function celevator.pi.removeentity(pos)
 	local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
 	for _,i in pairs(entitiesnearby) do
-		if i:get_luaentity() and i:get_luaentity().name == "celevator:pi_entity" then
+		if i:get_luaentity() and (i:get_luaentity().name == "celevator:pi_entity" or i:get_luaentity().name == "celevator:incar_pi_entity") then
 			i:remove()
 		end
 	end
 end
 
-local function generatetexture(text,uparrow,downarrow,lanternoffset)
+function celevator.pi.generatetexture(text,uparrow,downarrow,lanternoffset,carbg)
 	local out = "[combine:600x600:0,0=celevator_transparent.png"
+	if carbg then out = out..":0,0=celevator_pi_background_incar.png" end
 	local yp = 440
 	if lanternoffset then yp = 290 end
 	for i=1,string.len(text),1 do
@@ -36,7 +50,7 @@ local function generatetexture(text,uparrow,downarrow,lanternoffset)
 end
 
 function celevator.pi.updatedisplay(pos)
-	removeentity(pos)
+	celevator.pi.removeentity(pos)
 	local meta = minetest.get_meta(pos)
 	local text = meta:get_string("text")
 	local entity = minetest.add_entity(pos,"celevator:pi_entity")
@@ -47,12 +61,12 @@ function celevator.pi.updatedisplay(pos)
 	local flash_is = meta:get_int("flash_is") > 0
 	local flashtimer = meta:get_int("flashtimer") > 0
 	local islantern = minetest.get_item_group(minetest.get_node(pos).name,"_celevator_lantern") == 1
-	local etex = generatetexture(text,uparrow,downarrow,islantern)
+	local etex = celevator.pi.generatetexture(text,uparrow,downarrow,islantern)
 	if flash_fs then
-		if flashtimer then etex = generatetexture(" FS",uparrow,downarrow) end
+		if flashtimer then etex = celevator.pi.generatetexture(" FS",uparrow,downarrow) end
 		entity:set_properties({_flash_fs = true,_flash_is = false,})
 	elseif flash_is then
-		if flashtimer then etex = generatetexture(" IS",uparrow,downarrow) end
+		if flashtimer then etex = celevator.pi.generatetexture(" IS",uparrow,downarrow) end
 		entity:set_properties({_flash_fs = false,_flash_is = true,})
 	else
 		entity:set_properties({_flash_fs = false,_flash_is = false,})
@@ -122,7 +136,7 @@ minetest.register_node("celevator:pi",{
 			{-0.25,-0.453,0.475,0.25,-0.125,0.5},
 		},
 	},
-	on_destruct = removeentity,
+	on_destruct = celevator.pi.removeentity,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("text","--")
@@ -265,7 +279,7 @@ for _,state in ipairs(validstates) do
 		},
 		paramtype = "light",
 		paramtype2 = "facedir",
-		on_destruct = removeentity,
+		on_destruct = celevator.pi.removeentity,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",

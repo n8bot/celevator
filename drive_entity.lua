@@ -137,21 +137,27 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 	local refs = {}
 	for _,pos in ipairs(nodes) do
 		local node = minetest.get_node(pos)
-		local attachobjs = minetest.get_objects_inside_radius(pos,0.9)
+		local attach = minetest.get_objects_inside_radius(pos,0.9)
 		local eref = minetest.add_entity(pos,(ename or "celevator:car_moving"))
 		eref:set_properties({
 			wield_item = node.name,
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
+		table.insert(refs,eref)
 		if not ename then --If ename is set, something other than the car is moving
-			for _,attachref in ipairs(attachobjs) do
-				local attachpos = attachref:get_pos()
-				local attachoffset = vector.multiply(vector.subtract(pos,attachpos),1/0.667)
-				attachref:set_attach(eref,"",attachoffset)
+			for _,attachref in ipairs(attach) do
+				if attachref:get_luaentity() and attachref:get_luaentity().name == "celevator:incar_pi_entity" then
+					table.insert(refs,attachref)
+				else
+					local attachpos = attachref:get_pos()
+					local basepos = eref:get_pos()
+					local attachoffset = vector.multiply(vector.subtract(attachpos,basepos),30)
+					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
+					attachref:set_attach(eref,"",attachoffset)
+				end
 			end
 		end
 		minetest.remove_node(pos)
-		table.insert(refs,eref)
 	end
 	return refs
 end
@@ -160,7 +166,7 @@ function celevator.drives.entity.entitiestonodes(refs)
 	local ok = true
 	for _,eref in ipairs(refs) do
 		local pos = eref:get_pos()
-		if pos then
+		if pos and (eref:get_luaentity().name == "celevator:car_moving" or eref:get_luaentity().name == "celevator:hwdoor_moving") then
 			pos = vector.round(pos)
 			local node = {
 				name = eref:get_properties().wield_item,
@@ -168,6 +174,9 @@ function celevator.drives.entity.entitiestonodes(refs)
 			}
 			minetest.set_node(pos,node)
 			eref:remove()
+		elseif pos and eref:get_luaentity().name == "celevator:incar_pi_entity" then
+			pos = vector.new(pos.x,math.floor(pos.y+0.5),pos.z)
+			eref:set_pos(pos)
 		else
 			ok = false
 		end
@@ -424,6 +433,7 @@ local function updatecarpos(pos)
 	local carpos = carsearch(pos)
 	if carpos then
 		meta:set_string("origin",minetest.pos_to_string(carpos))
+		minetest.get_meta(carpos):set_string("machinepos",minetest.pos_to_string(pos))
 		meta:set_string("infotext",string.format("Using car with origin %s",minetest.pos_to_string(carpos)))
 	else
 		meta:set_string("infotext","No car found! Punch to try again")
@@ -444,7 +454,7 @@ minetest.register_node("celevator:machine",{
 	after_place_node = updatecarpos,
 	on_punch = function(pos)
 		local meta = minetest.get_meta(pos)
-		if not minetest.pos_to_string(meta:get_string("origin")) then
+		if not minetest.string_to_pos(meta:get_string("origin")) then
 			updatecarpos(pos)
 		end
 	end,
