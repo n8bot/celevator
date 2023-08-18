@@ -400,7 +400,7 @@ function celevator.controller.finddrive(pos)
 	return drivepos,minetest.registered_nodes[drivename]._celevator_drive_type
 end
 
-function celevator.controller.finish(pos,mem)
+function celevator.controller.finish(pos,mem,changedinterrupts)
 	if not celevator.controller.iscontroller(pos) then
 		return
 	else
@@ -416,9 +416,11 @@ function celevator.controller.finish(pos,mem)
 				elseif command.command == "estop" then
 					celevator.drives[drivetype].estop(drivepos)
 				elseif command.command == "open" then
-					celevator.drives[drivetype].movedoors(drivepos,"open")
+					minetest.after(0.25,celevator.drives[drivetype].movedoors,drivepos,"open")
 				elseif command.command == "close" then
 					celevator.drives[drivetype].movedoors(drivepos,"close")
+				elseif command.command == "resetfault" then
+					celevator.drives[drivetype].resetfault(drivepos)
 				end
 			end
 		end
@@ -479,7 +481,10 @@ function celevator.controller.finish(pos,mem)
 		meta:set_string("formspec_hidden",mem.formspec or "")
 		meta:set_string("infotext",mem.infotext or "")
 		local hash = minetest.hash_node_position(pos)
-		celevator.controller.iqueue[hash] = mem.interrupts
+		if not celevator.controller.iqueue[hash] then celevator.controller.iqueue[hash] = mem.interrupts end
+		for iid in pairs(changedinterrupts) do
+			celevator.controller.iqueue[hash][iid] = mem.interrupts[iid]
+		end
 		celevator.storage:set_string("controller_iqueue",minetest.serialize(celevator.controller.iqueue))
 		controllerleds(pos,mem.showrunning)
 		celevator.controller.running[hash] = nil

@@ -1,5 +1,7 @@
 local pos,event,mem = ...
 
+local changedinterrupts = {}
+
 local function fault(ftype,fatal)
 	if fatal then mem.fatalfault = true end
 	if not mem.activefaults then mem.activefaults = {} end
@@ -17,6 +19,8 @@ if not mem.drive.status then
 		vel = 0,
 		maxvel = 0,
 	}
+elseif mem.drive.status.fault then
+	fault("drive"..mem.drive.status.fault,true)
 end
 
 if mem.drive.state == "uninit" then
@@ -51,8 +55,13 @@ local doorstates = {
 }
 
 local faultnames = {
+	opentimeout = "Door Open Timeout",
+	closetimeout = "Door Close Timeout",
 	drivecomm = "Lost Communication With Drive",
 	driveuninit = "Drive Not Configured",
+	drivemetaload = "Drive Metadata Load Failure",
+	drivebadorigin = "Drive Origin Invalid",
+	drivedoorinterlock = "Attempted to Move Doors With Car in Motion",
 }
 
 local function drivecmd(command)
@@ -61,13 +70,16 @@ end
 
 local function interrupt(time,iid)
 	mem.interrupts[iid] = time
+	changedinterrupts[iid] = true
 end
 
-local function getpos()
+local function getpos(pioffset)
 	local ret = 0
+	local searchpos = mem.drive.status.apos
+	if pioffset then searchpos = math.max(0,searchpos+0.5) end
 	for k,v in ipairs(mem.params.floorheights) do
 		ret = ret+v
-		if ret > mem.drive.status.apos then return k end
+		if ret > searchpos then return k end
 	end
 	return mem.params.floorheights[#mem.params.floorheights]
 end
@@ -163,12 +175,14 @@ local function open()
 	mem.doorstate = "opening"
 	drivecmd({command = "open"})
 	interrupt(0.2,"checkopen")
+	interrupt(10,"opentimeout")
 end
 
 local function close()
 	mem.doorstate = "closing"
 	drivecmd({command = "close"})
 	interrupt(0.2,"checkclosed")
+	interrupt(10,"closetimeout")
 end
 
 mem.formspec = ""
@@ -374,6 +388,7 @@ elseif event.type == "ui" then
 			mem.faultlog = {}
 			mem.activefaults = {}
 			mem.fatalfault = false
+			drivecmd({command = "resetfault"})
 		end
 	end
 elseif event.iid == "opened" and mem.doorstate == "opening" then
@@ -409,15 +424,21 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
 		interrupt(0,"opened")
+		interrupt(nil,"opentimeout")
 	else
 		interrupt(0.2,"checkopen")
 	end
 elseif event.iid == "checkclosed" then
 	if mem.drive.status.doorstate == "closed" then
 		interrupt(0,"closed")
+		interrupt(nil,"closetimeout")
 	else
 		interrupt(0.2,"checkclosed")
 	end
+elseif event.iid == "opentimeout" then
+	fault("opentimeout",true)
+elseif event.iid == "closetimeout" then
+	fault("closetimeout",true)
 end
 
 local oldstate = mem.carstate
@@ -727,7 +748,7 @@ else
 	mem.showrunning = false
 end
 
-mem.pifloor = mem.params.floornames[getpos()]
+mem.pifloor = mem.params.floornames[getpos(true)]
 local hidepi = {
 	bfdemand = true,
 	uninit = true,
@@ -754,4 +775,4 @@ if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "op
 	mem.lanterns[getpos()] = mem.direction
 end
 
-return pos,mem
+return pos,mem,changedinterrupts

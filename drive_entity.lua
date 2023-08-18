@@ -208,7 +208,9 @@ function celevator.drives.entity.step(dtime)
 				local origin = minetest.string_to_pos(meta:get_string("origin"))
 				if not origin then
 					minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(pos))
+					meta:set_string("fault","badorigin")
 					table.remove(entitydrives_running,i)
+					return
 				end
 				if state == "start" then
 					sound = true
@@ -370,7 +372,7 @@ function celevator.drives.entity.getstatus(pos,call2)
 		return celevator.drives.null.get_status(pos,true)
 	elseif node.name ~= "celevator:drive" then
 		minetest.log("error","[celevator] [entity drive] Could not load drive status at "..minetest.pos_to_string(pos))
-		return
+		return {fault = "metaload"}
 	else
 		local meta = minetest.get_meta(pos)
 		local ret = {}
@@ -380,6 +382,8 @@ function celevator.drives.entity.getstatus(pos,call2)
 		ret.maxvel = tonumber(meta:get_string("maxvel")) or 0.2
 		ret.state = meta:get_string("state")
 		ret.doorstate = meta:get_string("doorstate")
+		ret.fault = meta:get_string("fault")
+		if ret.fault == "" then ret.fault = nil end
 		return ret
 	end
 end
@@ -387,11 +391,20 @@ end
 function celevator.drives.entity.movedoors(drivepos,direction)
 	local drivehash = minetest.hash_node_position(drivepos)
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
-	for _,hash in pairs(entitydrives_running) do
-		if drivehash == hash then return end
-	end
 	local drivemeta = minetest.get_meta(drivepos)
+	for _,hash in pairs(entitydrives_running) do
+		if drivehash == hash then
+			minetest.log("error","[celevator] [entity drive] Attempted to open doors while drive at "..minetest.pos_to_string(drivepos).." was still moving")
+			drivemeta:set_string("fault","doorinterlock")
+			return
+		end
+	end
 	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
+	if not origin then
+		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
+		drivemeta:set_string("fault","badorigin")
+		return
+	end
 	local apos = tonumber(drivemeta:get_string("apos")) or 0
 	local carpos = vector.add(origin,vector.new(0,apos,0))
 	local carnode = minetest.get_node(carpos)
@@ -409,6 +422,10 @@ function celevator.drives.entity.movedoors(drivepos,direction)
 			minetest.get_meta(drivepos):set_string("doorstate","closed")
 		end)
 	end
+end
+
+function celevator.drives.entity.resetfault(pos)
+	minetest.get_meta(pos):set_string("fault","")
 end
 
 local function carsearch(pos)
