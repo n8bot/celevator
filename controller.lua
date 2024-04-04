@@ -453,10 +453,9 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local oldpitext = oldmem.pifloor or "--"
 		local newpitext = mem.pifloor or "--"
 		if oldpitext ~= newpitext then
-			local pis = minetest.deserialize(meta:get_string("pis")) or {}
-			for hash in pairs(pis) do
-				local pipos = minetest.get_position_from_hash(hash)
-				celevator.pi.settext(pipos,newpitext)
+			local pis = carinfo.pis
+			for _,pi in pairs(pis) do
+				celevator.pi.settext(pi.pos,newpitext)
 			end
 		end
 		local oldpiuparrow = oldmem.piuparrow
@@ -464,26 +463,24 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local oldpidownarrow = oldmem.pidownarrow
 		local newpidownarrow = mem.pidownarrow
 		if oldpiuparrow ~= newpiuparrow then
-			local pis = minetest.deserialize(meta:get_string("pis")) or {}
-			for hash in pairs(pis) do
-				local pipos = minetest.get_position_from_hash(hash)
-				celevator.pi.setarrow(pipos,"up",newpiuparrow)
+			local pis = carinfo.pis
+			for _,pi in pairs(pis) do
+				celevator.pi.setarrow(pi.pos,"up",newpiuparrow)
 			end
 		end
 		if oldpidownarrow ~= newpidownarrow then
-			local pis = minetest.deserialize(meta:get_string("pis")) or {}
-			for hash in pairs(pis) do
-				local pipos = minetest.get_position_from_hash(hash)
-				celevator.pi.setarrow(pipos,"down",newpidownarrow)
+			local pis = carinfo.pis
+			for _,pi in pairs(pis) do
+				celevator.pi.setarrow(pi.pos,"down",newpidownarrow)
 			end
 		end
 		local oldlanterns = oldmem.lanterns or {}
 		local newlanterns = mem.lanterns or {}
-		local lanterns = minetest.deserialize(meta:get_string("lanterns")) or {}
-		for hash,landing in pairs(lanterns) do
-			if oldlanterns[landing] ~= newlanterns[landing] then
-				celevator.lantern.setlight(minetest.get_position_from_hash(hash),"up",newlanterns[landing] == "up")
-				celevator.lantern.setlight(minetest.get_position_from_hash(hash),"down",newlanterns[landing] == "down")
+		local lanterns = carinfo.lanterns
+		for _,lantern in pairs(lanterns) do
+			if oldlanterns[lantern.landing] ~= newlanterns[lantern.landing] then
+				celevator.lantern.setlight(lantern.pos,"up",newlanterns[lantern.landing] == "up")
+				celevator.lantern.setlight(lantern.pos,"down",newlanterns[lantern.landing] == "down")
 			end
 		end
 		meta:set_string("mem",minetest.serialize(mem))

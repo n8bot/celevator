@@ -136,7 +136,36 @@ minetest.register_node("celevator:pi",{
 			{-0.25,-0.453,0.475,0.25,-0.125,0.5},
 		},
 	},
-	on_destruct = celevator.pi.removeentity,
+	after_place_node = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+	end,
+	on_receive_fields = function(pos,_,fields)
+		if tonumber(fields.carid) then
+			local carid = tonumber(fields.carid)
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			table.insert(carinfo.pis,{pos=pos})
+			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+			local meta = minetest.get_meta(pos)
+			meta:set_int("carid",carid)
+			meta:set_string("formspec","")
+		end
+	end,
+	on_destruct = function(pos)
+		celevator.pi.removeentity(pos)
+		local meta = minetest.get_meta(pos)
+		local carid = meta:get_int("carid")
+		if carid == 0 then return end
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then return end
+		for i,pi in pairs(carinfo.pis) do
+			if vector.equals(pos,pi.pos) then
+				table.remove(carinfo.pis,i)
+				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+			end
+		end
+	end,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("text","--")
@@ -279,7 +308,6 @@ for _,state in ipairs(validstates) do
 		},
 		paramtype = "light",
 		paramtype2 = "facedir",
-		on_destruct = celevator.pi.removeentity,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
@@ -287,6 +315,49 @@ for _,state in ipairs(validstates) do
 				{-0.25,-0.5,0.475,0.25,0.125,0.5},
 			},
 		},
+		after_place_node = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+		end,
+		on_receive_fields = function(pos,_,fields)
+			if tonumber(fields.carid) and tonumber(fields.landing) then
+				local carid = tonumber(fields.carid)
+				local landing = tonumber(fields.landing)
+				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				if not carinfo then return end
+				table.insert(carinfo.pis,{pos=pos})
+				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
+				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				local meta = minetest.get_meta(pos)
+				meta:set_int("carid",carid)
+				meta:set_string("formspec","")
+			end
+		end,
+		on_destruct = function(pos)
+			celevator.pi.removeentity(pos)
+			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			for i,pi in pairs(carinfo.pis) do
+				if vector.equals(pos,pi.pos) then
+					table.remove(carinfo.pis,i)
+					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				end
+			end
+			for i,lantern in pairs(carinfo.lanterns) do
+				if vector.equals(pos,lantern.pos) then
+					table.remove(carinfo.lanterns,i)
+					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				end
+			end
+		end,
+		on_construct = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("text","--")
+			celevator.pi.updatedisplay(pos)
+		end,
 	})
 	nname = "celevator:lantern_"..state[1]
 	dropname = nname
@@ -314,6 +385,36 @@ for _,state in ipairs(validstates) do
 			boringside,
 			makelanterntex(state[1],state[2],state[3])
 		},
+		after_place_node = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+		end,
+		on_receive_fields = function(pos,_,fields)
+			if tonumber(fields.carid) and tonumber(fields.landing) then
+				local carid = tonumber(fields.carid)
+				local landing = tonumber(fields.landing)
+				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				if not carinfo then return end
+				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
+				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				local meta = minetest.get_meta(pos)
+				meta:set_int("carid",carid)
+				meta:set_string("formspec","")
+			end
+		end,
+		on_destruct = function(pos)
+			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			for i,lantern in pairs(carinfo.lanterns) do
+				if vector.equals(pos,lantern.pos) then
+					table.remove(carinfo.lanterns,i)
+					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				end
+			end
+		end,
 		paramtype = "light",
 		paramtype2 = "facedir",
 		drawtype = "nodebox",
