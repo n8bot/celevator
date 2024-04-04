@@ -447,11 +447,25 @@ end
 
 local function updatecarpos(pos)
 	local meta = minetest.get_meta(pos)
+	if meta:get_int("carid") == 0 then return end
 	local carpos = carsearch(pos)
 	if carpos then
 		meta:set_string("origin",minetest.pos_to_string(carpos))
 		minetest.get_meta(carpos):set_string("machinepos",minetest.pos_to_string(pos))
 		meta:set_string("infotext",string.format("Using car with origin %s",minetest.pos_to_string(carpos)))
+		local carid = meta:get_int("carid")
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then return end
+		carinfo.origin = carpos
+		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+		local drivepos = celevator.controller.finddrive(carinfo.controllerpos)
+		if drivepos then
+			local drivemeta = minetest.get_meta(drivepos)
+			if drivemeta:get_string("state") == "uninit" then
+				drivemeta:set_string("origin",minetest.pos_to_string(carpos))
+				drivemeta:set_string("state","stopped")
+			end
+		end
 	else
 		meta:set_string("infotext","No car found! Punch to try again")
 	end
@@ -468,11 +482,27 @@ minetest.register_node("celevator:machine",{
 	tiles = {
 		"default_dirt.png",
 	},
-	after_place_node = updatecarpos,
+	after_place_node = function(pos)
+		updatecarpos(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+	end,
 	on_punch = function(pos)
 		local meta = minetest.get_meta(pos)
 		if not minetest.string_to_pos(meta:get_string("origin")) then
 			updatecarpos(pos)
+		end
+	end,
+	on_receive_fields = function(pos,_,fields)
+		if tonumber(fields.carid) then
+			local carid = tonumber(fields.carid)
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			carinfo.machinepos = pos
+			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+			local meta = minetest.get_meta(pos)
+			meta:set_int("carid",carid)
+			meta:set_string("formspec","")
 		end
 	end,
 })

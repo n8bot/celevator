@@ -6,7 +6,6 @@ local components = {
 	"drive_entity",
 	"controller",
 	"callbuttons",
-	"pairingtool",
 	"pilantern",
 }
 
