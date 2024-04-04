@@ -152,6 +152,10 @@ minetest.register_node("celevator:controller",{
 		meta:mark_as_private("mem")
 		local event = {}
 		event.type = "program"
+		local carid = celevator.storage:get_int("maxcarid")+1
+		meta:set_int("carid",carid)
+		celevator.storage:set_int("maxcarid",carid)
+		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize({controllerpos=pos,pis={},lanterns={},callbuttons={}}))
 		celevator.controller.run(pos,event)
 	end,
 	on_punch = function(pos,node,puncher)
@@ -404,6 +408,13 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 	if not celevator.controller.iscontroller(pos) then
 		return
 	else
+		local meta = minetest.get_meta(pos)
+		local carid = meta:get_int("carid")
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then
+			minetest.log("error","[celevator] [controller] Bad car info for controller at "..minetest.pos_to_string(pos))
+			return
+		end
 		local drivepos,drivetype = celevator.controller.finddrive(pos)
 		if drivetype then
 			for _,command in ipairs(mem.drive.commands) do
@@ -424,20 +435,19 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				end
 			end
 		end
-		local meta = minetest.get_meta(pos)
 		local node = minetest.get_node(pos)
 		local oldmem = minetest.deserialize(meta:get_string("mem")) or {}
 		local oldupbuttonlights = oldmem.upcalls or {}
 		local olddownbuttonlights = oldmem.dncalls or {}
 		local newupbuttonlights = mem.upcalls or {}
 		local newdownbuttonlights = mem.dncalls or {}
-		local callbuttons = minetest.deserialize(meta:get_string("callbuttons")) or {}
-		for hash,landing in pairs(callbuttons) do
-			if oldupbuttonlights[landing] ~= newupbuttonlights[landing] then
-				celevator.callbutton.setlight(minetest.get_position_from_hash(hash),"up",newupbuttonlights[landing])
+		local callbuttons = carinfo.callbuttons
+		for _,button in pairs(callbuttons) do
+			if oldupbuttonlights[button.landing] ~= newupbuttonlights[button.landing] then
+				celevator.callbutton.setlight(button.pos,"up",newupbuttonlights[button.landing])
 			end
-			if olddownbuttonlights[landing] ~= newdownbuttonlights[landing] then
-				celevator.callbutton.setlight(minetest.get_position_from_hash(hash),"down",newdownbuttonlights[landing])
+			if olddownbuttonlights[button.landing] ~= newdownbuttonlights[button.landing] then
+				celevator.callbutton.setlight(button.pos,"down",newdownbuttonlights[button.landing])
 			end
 		end
 		local oldpitext = oldmem.pifloor or "--"
@@ -530,23 +540,18 @@ function celevator.controller.run(pos,event)
 			mem.drive.status = celevator.drives[drivetype].getstatus(drivepos)
 		end
 		mem.interrupts = celevator.controller.iqueue[minetest.hash_node_position(pos)] or {}
+		mem.carid = meta:get_int("carid")
 		minetest.handle_async(fw,celevator.controller.finish,pos,event,mem)
 	end
 end
 
-function celevator.controller.handlecallbutton(controllerpos,buttonpos,dir)
-	local buttonhash = minetest.hash_node_position(buttonpos)
-	local controllermeta = minetest.get_meta(controllerpos)
-	local pairings = minetest.deserialize(controllermeta:get_string("callbuttons")) or {}
-	if pairings[buttonhash] then
-		local landing = pairings[buttonhash]
-		local event = {
-			type = "callbutton",
-			landing = landing,
-			dir = dir,
-		}
-		celevator.controller.run(controllerpos,event)
-	end
+function celevator.controller.handlecallbutton(controllerpos,landing,dir)
+	local event = {
+		type = "callbutton",
+		landing = landing,
+		dir = dir,
+	}
+	celevator.controller.run(controllerpos,event)
 end
 
 function celevator.controller.checkiqueue(dtime)

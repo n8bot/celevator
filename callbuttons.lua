@@ -135,20 +135,56 @@ for _,state in ipairs(validstates) do
 				{-0.16,-0.37,0.475,0.17,0.13,0.5},
 			},
 		},
+		after_place_node = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+		end,
+		on_receive_fields = function(pos,_,fields)
+			if tonumber(fields.carid) and tonumber(fields.landing) then
+				local carid = tonumber(fields.carid)
+				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				if not carinfo then return end
+				table.insert(carinfo.callbuttons,{pos=pos,landing=tonumber(fields.landing)})
+				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				local meta = minetest.get_meta(pos)
+				meta:set_int("carid",carid)
+				meta:set_int("landing",tonumber(fields.landing))
+				meta:set_string("formspec","")
+			end
+		end,
+		on_destruct = function(pos)
+			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			for i,button in pairs(carinfo.callbuttons) do
+				if vector.equals(pos,button.pos) then
+					table.remove(carinfo.callbuttons,i)
+					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				end
+			end
+		end,
 		on_rightclick = function(pos,_,clicker)
 			local meta = minetest.get_meta(pos)
-			local controllerpos = minetest.string_to_pos(meta:get_string("controllerpos"))
-			if not controllerpos then return end
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not carinfo then return end
+			local controllerpos = carinfo.controllerpos
+			local controllermeta = minetest.get_meta(controllerpos)
+			if controllermeta:get_int("carid") ~= carid then return end
+			local landing = meta:get_int("landing")
 			if state[1] == "up" then
-				celevator.controller.handlecallbutton(controllerpos,pos,"up")
+				celevator.controller.handlecallbutton(controllerpos,landing,"up")
 			elseif state[1] == "down" then
-				celevator.controller.handlecallbutton(controllerpos,pos,"down")
+				celevator.controller.handlecallbutton(controllerpos,landing,"down")
 			elseif state[1] == "both" then
 				local dir = disambiguatedir(pos,clicker)
 				if dir == "up" then
-					celevator.controller.handlecallbutton(controllerpos,pos,"up")
+					celevator.controller.handlecallbutton(controllerpos,landing,"up")
 				elseif dir == "down" then
-					celevator.controller.handlecallbutton(controllerpos,pos,"down")
+					celevator.controller.handlecallbutton(controllerpos,landing,"down")
 				end
 			end
 		end,

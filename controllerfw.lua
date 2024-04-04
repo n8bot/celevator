@@ -740,7 +740,7 @@ if mem.drive.status.dpos > mem.drive.status.apos then
 elseif mem.drive.status.dpos < mem.drive.status.apos then
 	arrow = "v"
 end
-mem.infotext = string.format("Floor %s %s - %s - Doors %s",mem.params.floornames[getpos()],arrow,modenames[mem.carstate],doorstates[mem.doorstate])
+mem.infotext = string.format("ID %d: Floor %s %s - %s - Doors %s",mem.carid,mem.params.floornames[getpos()],arrow,modenames[mem.carstate],doorstates[mem.doorstate])
 
 if mem.drive.type then
 	mem.showrunning = mem.drive.status.vel ~= 0
