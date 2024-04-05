@@ -347,7 +347,7 @@ for _,def in ipairs(pieces) do
 	minetest.register_node("celevator:car_"..def._position,def)
 end
 
-function celevator.car.spawncar(origin,yaw)
+function celevator.car.spawncar(origin,yaw,carid)
 	local right = vector.rotate_around_axis(vector.new(1,0,0),vector.new(0,1,0),yaw)
 	local back = vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),yaw)
 	local up = vector.new(0,1,0)
@@ -363,6 +363,7 @@ function celevator.car.spawncar(origin,yaw)
 					param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(yaw)),
 				}
 				minetest.set_node(pos,node)
+				if carid then minetest.get_meta(pos):set_int("carid",carid) end
 			end
 		end
 	end

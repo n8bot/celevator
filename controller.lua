@@ -411,6 +411,7 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local meta = minetest.get_meta(pos)
 		local carid = meta:get_int("carid")
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		local carinfodirty = false
 		if not carinfo then
 			minetest.log("error","[celevator] [controller] Bad car info for controller at "..minetest.pos_to_string(pos))
 			return
@@ -453,6 +454,8 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local oldpitext = oldmem.pifloor or "--"
 		local newpitext = mem.pifloor or "--"
 		if oldpitext ~= newpitext then
+			carinfodirty = true
+			carinfo.pitext = newpitext
 			local pis = carinfo.pis
 			for _,pi in pairs(pis) do
 				celevator.pi.settext(pi.pos,newpitext)
@@ -463,12 +466,16 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local oldpidownarrow = oldmem.pidownarrow
 		local newpidownarrow = mem.pidownarrow
 		if oldpiuparrow ~= newpiuparrow then
+			carinfodirty = true
+			carinfo.piuparrow = newpiuparrow
 			local pis = carinfo.pis
 			for _,pi in pairs(pis) do
 				celevator.pi.setarrow(pi.pos,"up",newpiuparrow)
 			end
 		end
 		if oldpidownarrow ~= newpidownarrow then
+			carinfodirty = true
+			carinfo.pidownarrow = newpidownarrow
 			local pis = carinfo.pis
 			for _,pi in pairs(pis) do
 				celevator.pi.setarrow(pi.pos,"down",newpidownarrow)
@@ -500,6 +507,9 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 			table.remove(celevator.controller.equeue[hash],1)
 			celevator.storage:set_string("controller_equeue",minetest.serialize(celevator.controller.equeue))
 			celevator.controller.run(pos,event)
+		end
+		if carinfodirty then
+			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 		end
 	end
 end

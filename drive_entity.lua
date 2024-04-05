@@ -162,7 +162,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 	return refs
 end
 
-function celevator.drives.entity.entitiestonodes(refs)
+function celevator.drives.entity.entitiestonodes(refs,carid)
 	local ok = true
 	for _,eref in ipairs(refs) do
 		local pos = eref:get_pos()
@@ -174,6 +174,7 @@ function celevator.drives.entity.entitiestonodes(refs)
 			}
 			minetest.set_node(pos,node)
 			eref:remove()
+			if carid then minetest.get_meta(pos):set_int("carid",carid) end
 		elseif pos and eref:get_luaentity().name == "celevator:incar_pi_entity" then
 			pos = vector.new(pos.x,math.floor(pos.y+0.5),pos.z)
 			eref:set_pos(pos)
@@ -198,6 +199,7 @@ function celevator.drives.entity.step(dtime)
 			table.remove(entitydrives_running,i)
 		else
 			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
 			local state = meta:get_string("state")
 			if not (state == "running" or state == "start" or state == "fakerunning") then
 				table.remove(entitydrives_running,i)
@@ -249,10 +251,10 @@ function celevator.drives.entity.step(dtime)
 					if dremain < 0.05 then
 						vel = 0
 						meta:set_string("state","stopped")
-						local ok = celevator.drives.entity.entitiestonodes(handles)
+						local ok = celevator.drives.entity.entitiestonodes(handles,carid)
 						if not ok then
 							local carparam2 = meta:get_int("carparam2")
-							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)))
+							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						end
 						apos = math.floor(apos+0.5)
 					elseif dremain < 0.2 then
@@ -280,7 +282,7 @@ function celevator.drives.entity.step(dtime)
 						vel = 0
 						meta:set_string("state","stopped")
 						local carparam2 = meta:get_int("carparam2")
-						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)))
+						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
 					elseif dremain < 0.2 then
 						vel = 0.2
@@ -464,7 +466,14 @@ local function updatecarpos(pos)
 			if drivemeta:get_string("state") == "uninit" then
 				drivemeta:set_string("origin",minetest.pos_to_string(carpos))
 				drivemeta:set_string("state","stopped")
+				drivemeta:set_int("carid",carid)
 			end
+		end
+		local caryaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(carpos).param2))
+		local carnodes = celevator.drives.entity.gathercar(carpos,caryaw)
+		for hash in pairs(carnodes) do
+			local carmeta = minetest.get_meta(minetest.get_position_from_hash(hash))
+			carmeta:set_int("carid",carid)
 		end
 	else
 		meta:set_string("infotext","No car found! Punch to try again")

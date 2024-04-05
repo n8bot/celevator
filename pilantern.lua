@@ -20,10 +20,26 @@ minetest.register_entity("celevator:incar_pi_entity",{
 		physical = false,
 		collisionbox = {0,0,0,0,0,0,},
 		textures = {"celevator_transparent.png",},
-		_flashtimer = 0,
-		_machinepos = "",
 		static_save = false,
 	},
+	on_step = function(self)
+		local pos = self.object:get_pos()
+		local props = self.object:get_properties()
+		if props.breath_max and props.breath_max ~= 0 then
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",props.breath_max)))
+			if not carinfo then return end
+			local text = carinfo.pitext or "--"
+			if string.len(text) < 3 then text = string.rep(" ",3-string.len(text))..text end
+			text = string.sub(text,1,3)
+			local etex = celevator.pi.generatetexture(text,carinfo.piuparrow,carinfo.pidownarrow,false,true)
+			self.object:set_properties({textures = {etex}})
+		else
+			local carpos = vector.round(pos)
+			local carmeta = minetest.get_meta(carpos)
+			local carid = carmeta:get_int("carid")
+			if carid > 0 then self.object:set_properties({breath_max=carid}) end
+		end
+	end,
 })
 
 function celevator.pi.removeentity(pos)
