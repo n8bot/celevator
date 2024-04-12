@@ -6,6 +6,7 @@ celevator.drives.entity = {
 	movementsoundhandles = {},
 	movementsoundstate = {},
 	entityinfo = {},
+	sheaverefs = {},
 }
 
 local function update_ui(pos)
@@ -329,6 +330,7 @@ function celevator.drives.entity.step(dtime)
 						handles = handles,
 					}
 					meta:set_string("state","running")
+					celevator.drives.entity.sheavetoentity(carid)
 				elseif state == "running" then
 					if not celevator.drives.entity.entityinfo[hash] then
 						meta:set_string("state","fakerunning")
@@ -340,13 +342,22 @@ function celevator.drives.entity.step(dtime)
 						return
 					end
 					local apos = handles[1]:get_pos().y - origin.y
+					local sheaverefs = celevator.drives.entity.sheaverefs[carid]
+					if sheaverefs and sheaverefs[1] then
+						local rotation = sheaverefs[1]:get_rotation()
+						if rotation then
+							rotation.z = math.pi*apos*-1
+							sheaverefs[1]:set_rotation(rotation)
+						end
+					end
 					local dremain = math.abs(dpos-apos)
 					local dmoved = math.abs(apos-startpos)
 					local vel
-					if dremain < 0.05 then
+					if dremain < 0.01 then
 						vel = 0
 						meta:set_string("state","stopped")
 						motorsound(pos,"idle")
+						celevator.drives.entity.sheavetonode(carid)
 						local ok = celevator.drives.entity.entitiestonodes(handles,carid)
 						if not ok then
 							local carparam2 = meta:get_int("carparam2")
@@ -374,13 +385,22 @@ function celevator.drives.entity.step(dtime)
 					meta:set_string("vel",tostring(vel))
 				elseif state == "fakerunning" then
 					local apos = tonumber(meta:get_string("apos")) or 0
+					local sheaverefs = celevator.drives.entity.sheaverefs[carid]
+					if sheaverefs and sheaverefs[1] then
+						local rotation = sheaverefs[1]:get_rotation()
+						if rotation then
+							rotation.z = math.pi*apos*-1
+							sheaverefs[1]:set_rotation(rotation)
+						end
+					end
 					local dremain = math.abs(dpos-apos)
 					local dmoved = math.abs(apos-startpos)
 					local vel
-					if dremain < 0.05 then
+					if dremain < 0.01 then
 						vel = 0
 						meta:set_string("state","stopped")
 						motorsound(pos,"idle")
+						celevator.drives.entity.sheavetonode(carid)
 						local carparam2 = meta:get_int("carparam2")
 						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
@@ -593,7 +613,29 @@ minetest.register_node("celevator:machine",{
 	paramtype = "light",
 	paramtype2 = "4dir",
 	tiles = {
-		"default_dirt.png",
+		"celevator_machine_top.png",
+		"celevator_machine_top.png",
+		"celevator_machine_sides.png",
+		"celevator_machine_sides.png",
+		"celevator_machine_front.png",
+		"celevator_machine_front.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.3,-0.5,-0.2,0.3,0.4,0.2}, -- Main body
+			{-0.2,0.4,-0.2,0.2,0.5,0.2}, -- Top of circle
+			{-0.4,-0.1,-0.2,-0.3,0.3,0.2}, -- Left of circle
+			{0.3,-0.1,-0.2,0.4,0.3,0.2}, -- Right of circle
+			{-0.42,0.075,-0.22,0.42,0.125,0.22}, -- Sealing flanges
+			{0.3,-0.3,-0.1,0.35,-0.1,0.1}, -- Bearing cap opposite motor
+			{-0.35,-0.3,-0.1,-0.3,-0.1,0.1}, -- Bearing cap on motor side
+			{-0.1,0,-0.5,0.1,0.2,-0.2}, -- Shaft to sheave
+			{-0.15,-0.05,0.2,0.15,0.25,0.25}, -- Bearing cap opposite sheave
+			{-0.15,-0.05,-0.25,0.15,0.25,-0.2}, -- Bearing cap on sheave side
+			{-0.5,-0.25,-0.05,-0.35,-0.15,0.05} -- Shaft from motor
+		},
 	},
 	after_place_node = function(pos)
 		updatecarpos(pos)
@@ -619,3 +661,127 @@ minetest.register_node("celevator:machine",{
 		end
 	end,
 })
+
+minetest.register_node("celevator:motor",{
+	description = "Hoist Motor",
+	groups = {
+		dig_immediate = 2,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_machine_top.png",
+		"celevator_machine_top.png",
+		"celevator_motor_sides.png",
+		"celevator_motor_sides.png",
+		"celevator_machine_top.png",
+		"celevator_machine_top.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5,-0.5,-0.3,0.1,0.1,0.3}, -- Motor body
+			{0.1,-0.25,-0.05,0.5,-0.15,0.05}, -- Shaft
+			{0.3,-0.4,-0.2,0.35,0,0.2}, -- Brake disc
+			{0.275,-0.3,-0.1,0.375,-0.1,0.1}, -- Brake disc clamp
+			{0.2,-0.5,0.15,0.45,0.1,0.3}, -- Brake housing
+			{-0.4,0.1,-0.2,0,0.3,0.2}, -- Junction box
+		},
+	},
+})
+
+minetest.register_node("celevator:sheave",{
+	description = "Sheave",
+	groups = {
+		dig_immediate = 2,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_sheave_sides.png^[transformR90",
+		"celevator_sheave_sides.png^[transformR270",
+		"celevator_sheave_sides.png",
+		"celevator_sheave_sides.png^[transformR180",
+		"celevator_sheave_front.png",
+		"celevator_sheave_front.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.3,-0.2,0.2,0.3,0.4,0.5},
+			{-0.4,-0.1,0.2,-0.3,0.3,0.5},
+			{0.3,-0.1,0.2,0.4,0.3,0.5},
+			{-0.2,0.4,0.2,0.2,0.5,0.5},
+			{-0.2,-0.3,0.2,0.2,-0.2,0.5},
+		},
+	},
+})
+
+minetest.register_node("celevator:sheave_centered",{
+	description = "Centered Sheave",
+	groups = {
+		dig_immediate = 2,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_sheave_sides.png^[transformR90",
+		"celevator_sheave_sides.png^[transformR270",
+		"celevator_sheave_sides.png",
+		"celevator_sheave_sides.png^[transformR180",
+		"celevator_sheave_front_centered.png",
+		"celevator_sheave_front_centered.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.3,-0.3,0.2,0.3,0.3,0.5},
+			{-0.4,-0.2,0.2,-0.3,0.2,0.5},
+			{0.3,-0.2,0.2,0.4,0.2,0.5},
+			{-0.2,0.3,0.2,0.2,0.4,0.5},
+			{-0.2,-0.4,0.2,0.2,-0.3,0.5},
+		},
+	},
+})
+
+minetest.register_entity("celevator:sheave_moving",{
+	initial_properties = {
+		visual = "wielditem",
+		visual_size = vector.new(0.667,0.667,0.667),
+		wield_item = "celevator:sheave_centered",
+		static_save = false,
+	},
+})
+
+function celevator.drives.entity.sheavetoentity(carid)
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.machinepos) then return end
+	local dir = minetest.fourdir_to_dir(minetest.get_node(carinfo.machinepos).param2)
+	local pos = vector.add(carinfo.machinepos,vector.multiply(dir,-1))
+	minetest.set_node(pos,{
+		name = "celevator:sheave",
+		param2 = minetest.dir_to_fourdir(dir),
+	})
+	local sheaverefs = celevator.drives.entity.nodestoentities({pos},"celevator:sheave_moving")
+	celevator.drives.entity.sheaverefs[carid] = sheaverefs
+	sheaverefs[1]:set_properties({wield_item = "celevator:sheave_centered"})
+	sheaverefs[1]:set_pos(vector.add(pos,vector.new(0,0.1,0)))
+end
+
+function celevator.drives.entity.sheavetonode(carid)
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.machinepos) then return end
+	local dir = minetest.fourdir_to_dir(minetest.get_node(carinfo.machinepos).param2)
+	local pos = vector.add(carinfo.machinepos,vector.multiply(dir,-1))
+	local erefs = celevator.drives.entity.sheaverefs[carid]
+	if erefs and erefs[1] then
+		erefs[1]:remove()
+	end
+	minetest.set_node(pos,{
+		name = "celevator:sheave",
+		param2 = minetest.dir_to_fourdir(dir),
+	})
+end
