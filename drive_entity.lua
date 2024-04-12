@@ -33,7 +33,7 @@ local function playbuzz(pos)
 	celevator.drives.entity.buzzsoundhandles[hash] = minetest.sound_play("celevator_drive_run",{
 		pos = pos,
 		loop = true,
-		gain = 0.4,
+		gain = 0.2,
 	})
 end
 
