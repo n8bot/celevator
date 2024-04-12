@@ -2,7 +2,9 @@ celevator.drives.entity = {
 	name = "Drive",
 	description = "Normal entity-based drive",
 	nname = "celevator:drive",
-	soundhandles = {},
+	buzzsoundhandles = {},
+	movementsoundhandles = {},
+	movementsoundstate = {},
 	entityinfo = {},
 }
 
@@ -26,8 +28,8 @@ end
 
 local function playbuzz(pos)
 	local hash = minetest.hash_node_position(pos)
-	if celevator.drives.null.soundhandles[hash] == "cancel" then return end
-	celevator.drives.null.soundhandles[hash] = minetest.sound_play("celevator_drive_run",{
+	if celevator.drives.entity.buzzsoundhandles[hash] == "cancel" then return end
+	celevator.drives.entity.buzzsoundhandles[hash] = minetest.sound_play("celevator_drive_run",{
 		pos = pos,
 		loop = true,
 		gain = 0.4,
@@ -36,25 +38,101 @@ end
 
 local function startbuzz(pos)
 	local hash = minetest.hash_node_position(pos)
-	if celevator.drives.null.soundhandles[hash] == "cancel" then
-		celevator.drives.null.soundhandles[hash] = nil
+	if celevator.drives.entity.buzzsoundhandles[hash] == "cancel" then
+		celevator.drives.entity.buzzsoundhandles[hash] = nil
 		return
 	end
-	if celevator.drives.null.soundhandles[hash] then return end
-	celevator.drives.null.soundhandles[hash] = "pending"
+	if celevator.drives.entity.buzzsoundhandles[hash] then return end
+	celevator.drives.entity.buzzsoundhandles[hash] = "pending"
 	minetest.after(0.5,playbuzz,pos)
 end
 
 local function stopbuzz(pos)
 	local hash = minetest.hash_node_position(pos)
-	if not celevator.drives.null.soundhandles[hash] then return end
-	if celevator.drives.null.soundhandles[hash] == "pending" then
-		celevator.drives.null.soundhandles[hash] = "cancel"
+	if not celevator.drives.entity.buzzsoundhandles[hash] then return end
+	if celevator.drives.entity.buzzsoundhandles[hash] == "pending" then
+		celevator.drives.entity.buzzsoundhandles[hash] = "cancel"
 	end
-	if type(celevator.drives.null.soundhandles[hash]) ~= "string" then
-		minetest.sound_stop(celevator.drives.null.soundhandles[hash])
-		celevator.drives.null.soundhandles[hash] = nil
+	if type(celevator.drives.entity.buzzsoundhandles[hash]) ~= "string" then
+		minetest.sound_stop(celevator.drives.entity.buzzsoundhandles[hash])
+		celevator.drives.entity.buzzsoundhandles[hash] = nil
 	end
+end
+
+local function motorsound(pos,newstate)
+	local hash = minetest.hash_node_position(pos)
+	local oldstate = celevator.drives.entity.movementsoundstate[hash]
+	oldstate = oldstate or "idle"
+	if oldstate == newstate then return end
+	local carid = minetest.get_meta(pos):get_int("carid")
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.machinepos) then return end
+	local oldhandle = celevator.drives.entity.movementsoundhandles[hash]
+	if newstate == "slow" then
+		if oldstate == "idle" then
+			minetest.sound_play("celevator_brake_release",{
+				pos = carinfo.machinepos,
+				gain = 1,
+			},true)
+			celevator.drives.entity.movementsoundhandles[hash] = minetest.sound_play("celevator_motor_slow",{
+				pos = carinfo.machinepos,
+				loop = true,
+				gain = 1,
+			})
+		elseif oldstate == "accel" or oldstate == "fast" or oldstate == "decel" then
+			if oldhandle then minetest.sound_stop(oldhandle) end
+			celevator.drives.entity.movementsoundhandles[hash] = minetest.sound_play("celevator_motor_slow",{
+				pos = carinfo.machinepos,
+				loop = true,
+				gain = 1,
+			})
+		end
+	elseif newstate == "accel" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.movementsoundhandles[hash] = minetest.sound_play("celevator_motor_accel",{
+			pos = carinfo.machinepos,
+			gain = 1,
+		})
+	elseif newstate == "fast" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.movementsoundhandles[hash] = minetest.sound_play("celevator_motor_fast",{
+			pos = carinfo.machinepos,
+			loop = true,
+			gain = 1,
+		})
+	elseif newstate == "decel" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.movementsoundhandles[hash] = minetest.sound_play("celevator_motor_decel",{
+			pos = carinfo.machinepos,
+			gain = 1,
+		})
+	elseif newstate == "idle" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		minetest.sound_play("celevator_brake_apply",{
+			pos = carinfo.machinepos,
+			gain = 1,
+		},true)
+	end
+	celevator.drives.entity.movementsoundstate[hash] = newstate
+end
+
+local function compareexchangesound(pos,compare,new)
+	local hash = minetest.hash_node_position(pos)
+	local oldstate = celevator.drives.entity.movementsoundstate[hash]
+	if oldstate == compare then
+		motorsound(pos,new)
+	end
+end
+
+local function accelsound(pos)
+	motorsound(pos,"slow")
+	minetest.after(1,compareexchangesound,pos,"slow","accel")
+	minetest.after(4,compareexchangesound,pos,"accel","fast")
+end
+
+local function decelsound(pos)
+	motorsound(pos,"decel")
+	minetest.after(2,compareexchangesound,pos,"decel","slow")
 end
 
 minetest.register_node("celevator:drive",{
@@ -215,7 +293,14 @@ function celevator.drives.entity.step(dtime)
 					return
 				end
 				if state == "start" then
-					sound = true
+					if math.abs(dpos-startpos) > 0.1 then
+						sound = true
+						if maxvel > 0.2 then
+							accelsound(pos)
+						else
+							motorsound(pos,"slow")
+						end
+					end
 					local startv = vector.add(origin,vector.new(0,startpos,0))
 					local hashes = celevator.drives.entity.gathercar(startv,minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(startv).param2)))
 					local nodes = {}
@@ -251,6 +336,7 @@ function celevator.drives.entity.step(dtime)
 					if dremain < 0.05 then
 						vel = 0
 						meta:set_string("state","stopped")
+						motorsound(pos,"idle")
 						local ok = celevator.drives.entity.entitiestonodes(handles,carid)
 						if not ok then
 							local carparam2 = meta:get_int("carparam2")
@@ -259,8 +345,11 @@ function celevator.drives.entity.step(dtime)
 						apos = math.floor(apos+0.5)
 					elseif dremain < 0.2 then
 						vel = 0.2
-					elseif dremain < maxvel and dremain < dmoved then
-						vel = dremain
+					elseif dremain < 2*maxvel and dremain < dmoved then
+						vel = math.min(dremain,maxvel)
+						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
+							decelsound(pos)
+						end
 					elseif dmoved+0.1 > maxvel then
 						vel = maxvel
 					else
@@ -281,13 +370,17 @@ function celevator.drives.entity.step(dtime)
 					if dremain < 0.05 then
 						vel = 0
 						meta:set_string("state","stopped")
+						motorsound(pos,"idle")
 						local carparam2 = meta:get_int("carparam2")
 						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
 					elseif dremain < 0.2 then
 						vel = 0.2
-					elseif dremain < maxvel and dremain < dmoved then
-						vel = dremain
+					elseif dremain < 2*maxvel and dremain < dmoved then
+						vel = math.min(dremain,maxvel)
+						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
+							decelsound(pos)
+						end
 					elseif dmoved+0.1 > maxvel then
 						vel = maxvel
 					else
@@ -354,6 +447,7 @@ function celevator.drives.entity.estop(pos)
 	meta:set_string("vel","0")
 	celevator.drives.entity.entitiestonodes(handles)
 	stopbuzz(pos)
+	motorsound(pos,"idle")
 end
 
 
