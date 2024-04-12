@@ -244,12 +244,14 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 	local ok = true
 	for _,eref in ipairs(refs) do
 		local pos = eref:get_pos()
+		local top = false
 		if pos and (eref:get_luaentity().name == "celevator:car_moving" or eref:get_luaentity().name == "celevator:hwdoor_moving") then
 			pos = vector.round(pos)
 			local node = {
 				name = eref:get_properties().wield_item,
 				param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(eref:get_yaw()))
 			}
+			if minetest.get_item_group(eref:get_properties().wield_item,"_connects_yp") ~= 1 then top = true end
 			minetest.set_node(pos,node)
 			eref:remove()
 			if carid then minetest.get_meta(pos):set_int("carid",carid) end
@@ -258,6 +260,14 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			eref:set_pos(pos)
 		else
 			ok = false
+		end
+		for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
+			if i:is_player() then
+				local ppos = i:get_pos()
+				if top then ppos.y = ppos.y+1 end
+				i:set_pos(ppos)
+				minetest.after(0.5,i.set_pos,i,ppos)
+			end
 		end
 	end
 	return ok
