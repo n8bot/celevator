@@ -118,7 +118,7 @@ local pieces = {
 		tiles = {
 			"celevator_cabinet_sides.png",
 			"celevator_cabinet_sides.png",
-			"celevator_car_wallpaper.png",
+			"celevator_car_wallpaper_2x.png^celevator_cop.png",
 			"celevator_cabinet_sides.png",
 		},
 	},
@@ -344,6 +344,19 @@ for _,def in ipairs(pieces) do
 	def.drawtype = "nodebox"
 	def.description = "Car "..def._position
 	def.light_source = 9
+	def.on_receive_fields = function(pos,_,fields,player)
+		local meta = minetest.get_meta(pos)
+		local carid = meta:get_int("carid")
+		if carid == 0 then return end
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then return end
+		local event = {
+			type = "cop",
+			fields = fields,
+			player = player:get_player_name(),
+		}
+		celevator.controller.run(carinfo.controllerpos,event)
+	end
 	minetest.register_node("celevator:car_"..def._position,def)
 end
 
@@ -391,3 +404,13 @@ minetest.register_abm({
 		entity:set_pos(vector.add(pos,vector.multiply(fdir,0.44)))
 	end,
 })
+
+function celevator.car.updatecop(pos)
+	local copmeta = minetest.get_meta(pos)
+	local carid = copmeta:get_int("carid")
+	if carid == 0 then return end
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not carinfo then return end
+	local controllermeta = minetest.get_meta(carinfo.controllerpos)
+	copmeta:set_string("formspec",controllermeta:get_string("copformspec"))
+end

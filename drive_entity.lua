@@ -364,6 +364,7 @@ function celevator.drives.entity.step(dtime)
 							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						end
 						apos = math.floor(apos+0.5)
+						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 					elseif dremain < 0.2 then
 						vel = 0.2
 					elseif dremain < 2*maxvel and dremain < dmoved then
@@ -404,6 +405,7 @@ function celevator.drives.entity.step(dtime)
 						local carparam2 = meta:get_int("carparam2")
 						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
+						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 					elseif dremain < 0.2 then
 						vel = 0.2
 					elseif dremain < 2*maxvel and dremain < dmoved then
@@ -784,4 +786,31 @@ function celevator.drives.entity.sheavetonode(carid)
 		name = "celevator:sheave",
 		param2 = minetest.dir_to_fourdir(dir),
 	})
+end
+
+function celevator.drives.entity.updatecopformspec(drivepos)
+	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
+	if entitydrives_running[minetest.hash_node_position(drivepos)] then return end
+	local drivemeta = minetest.get_meta(drivepos)
+	local carid = drivemeta:get_int("carid")
+	if carid == 0 then return end
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not carinfo then return end
+	local formspec = minetest.get_meta(carinfo.controllerpos):get_string("copformspec")
+	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
+	if not origin then
+		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
+		drivemeta:set_string("fault","badorigin")
+		return
+	end
+	local apos = tonumber(drivemeta:get_string("apos")) or 0
+	local carpos = vector.add(origin,vector.new(0,apos,0))
+	local carnodes = celevator.drives.entity.gathercar(carpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(carpos).param2)))
+	for hash in pairs(carnodes) do
+		local piecepos = minetest.get_position_from_hash(hash)
+		local piece = minetest.get_node(piecepos)
+		if piece.name == "celevator:car_010" then
+			minetest.get_meta(piecepos):set_string("formspec",formspec)
+		end
+	end
 end

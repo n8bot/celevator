@@ -439,6 +439,23 @@ elseif event.iid == "opentimeout" then
 	fault("opentimeout",true)
 elseif event.iid == "closetimeout" then
 	fault("closetimeout",true)
+elseif event.type == "cop" then
+	local fields = event.fields
+	if mem.carstate == "normal" then
+		for k,v in pairs(fields) do
+			if string.sub(k,1,7) == "carcall" then
+				local landing = tonumber(string.sub(k,8,-1))
+				if v and landing and landing >= 1 and landing <= #mem.params.floorheights then
+					mem.carcalls[landing] = true
+				end
+			end
+		end
+		if fields.close and mem.doorstate == "open" then
+			interrupt(0,"close")
+		elseif fields.open and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
+			open()
+		end
+	end
 end
 
 local oldstate = mem.carstate
@@ -612,7 +629,7 @@ elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" t
 		fs(minetest.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
-	fs("button[8,2;2,1;add;New Floor]")
+	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;New Floor]") end
 	fs("button[8,3.5;2,1;edit;Edit Floor]")
 	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;Remove Floor]") end
 	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;Move Up]") end
@@ -774,5 +791,32 @@ mem.lanterns = {}
 if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then
 	mem.lanterns[getpos()] = mem.direction
 end
+
+mem.copformspec = "formspec_version[7]"
+local floorcount = #mem.params.floornames
+local copcols = math.floor((floorcount-1)/10)+1
+local coprows = math.floor((floorcount-1)/copcols)+1
+local litimg = "celevator_copbutton_lit.png"
+local unlitimg = "celevator_copbutton_unlit.png"
+mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+4)
+for i=1,floorcount,1 do
+	local row = math.floor((i-1)/copcols)+1
+	local col = ((i-1)%copcols)+1
+	local yp = (coprows-row+1)*1.25
+	local xp = col*1.25
+	local tex = mem.carcalls[i] and litimg or unlitimg
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;carcall%d;%d;false;false;%s]",xp,yp,tex,i,i,litimg)
+end
+
+local doxp = (copcols == 1) and 0.5 or 1.25
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;open;%s;false;false;%s]",doxp,coprows*1.25+1.5,unlitimg,minetest.formspec_escape("<|>"),litimg)
+
+local dcxp = 3.75
+if copcols == 1 then
+	dcxp = 2
+elseif copcols == 2 then
+	dcxp = 2.5
+end
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+1.5,unlitimg,minetest.formspec_escape(">|<"),litimg)
 
 return pos,mem,changedinterrupts

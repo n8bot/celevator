@@ -62,6 +62,8 @@ local function ondestruct(pos)
 	end
 	celevator.controller.equeue[minetest.hash_node_position(pos)] = nil
 	celevator.storage:set_string("controller_equeue",minetest.serialize(celevator.controller.equeue))
+	local carid = minetest.get_meta(pos):get_int("carid")
+	if carid ~= 0 then celevator.storage:set_string(string.format("car%d",carid),"") end
 end
 
 local function onrotate(controllerpos,node,user,mode,new_param2)
@@ -489,6 +491,10 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				celevator.lantern.setlight(lantern.pos,"up",newlanterns[lantern.landing] == "up")
 				celevator.lantern.setlight(lantern.pos,"down",newlanterns[lantern.landing] == "down")
 			end
+		end
+		meta:set_string("copformspec",mem.copformspec)
+		if mem.copformspec ~= oldmem.copformspec and drivetype then
+			minetest.after(0.25,celevator.drives[drivetype].updatecopformspec,drivepos)
 		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:controller_open" then meta:set_string("formspec",mem.formspec or "") end
