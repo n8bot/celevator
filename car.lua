@@ -357,6 +357,11 @@ for _,def in ipairs(pieces) do
 		}
 		celevator.controller.run(carinfo.controllerpos,event)
 	end
+	if def._position == "000" then
+		def.on_construct = function(pos)
+			minetest.get_meta(pos):set_string("doorstate","closed")
+		end
+	end
 	minetest.register_node("celevator:car_"..def._position,def)
 end
 

@@ -9,4 +9,5 @@ read_globals = {
 	"vector",
 	"screwdriver",
 	"minetest",
+	"table.copy",
 }

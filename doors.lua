@@ -189,7 +189,8 @@ function celevator.doors.hwopen(pos)
 	if hwdoors_moving[hash] then
 		return
 	end
-	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local param2 = minetest.get_node(pos).param2
+	local fdir = minetest.fourdir_to_dir(param2)
 	local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
 	local positions = {
 		pos,
@@ -213,10 +214,14 @@ function celevator.doors.hwopen(pos)
 	}
 	celevator.doors.erefs[hash] = erefs
 	celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
-	minetest.set_node(pos,{name="celevator:hwdoor_placeholder"})
+	minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=param2})
 	local pmeta = minetest.get_meta(pos)
 	pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
 	pmeta:set_string("state","opening")
+	local carpos = vector.add(pos,fdir)
+	if minetest.get_node(carpos).name == "celevator:car_000" then
+		celevator.doors.caropen(carpos)
+	end
 end
 
 function celevator.doors.hwclose(pos)
@@ -228,6 +233,11 @@ function celevator.doors.hwclose(pos)
 	local pmeta = minetest.get_meta(pos)
 	local state = pmeta:get_string("state")
 	if state ~= "open" then return end
+	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local carpos = vector.add(pos,fdir)
+	if minetest.get_node(carpos).name == "celevator:car_000" then
+		celevator.doors.carclose(carpos)
+	end
 	local data = minetest.deserialize(pmeta:get_string("data"))
 	if not data then return end
 	for i=1,6,1 do
@@ -249,7 +259,7 @@ function celevator.doors.hwclose(pos)
 	celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
 end
 
-function celevator.doors.step(dtime)
+function celevator.doors.hwstep(dtime)
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local save = false
 	for hash,data in pairs(hwdoors_moving) do
@@ -318,4 +328,190 @@ function celevator.doors.step(dtime)
 	end
 end
 
-minetest.register_globalstep(celevator.doors.step)
+minetest.register_globalstep(celevator.doors.hwstep)
+
+function celevator.doors.carstep(dtime)
+	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local save = false
+	for hash,data in pairs(cardoors_moving) do
+		save = true
+		local present = celevator.doors.erefs[hash]
+		if present then
+			for i=1,6,1 do
+				if not (celevator.doors.erefs[hash][i] and celevator.doors.erefs[hash][i]:get_pos()) then
+					present = false
+					break
+				end
+			end
+		end
+		if present then
+			if data.direction == "open" then
+				data.time = data.time+dtime
+				local vel = math.sin(data.time)
+				for i=1,3,1 do
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel))
+				end
+				for i=4,6,1 do
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2))
+				end
+				if data.time >= math.pi then
+					for i=1,6,1 do
+						celevator.doors.erefs[hash][i]:remove()
+					end
+					minetest.get_meta(data.positions[1]):set_string("doorstate","open")
+					cardoors_moving[hash] = nil
+				end
+			elseif data.direction == "close" then
+				data.time = data.time+(0.66*dtime)
+				local vel = math.sin(data.time)
+				for i=1,3,1 do
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel*-0.66))
+				end
+				for i=4,6,1 do
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-0.66))
+				end
+				if data.time >= math.pi then
+					for i=1,6,1 do
+						celevator.doors.erefs[hash][i]:set_velocity(vector.new(0,0,0))
+					end
+					minetest.get_meta(data.positions[1]):set_string("doorstate","closed")
+					cardoors_moving[hash] = nil
+				end
+			end
+		else
+			if data.direction == "open" then
+				for i=1,6,1 do
+					if celevator.doors.erefs[hash] and celevator.doors.erefs[hash][i] then
+						celevator.doors.erefs[hash][i]:remove()
+					end
+				end
+				minetest.get_meta(data.positions[1]):set_string("doorstate","open")
+				cardoors_moving[hash] = nil
+			elseif data.direction == "close" then
+				local fdir = minetest.fourdir_to_dir(minetest.get_node(data.positions[1]).param2)
+				celevator.doors.spawncardoors(data.positions[1],vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi))
+				minetest.get_meta(data.positions[1]):set_string("doorstate","closed")
+				cardoors_moving[hash] = nil
+			end
+		end
+	end
+	if save then
+		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+	end
+end
+
+minetest.register_globalstep(celevator.doors.carstep)
+
+minetest.register_entity("celevator:car_door",{
+	initial_properties = {
+		visual = "wielditem",
+		visual_size = vector.new(0.667,0.667,0.667),
+		wield_item = "default:dirt",
+		static_save = false,
+		pointable = false,
+	},
+})
+
+function celevator.doors.spawncardoors(pos,dir)
+	local refs = {}
+	for x=2,1,-1 do
+		for y=1,3,1 do
+			local yaw = minetest.dir_to_yaw(dir)+math.pi
+			local doorpos = vector.add(pos,vector.rotate_around_axis(vector.new(x-2,y-1,0),vector.new(0,1,0),yaw))
+			local xnames = {"slow","fast"}
+			local ynames = {"bottom","middle","top"}
+			local nname = string.format("celevator:hwdoor_%s_glass_%s",xnames[x],ynames[y])
+			local ref = minetest.add_entity(doorpos,"celevator:car_door")
+			ref:set_yaw(yaw)
+			ref:set_properties({
+				wield_item = nname,
+			})
+			table.insert(refs,ref)
+		end
+	end
+	return refs
+end
+
+function celevator.doors.caropen(pos)
+	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local hash = minetest.hash_node_position(pos)
+	if cardoors_moving[hash] then
+		return
+	end
+	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
+	local positions = {
+		pos,
+		vector.add(pos,vector.new(0,1,0)),
+		vector.add(pos,vector.new(0,2,0)),
+		otherpanel,
+		vector.add(otherpanel,vector.new(0,1,0)),
+		vector.add(otherpanel,vector.new(0,2,0)),
+	}
+	local erefs = {}
+	for _,dpos in ipairs(positions) do
+		local objs = minetest.get_objects_inside_radius(dpos,0.1)
+		for _,obj in pairs(objs) do
+			if obj:get_luaentity() and obj:get_luaentity().name then
+				table.insert(erefs,obj)
+			end
+		end
+	end
+	cardoors_moving[hash] = {
+		direction = "open",
+		positions = positions,
+		time = 0,
+		opendir = vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2),
+	}
+	celevator.doors.erefs[hash] = erefs
+	celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+	local meta = minetest.get_meta(pos)
+	meta:set_string("doordata",minetest.serialize(cardoors_moving[hash]))
+	meta:set_string("doorstate","opening")
+end
+
+function celevator.doors.carclose(pos)
+	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local hash = minetest.hash_node_position(pos)
+	if cardoors_moving[hash] then
+		return
+	end
+	local meta = minetest.get_meta(pos)
+	local state = meta:get_string("doorstate")
+	if state ~= "open" then return end
+	local data = minetest.deserialize(meta:get_string("doordata"))
+	if not data then return end
+	local dir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	data.direction = "close"
+	data.time = 0
+	local erefs = celevator.doors.spawncardoors(pos,dir)
+	local soffset = data.opendir
+	local foffset = vector.multiply(soffset,2)
+	for i=1,3,1 do
+		erefs[i]:set_pos(vector.add(erefs[i]:get_pos(),foffset))
+	end
+	for i=4,6,1 do
+		erefs[i]:set_pos(vector.add(erefs[i]:get_pos(),soffset))
+	end
+	celevator.doors.erefs[hash] = erefs
+	cardoors_moving[hash] = data
+	celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+end
+
+minetest.register_abm({
+	label = "Respawn car doors",
+	nodenames = {"celevator:car_000"},
+	interval = 1,
+	chance = 1,
+	action = function(pos)
+		if minetest.get_meta(pos):get_string("doorstate") ~= "closed" then return end
+		local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+		for _,i in pairs(entitiesnearby) do
+			if i:get_luaentity() and i:get_luaentity().name == "celevator:car_door" then
+				return
+			end
+		end
+		local fdir = minetest.facedir_to_dir(minetest.get_node(pos).param2)
+		celevator.doors.spawncardoors(pos,fdir)
+	end,
+})

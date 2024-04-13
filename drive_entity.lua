@@ -225,7 +225,11 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		table.insert(refs,eref)
 		if not ename then --If ename is set, something other than the car is moving
 			for _,attachref in ipairs(attach) do
-				if attachref:get_luaentity() and attachref:get_luaentity().name == "celevator:incar_pi_entity" then
+				local included = {
+					["celevator:incar_pi_entity"] = true,
+					["celevator:car_door"] = true,
+				}
+				if attachref:get_luaentity() and included[attachref:get_luaentity().name] then
 					table.insert(refs,attachref)
 				else
 					local attachpos = attachref:get_pos()
