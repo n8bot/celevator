@@ -14,7 +14,7 @@ local pieces = {
 		tiles = {
 			"celevator_car_floor.png",
 			"celevator_cabinet_sides.png",
-			"celevator_car_wallpaper.png^celevator_car_wall_bottom.png",
+			"celevator_car_wallpaper.png^celevator_car_wall_bottom.png^celevator_car_switch_panel.png",
 			"celevator_cabinet_sides.png",
 		},
 	},
@@ -350,12 +350,29 @@ for _,def in ipairs(pieces) do
 		if carid == 0 then return end
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 		if not carinfo then return end
-		local event = {
-			type = "cop",
-			fields = fields,
-			player = player:get_player_name(),
-		}
-		celevator.controller.run(carinfo.controllerpos,event)
+		local nname = minetest.get_node(pos).name
+		if nname == "celevator:car_010" then
+			local event = {
+				type = "cop",
+				fields = fields,
+				player = player:get_player_name(),
+			}
+			celevator.controller.run(carinfo.controllerpos,event)
+		elseif nname == "celevator:car_000" then
+			if fields.quit then return end
+			local name = player:get_player_name()
+			if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				minetest.chat_send_player(name,"You don't have access to these switches.")
+				minetest.record_protection_violation(pos,name)
+				return
+			end
+			local event = {
+				type = "copswitches",
+				fields = fields,
+				player = name,
+			}
+			celevator.controller.run(carinfo.controllerpos,event)
+		end
 	end
 	if def._position == "000" then
 		def.on_construct = function(pos)
@@ -410,12 +427,3 @@ minetest.register_abm({
 	end,
 })
 
-function celevator.car.updatecop(pos)
-	local copmeta = minetest.get_meta(pos)
-	local carid = copmeta:get_int("carid")
-	if carid == 0 then return end
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-	if not carinfo then return end
-	local controllermeta = minetest.get_meta(carinfo.controllerpos)
-	copmeta:set_string("formspec",controllermeta:get_string("copformspec"))
-end

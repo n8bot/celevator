@@ -31,6 +31,11 @@ minetest.register_entity("celevator:incar_pi_entity",{
 			local text = carinfo.pitext or "--"
 			if string.len(text) < 3 then text = string.rep(" ",3-string.len(text))..text end
 			text = string.sub(text,1,3)
+			if carinfo.flash_is and os.time()%2 == 0 then
+				text = " IS"
+			elseif carinfo.flash_fs and os.time()%2 == 0 then
+				text = " FS"
+			end
 			local etex = celevator.pi.generatetexture(text,carinfo.piuparrow,carinfo.pidownarrow,false,true)
 			self.object:set_properties({textures = {etex}})
 		else
@@ -79,10 +84,10 @@ function celevator.pi.updatedisplay(pos)
 	local islantern = minetest.get_item_group(minetest.get_node(pos).name,"_celevator_lantern") == 1
 	local etex = celevator.pi.generatetexture(text,uparrow,downarrow,islantern)
 	if flash_fs then
-		if flashtimer then etex = celevator.pi.generatetexture(" FS",uparrow,downarrow) end
+		if flashtimer then etex = celevator.pi.generatetexture(" FS",uparrow,downarrow,islantern) end
 		entity:set_properties({_flash_fs = true,_flash_is = false,})
 	elseif flash_is then
-		if flashtimer then etex = celevator.pi.generatetexture(" IS",uparrow,downarrow) end
+		if flashtimer then etex = celevator.pi.generatetexture(" IS",uparrow,downarrow,islantern) end
 		entity:set_properties({_flash_fs = false,_flash_is = true,})
 	else
 		entity:set_properties({_flash_fs = false,_flash_is = false,})

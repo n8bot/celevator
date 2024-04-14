@@ -209,6 +209,10 @@ if event.type == "program" then
 	mem.activefaults = {}
 	mem.faultlog = {}
 	mem.fatalfault = false
+	mem.fs2sw = "off"
+	mem.indsw = false
+	mem.lightsw = true
+	mem.fansw = true
 	if not mem.params then
 		mem.state = "unconfigured"
 		mem.screenstate = "oobe_welcome"
@@ -330,7 +334,7 @@ elseif event.type == "ui" then
 		end
 	elseif mem.screenstate == "status" then
 		for i=1,#mem.params.floornames,1 do
-			if event.fields[string.format("carcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "test" or mem.carstate == "capture") then
+			if event.fields[string.format("carcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "test" or mem.carstate == "capture" or mem.carstate == "indep") then
 				mem.carcalls[i] = true
 			elseif event.fields[string.format("upcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
 				mem.upcalls[i] = true
@@ -424,7 +428,7 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
 		interrupt(0,"opened")
-		interrupt(nil,"opentimeout")
+		if mem.carstate == "normal" or mem.carstate == "indep" then interrupt(nil,"opentimeout") end
 	else
 		interrupt(0.2,"checkopen")
 	end
@@ -441,7 +445,7 @@ elseif event.iid == "closetimeout" then
 	fault("closetimeout",true)
 elseif event.type == "cop" then
 	local fields = event.fields
-	if mem.carstate == "normal" then
+	if mem.carstate == "normal" or mem.carstate == "indep" then
 		for k,v in pairs(fields) do
 			if string.sub(k,1,7) == "carcall" then
 				local landing = tonumber(string.sub(k,8,-1))
@@ -455,6 +459,21 @@ elseif event.type == "cop" then
 		elseif fields.open and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
 			open()
 		end
+	end
+elseif event.type == "copswitches" then
+	local fields = event.fields
+	if fields.fanon then
+		mem.fansw = true
+	elseif fields.fanoff then
+		mem.fansw = false
+	elseif fields.lighton then
+		mem.lightsw = true
+	elseif fields.lightoff then
+		mem.lightsw = false
+	elseif fields.indon then
+		mem.indsw = true
+	elseif fields.indoff then
+		mem.indsw = false
 	end
 end
 
@@ -481,20 +500,44 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.dncalls = {}
 	mem.direction = nil
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
+elseif mem.indsw then
+	if mem.carstate ~= "resync" then mem.carstate = "indep" end
+	mem.upcalls = {}
+	mem.dncalls = {}
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+		mem.carstate = "resync"
+		gotofloor(getpos())
+	elseif oldstate == "normal" and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
+		open()
+	elseif oldstate == "normal" and mem.doorstate == "open" then
+		interrupt(nil,"close")
+	end
 elseif mem.testsw then
 	mem.upcalls = {}
 	mem.dncalls = {}
-	mem.carstate = "test"
+	if mem.carstate ~= "resync" then mem.carstate = "test" end
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+		mem.carstate = "resync"
+		gotofloor(getpos())
+	end
 elseif mem.capturesw then
 	mem.upcalls = {}
 	mem.dncalls = {}
-	if not mem.direction then mem.carstate = "capture" end
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+		mem.carstate = "resync"
+		gotofloor(getpos())
+	elseif mem.carstate ~= "resync" and not mem.direction then
+		mem.carstate = "capture"
+	end
 else
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
 	elseif oldstate == "test" or oldstate == "capture" then
 		mem.carstate = "normal"
+	elseif oldstate == "indep" then
+		mem.carstate = "normal"
+		if mem.doorstate == "open" then interrupt(mem.params.doortimer,"close") end
 	end
 end
 
@@ -503,7 +546,7 @@ if mem.carmotion then
 	if mem.carmotion then
 		interrupt(0.1,"checkdrive")
 	else
-		if mem.carstate == "normal" then
+		if mem.carstate == "normal" or mem.carstate == "indep" then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
@@ -526,12 +569,20 @@ if mem.carmotion then
 				mem.direction = "up"
 			end
 		elseif mem.carstate == "bfdemand" or mem.carstate == "resync" then
-			mem.carstate = "normal"
+			if mem.indsw then
+				mem.carstate = "indep"
+			elseif mem.testsw then
+				mem.carstate = "test"
+			elseif mem.capturesw then
+				mem.carstate = "capture"
+			else
+				mem.carstate = "normal"
+			end
 		end
 	end
 end
 
-if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test") and mem.doorstate == "closed" and not mem.carmotion then
+if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep") and mem.doorstate == "closed" and not mem.carmotion then
 	if mem.direction == "up" then
 		if getnextcallabove("up") then
 			mem.direction = "up"
@@ -787,6 +838,9 @@ local arrowenabled = {
 mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
 mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
+mem.flash_fs = false
+mem.flash_is = mem.carstate == "indep"
+
 mem.lanterns = {}
 if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then
 	mem.lanterns[getpos()] = mem.direction
@@ -818,5 +872,32 @@ elseif copcols == 2 then
 	dcxp = 2.5
 end
 mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+1.5,unlitimg,minetest.formspec_escape(">|<"),litimg)
+
+mem.switchformspec = "formspec_version[7]size[8,10]"
+local fs2ontex = (mem.fs2sw == "on") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+local fs2holdtex = (mem.fs2sw == "hold") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+local fs2offtex = (mem.fs2sw == "off" or not mem.fs2sw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,1.5;1.5,1;%s;fs2on;ON;false;false;celevator_button_rect_active.png]",fs2ontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,2.5;1.5,1;%s;fs2hold;HOLD;false;false;celevator_button_rect_active.png]",fs2holdtex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,3.5;1.5,1;%s;fs2off;OFF;false;false;celevator_button_rect_active.png]",fs2offtex)
+mem.switchformspec = mem.switchformspec.."label[1.6,4.75;FIRE SVC]"
+
+local indontex = mem.indsw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+local indofftex = (not mem.indsw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,1.5;1.5,1;%s;indon;ON;false;false;celevator_button_rect_active.png]",indontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,3.5;1.5,1;%s;indoff;OFF;false;false;celevator_button_rect_active.png]",indofftex)
+mem.switchformspec = mem.switchformspec.."label[4.6,4.75;IND SVC]"
+
+local lightontex = mem.lightsw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+local lightofftex = (not mem.lightsw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,5.5;1.5,1;%s;lighton;ON;false;false;celevator_button_rect_active.png]",lightontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,7.5;1.5,1;%s;lightoff;OFF;false;false;celevator_button_rect_active.png]",lightofftex)
+mem.switchformspec = mem.switchformspec.."label[1.6,8.75;CAR LIGHT]"
+
+local fanontex = mem.fansw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+local fanofftex = (not mem.fansw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,5.5;1.5,1;%s;fanon;ON;false;false;celevator_button_rect_active.png]",fanontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,7.5;1.5,1;%s;fanoff;OFF;false;false;celevator_button_rect_active.png]",fanofftex)
+mem.switchformspec = mem.switchformspec.."label[4.6,8.75;CAR FAN]"
 
 return pos,mem,changedinterrupts

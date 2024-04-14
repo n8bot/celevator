@@ -484,6 +484,9 @@ function celevator.drives.entity.estop(pos)
 	celevator.drives.entity.entitiestonodes(handles)
 	stopbuzz(pos)
 	motorsound(pos,"idle")
+	local carid = meta:get_int("carid")
+	if carid ~= 0 then celevator.drives.entity.sheavetonode(carid) end
+	minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 end
 
 
@@ -800,7 +803,8 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 	if carid == 0 then return end
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not carinfo then return end
-	local formspec = minetest.get_meta(carinfo.controllerpos):get_string("copformspec")
+	local copformspec = minetest.get_meta(carinfo.controllerpos):get_string("copformspec")
+	local switchformspec = minetest.get_meta(carinfo.controllerpos):get_string("switchformspec")
 	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
 	if not origin then
 		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
@@ -814,7 +818,9 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 		local piecepos = minetest.get_position_from_hash(hash)
 		local piece = minetest.get_node(piecepos)
 		if piece.name == "celevator:car_010" then
-			minetest.get_meta(piecepos):set_string("formspec",formspec)
+			minetest.get_meta(piecepos):set_string("formspec",copformspec)
+		elseif piece.name == "celevator:car_000" then
+			minetest.get_meta(piecepos):set_string("formspec",switchformspec)
 		end
 	end
 end

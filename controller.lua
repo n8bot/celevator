@@ -467,6 +467,10 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local newpiuparrow = mem.piuparrow
 		local oldpidownarrow = oldmem.pidownarrow
 		local newpidownarrow = mem.pidownarrow
+		local oldflashfs = oldmem.flash_fs
+		local newflashfs = mem.flash_fs
+		local oldflashis = oldmem.flash_is
+		local newflashis = mem.flash_is
 		if oldpiuparrow ~= newpiuparrow then
 			carinfodirty = true
 			carinfo.piuparrow = newpiuparrow
@@ -483,6 +487,17 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				celevator.pi.setarrow(pi.pos,"down",newpidownarrow)
 			end
 		end
+		if oldflashfs ~= newflashfs or oldflashis ~= newflashis then
+			carinfodirty = true
+			carinfo.flash_fs = newflashfs
+			carinfo.flash_is = newflashis
+			local pis = carinfo.pis
+			local what = newflashis and "IS"
+			if newflashfs then what = "FS" end
+			for _,pi in pairs(pis) do
+				celevator.pi.flash(pi.pos,what)
+			end
+		end
 		local oldlanterns = oldmem.lanterns or {}
 		local newlanterns = mem.lanterns or {}
 		local lanterns = carinfo.lanterns
@@ -493,7 +508,8 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 			end
 		end
 		meta:set_string("copformspec",mem.copformspec)
-		if mem.copformspec ~= oldmem.copformspec and drivetype then
+		meta:set_string("switchformspec",mem.switchformspec)
+		if (mem.copformspec ~= oldmem.copformspec or mem.switchformspec ~= oldmem.switchformspec) and drivetype then
 			minetest.after(0.25,celevator.drives[drivetype].updatecopformspec,drivepos)
 		end
 		meta:set_string("mem",minetest.serialize(mem))
