@@ -157,7 +157,7 @@ minetest.register_node("celevator:controller",{
 		local carid = celevator.storage:get_int("maxcarid")+1
 		meta:set_int("carid",carid)
 		celevator.storage:set_int("maxcarid",carid)
-		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize({controllerpos=pos,pis={},lanterns={},callbuttons={}}))
+		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize({controllerpos=pos,pis={},lanterns={},callbuttons={},fs1switches={}}))
 		celevator.controller.run(pos,event)
 	end,
 	on_punch = function(pos,node,puncher)
@@ -507,6 +507,14 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				celevator.lantern.setlight(lantern.pos,"down",newlanterns[lantern.landing] == "down")
 			end
 		end
+		local oldfs1led = oldmem.fs1led
+		local newfs1led = mem.fs1led
+		local fs1switches = carinfo.fs1switches or {}
+		if oldfs1led ~= newfs1led then
+			for _,fs1switch in pairs(fs1switches) do
+				celevator.fs1switch.setled(fs1switch.pos,newfs1led)
+			end
+		end
 		meta:set_string("copformspec",mem.copformspec)
 		meta:set_string("switchformspec",mem.switchformspec)
 		if (mem.copformspec ~= oldmem.copformspec or mem.switchformspec ~= oldmem.switchformspec) and drivetype then
@@ -579,6 +587,14 @@ function celevator.controller.handlecallbutton(controllerpos,landing,dir)
 		type = "callbutton",
 		landing = landing,
 		dir = dir,
+	}
+	celevator.controller.run(controllerpos,event)
+end
+
+function celevator.controller.handlefs1switch(controllerpos,on)
+	local event = {
+		type = "fs1switch",
+		state = on,
 	}
 	celevator.controller.run(controllerpos,event)
 end

@@ -209,6 +209,8 @@ if event.type == "program" then
 	mem.activefaults = {}
 	mem.faultlog = {}
 	mem.fatalfault = false
+	mem.fs1sw = false
+	mem.fs1led = false
 	mem.fs2sw = "off"
 	mem.indsw = false
 	mem.lightsw = true
@@ -222,6 +224,7 @@ if event.type == "program" then
 			floornames = {"1","2","3"},
 			doortimer = 5,
 			groupmode = "simplex",
+			mainlanding = 1,
 		}
 	end
 elseif event.type == "ui" then
@@ -327,6 +330,10 @@ elseif event.type == "ui" then
 			if contractspeed and contractspeed >= 0.1 and contractspeed <= 20 then
 				mem.params.contractspeed = contractspeed
 			end
+			local mainlanding = tonumber(event.fields.mainlanding)
+			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
+				mem.params.mainlanding = math.floor(mainlanding)
+			end
 		elseif event.fields.floortable then
 			mem.screenstate = "floortable"
 		elseif event.fields.cancel then
@@ -428,7 +435,7 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
 		interrupt(0,"opened")
-		if mem.carstate == "normal" or mem.carstate == "indep" then interrupt(nil,"opentimeout") end
+		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" then interrupt(nil,"opentimeout") end
 	else
 		interrupt(0.2,"checkopen")
 	end
@@ -475,6 +482,9 @@ elseif event.type == "copswitches" then
 	elseif fields.indoff then
 		mem.indsw = false
 	end
+elseif event.type == "fs1switch" then
+	mem.fs1switch = event.state
+	mem.fs1led = event.state
 end
 
 local oldstate = mem.carstate
@@ -500,6 +510,25 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.dncalls = {}
 	mem.direction = nil
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
+elseif mem.fs1switch and mem.fs2switch ~= "on" then
+	mem.carstate = "fs1"
+	mem.carcalls = {}
+	mem.upcalls = {}
+	mem.dncalls = {}
+	interrupt(nil,"close")
+	if getpos() ~= (mem.params.mainlanding or 1) then
+		if not (mem.carmotion or juststarted) then
+			if mem.doorstate == "closed" then
+				gotofloor(mem.params.mainlanding or 1)
+			elseif mem.doorstate == "open" then
+				close()
+			end
+		end
+	elseif mem.doorstate == "closed" then
+		if not (mem.carmotion or juststarted) then
+			open()
+		end
+	end
 elseif mem.indsw then
 	if mem.carstate ~= "resync" then mem.carstate = "indep" end
 	mem.upcalls = {}
@@ -533,7 +562,10 @@ else
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
-	elseif oldstate == "test" or oldstate == "capture" then
+	elseif oldstate == "test" or oldstate == "capture" or oldstate == "fs1" then
+		if oldstate == "fs1" and mem.doorstate == "open" then
+			interrupt(mem.params.doortimer,"close")
+		end
 		mem.carstate = "normal"
 	elseif oldstate == "indep" then
 		mem.carstate = "normal"
@@ -546,7 +578,7 @@ if mem.carmotion then
 	if mem.carmotion then
 		interrupt(0.1,"checkdrive")
 	else
-		if mem.carstate == "normal" or mem.carstate == "indep" then
+		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
@@ -558,7 +590,10 @@ if mem.carmotion then
 			elseif getpos() <= 1 then
 				mem.direction = "up"
 			end
-			open()
+			if mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1) then open() end
+			if mem.carstate == "fs1" and getpos() ~= (mem.params.mainlanding or 1) then
+				gotofloor(mem.params.mainlanding or 1)
+			end
 		elseif mem.carstate == "test" then
 			mem.carcalls[getpos()] = nil
 			mem.doorstate = "testtiming"
@@ -785,6 +820,7 @@ elseif mem.screenstate == "parameters" then
 	fs("button[8,10;3,1;floortable;Edit Floor Table]")
 	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
 	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
+	fs(string.format("field[1,7;3,1;mainlanding;Main Landing;%d]",mem.params.mainlanding or 1))
 elseif mem.screenstate == "faults" then
 	fs("label[1,1;FAULT HISTORY]")
 	if #mem.faultlog > 0 then
