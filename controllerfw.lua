@@ -41,6 +41,7 @@ local modenames = {
 	inspconflict = "Inspection Conflict",
 	fs1 = "Fire Service - Phase 1",
 	fs2 = "Fire Service - Phase 2",
+	fs2hold = "Fire Service - Phase 2 Hold",
 	indep = "Independent Service",
 	capture = "Captured",
 	test = "Test Mode",
@@ -209,7 +210,7 @@ if event.type == "program" then
 	mem.activefaults = {}
 	mem.faultlog = {}
 	mem.fatalfault = false
-	mem.fs1sw = false
+	mem.fs1switch = false
 	mem.fs1led = false
 	mem.fs2sw = "off"
 	mem.indsw = false
@@ -435,7 +436,9 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
 		interrupt(0,"opened")
-		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" then interrupt(nil,"opentimeout") end
+		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold" then
+			interrupt(nil,"opentimeout")
+		end
 	else
 		interrupt(0.2,"checkopen")
 	end
@@ -452,7 +455,7 @@ elseif event.iid == "closetimeout" then
 	fault("closetimeout",true)
 elseif event.type == "cop" then
 	local fields = event.fields
-	if mem.carstate == "normal" or mem.carstate == "indep" then
+	if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs2" then
 		for k,v in pairs(fields) do
 			if string.sub(k,1,7) == "carcall" then
 				local landing = tonumber(string.sub(k,8,-1))
@@ -465,6 +468,8 @@ elseif event.type == "cop" then
 			interrupt(0,"close")
 		elseif fields.open and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
 			open()
+		elseif fields.callcancel and (mem.carstate == "indep" or mem.carstate == "fs2") then
+			mem.carcalls = {}
 		end
 	end
 elseif event.type == "copswitches" then
@@ -481,6 +486,12 @@ elseif event.type == "copswitches" then
 		mem.indsw = true
 	elseif fields.indoff then
 		mem.indsw = false
+	elseif fields.fs2on then
+		mem.fs2sw = "on"
+	elseif fields.fs2hold then
+		mem.fs2sw = "hold"
+	elseif fields.fs2off then
+		mem.fs2sw = "off"
 	end
 elseif event.type == "fs1switch" then
 	mem.fs1switch = event.state
@@ -510,7 +521,19 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.dncalls = {}
 	mem.direction = nil
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
-elseif mem.fs1switch and mem.fs2switch ~= "on" then
+elseif mem.fs2sw == "on" then
+	mem.carstate = "fs2"
+	mem.upcalls = {}
+	mem.dncalls = {}
+	if oldstate ~= "fs2" then mem.carcalls = {} end
+	if mem.doorstate == "open" and oldstate ~= "fs2" then interrupt(nil,"close") end
+elseif mem.fs2sw == "hold" then
+	mem.carstate = "fs2hold"
+	mem.upcalls = {}
+	mem.dncalls = {}
+	mem.carcalls = {}
+	if mem.doorstate == "open" then interrupt(nil,"close") end
+elseif mem.fs1switch then
 	mem.carstate = "fs1"
 	mem.carcalls = {}
 	mem.upcalls = {}
@@ -562,8 +585,8 @@ else
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
-	elseif oldstate == "test" or oldstate == "capture" or oldstate == "fs1" then
-		if oldstate == "fs1" and mem.doorstate == "open" then
+	elseif oldstate == "test" or oldstate == "capture" or oldstate == "fs1" or oldstate == "fs2" or oldstate == "fs2hold" then
+		if (oldstate == "fs1" or oldstate == "fs2" or oldstate == "fs2hold") and mem.doorstate == "open" then
 			interrupt(mem.params.doortimer,"close")
 		end
 		mem.carstate = "normal"
@@ -578,7 +601,7 @@ if mem.carmotion then
 	if mem.carmotion then
 		interrupt(0.1,"checkdrive")
 	else
-		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" then
+		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
@@ -590,7 +613,7 @@ if mem.carmotion then
 			elseif getpos() <= 1 then
 				mem.direction = "up"
 			end
-			if mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1) then open() end
+			if (mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1)) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then open() end
 			if mem.carstate == "fs1" and getpos() ~= (mem.params.mainlanding or 1) then
 				gotofloor(mem.params.mainlanding or 1)
 			end
@@ -617,7 +640,7 @@ if mem.carmotion then
 	end
 end
 
-if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep") and mem.doorstate == "closed" and not mem.carmotion then
+if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep" or mem.carstate == "fs2") and mem.doorstate == "closed" and not mem.carmotion then
 	if mem.direction == "up" then
 		if getnextcallabove("up") then
 			mem.direction = "up"
@@ -881,7 +904,7 @@ local arrowenabled = {
 mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
 mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
-mem.flash_fs = (mem.carstate == "fs1" or mem.carstate == "fs2")
+mem.flash_fs = (mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold")
 mem.flash_is = mem.carstate == "indep"
 
 mem.lanterns = {}
@@ -895,18 +918,18 @@ local copcols = math.floor((floorcount-1)/10)+1
 local coprows = math.floor((floorcount-1)/copcols)+1
 local litimg = "celevator_copbutton_lit.png"
 local unlitimg = "celevator_copbutton_unlit.png"
-mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+4)
+mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+5)
 for i=1,floorcount,1 do
 	local row = math.floor((i-1)/copcols)+1
 	local col = ((i-1)%copcols)+1
-	local yp = (coprows-row+1)*1.25
+	local yp = (coprows-row+1)*1.25+1
 	local xp = col*1.25
 	local tex = mem.carcalls[i] and litimg or unlitimg
-	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;carcall%d;%d;false;false;%s]",xp,yp,tex,i,i,litimg)
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%d;false;false;%s]",xp,yp,tex,i,i,litimg)
 end
 
 local doxp = (copcols == 1) and 0.5 or 1.25
-mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;open;%s;false;false;%s]",doxp,coprows*1.25+1.5,unlitimg,minetest.formspec_escape("<|>"),litimg)
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;open;%s;false;false;%s]",doxp,coprows*1.25+2.5,unlitimg,minetest.formspec_escape("<|>"),litimg)
 
 local dcxp = 3.75
 if copcols == 1 then
@@ -914,7 +937,12 @@ if copcols == 1 then
 elseif copcols == 2 then
 	dcxp = 2.5
 end
-mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1,1;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+1.5,unlitimg,minetest.formspec_escape(">|<"),litimg)
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,minetest.formspec_escape(">|<"),litimg)
+
+mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;Call\nCancel;false;false;%s]",unlitimg,litimg)
+
+local firehat = mem.flash_fs and "celevator_fire_hat_lit.png" or "celevator_fire_hat_unlit.png"
+mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
 
 mem.switchformspec = "formspec_version[7]size[8,10]"
 local fs2ontex = (mem.fs2sw == "on") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
