@@ -223,10 +223,18 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
 		table.insert(refs,eref)
+		if node.name == "celevator:car_021" then
+			local toppos = vector.add(pos,vector.new(0,1,0))
+			local topattach = minetest.get_objects_inside_radius(toppos,0.9)
+			for _,ref in pairs(topattach) do
+				table.insert(attach,ref)
+			end
+		end
 		if not ename then --If ename is set, something other than the car is moving
 			for _,attachref in ipairs(attach) do
 				local included = {
 					["celevator:incar_pi_entity"] = true,
+					["celevator:car_top_box"] = true,
 					["celevator:car_door"] = true,
 				}
 				if attachref:get_luaentity() and included[attachref:get_luaentity().name] then

@@ -517,6 +517,12 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				celevator.fs1switch.setled(fs1switch.pos,newfs1led)
 			end
 		end
+		local oldcartopinsp = oldmem.cartopinspectsw
+		local newcartopinsp = mem.cartopinspectsw
+		if oldcartopinsp ~= newcartopinsp then
+			carinfodirty = true
+			carinfo.cartopinspect = newcartopinsp
+		end
 		meta:set_string("copformspec",mem.copformspec)
 		meta:set_string("switchformspec",mem.switchformspec)
 		if (mem.copformspec ~= oldmem.copformspec or mem.switchformspec ~= oldmem.switchformspec) and drivetype then
@@ -597,6 +603,14 @@ function celevator.controller.handlefs1switch(controllerpos,on)
 	local event = {
 		type = "fs1switch",
 		state = on,
+	}
+	celevator.controller.run(controllerpos,event)
+end
+
+function celevator.controller.handlecartopbox(controllerpos,control)
+	local event = {
+		type = "cartopbox",
+		control = control,
 	}
 	celevator.controller.run(controllerpos,event)
 end

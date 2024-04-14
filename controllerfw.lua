@@ -496,6 +496,32 @@ elseif event.type == "copswitches" then
 elseif event.type == "fs1switch" then
 	mem.fs1switch = event.state
 	mem.fs1led = event.state
+elseif event.type == "cartopbox" then
+	if event.control == "inspectswitch" then
+		mem.cartopinspectsw = not mem.cartopinspectsw
+	elseif event.control == "up" and mem.carstate == "carinspect" and mem.doorstate == "closed" and getpos() < #mem.params.floornames then
+		mem.carmotion = true
+		juststarted = true
+		drivecmd({
+			command = "setmaxvel",
+			maxvel = 0.2,
+		})
+		drivecmd({
+			command = "moveto",
+			pos = math.floor(mem.drive.status.apos)+1
+		})
+	elseif event.control == "down" and mem.carstate == "carinspect" and mem.doorstate == "closed" and mem.drive.status.apos-1 >= 0 then
+		mem.carmotion = true
+		juststarted = true
+		drivecmd({
+			command = "setmaxvel",
+			maxvel = 0.2,
+		})
+		drivecmd({
+			command = "moveto",
+			pos = math.floor(mem.drive.status.apos)-1
+		})
+	end
 end
 
 local oldstate = mem.carstate
@@ -514,6 +540,13 @@ elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstat
 	mem.upcalls = {}
 	mem.dncalls = {}
 	mem.direction = nil
+elseif mem.controllerinspectsw and mem.cartopinspectsw then
+	mem.carstate = "inspconflict"
+	mem.carcalls = {}
+	mem.upcalls = {}
+	mem.dncalls = {}
+	mem.direction = nil
+	drivecmd({command="estop"})
 elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.carstate = "mrinspect"
 	mem.carcalls = {}
@@ -521,6 +554,13 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.dncalls = {}
 	mem.direction = nil
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
+elseif mem.cartopinspectsw and not mem.controllerinspectsw then
+	mem.carstate = "carinspect"
+	mem.carcalls = {}
+	mem.upcalls = {}
+	mem.dncalls = {}
+	mem.direction = nil
+	if oldstate ~= "carinspect" then drivecmd({command="estop"}) end
 elseif mem.fs2sw == "on" then
 	mem.carstate = "fs2"
 	mem.upcalls = {}
@@ -582,7 +622,7 @@ elseif mem.capturesw then
 		mem.carstate = "capture"
 	end
 else
-	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "carinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
 	elseif oldstate == "test" or oldstate == "capture" or oldstate == "fs1" or oldstate == "fs2" or oldstate == "fs2hold" then

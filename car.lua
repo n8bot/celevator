@@ -1,5 +1,61 @@
 celevator.car = {}
 
+local function disambiguatebutton(pos,facedir,player)
+	if player and not player.is_fake_player then
+		local eyepos = vector.add(player:get_pos(),vector.add(player:get_eye_offset(),vector.new(0,1.5,0)))
+		local lookdir = player:get_look_dir()
+		local distance = vector.distance(eyepos,pos)
+		local endpos = vector.add(eyepos,vector.multiply(lookdir,distance+1))
+		local ray = minetest.raycast(eyepos,endpos,true,false)
+		local pointed,button,hitpos
+		repeat
+			pointed = ray:next()
+			if pointed and pointed.type == "node" then
+				local node = minetest.get_node(pointed.under)
+				if node.name == "celevator:car_021" then
+					button = pointed.under
+					hitpos = vector.subtract(pointed.intersection_point,button)
+				end
+			end
+		until button or not pointed
+		if not hitpos then return end
+		hitpos = vector.rotate_around_axis(hitpos,vector.new(0,-1,0),minetest.dir_to_yaw(facedir)+(math.pi/2))
+		if hitpos.y < 0.55 then return end
+		if hitpos.z > 0.36 or hitpos.z < 0.09 then return end
+		if hitpos.x >= -0.36 and hitpos.x <= -0.16 then
+			return "inspectswitch"
+		elseif hitpos.x > -0.16 and hitpos.x <= 0.03 then
+			return "up"
+		elseif hitpos.x > 0.03 and hitpos.x <= 0.2 then
+			return "down"
+		end
+	end
+end
+
+local function updatecartopbox(pos)
+	local toppos = vector.add(pos,vector.new(0,1.1,0))
+	local entitiesnearby = minetest.get_objects_inside_radius(toppos,0.5)
+	for _,i in pairs(entitiesnearby) do
+		if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
+			i:remove()
+		end
+	end
+	local carmeta = minetest.get_meta(pos)
+	local carid = carmeta:get_int("carid")
+	if carid == 0 then return end
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not carinfo then return end
+	local entity = minetest.add_entity(pos,"celevator:car_top_box")
+	local inspon = carinfo.cartopinspect
+	entity:set_properties({
+		wield_item = inspon and "celevator:car_top_box_on" or "celevator:car_top_box_off",
+	})
+	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	fdir = vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi/2)
+	entity:set_yaw(minetest.dir_to_yaw(fdir))
+	entity:set_pos(toppos)
+end
+
 local pieces = {
 	{
 		_position = "000",
@@ -237,6 +293,25 @@ local pieces = {
 			"celevator_car_wallpaper.png",
 			"celevator_cabinet_sides.png",
 		},
+		on_rightclick = function(pos,node,clicker)
+			local fdir = minetest.fourdir_to_dir(node.param2)
+			local control = disambiguatebutton(pos,fdir,clicker)
+			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not (carinfo and carinfo.controllerpos) then return end
+			celevator.controller.handlecartopbox(carinfo.controllerpos,control)
+		end,
+		after_dig_node = function(pos)
+			local toppos = vector.add(pos,vector.new(0,1.1,0))
+			local entitiesnearby = minetest.get_objects_inside_radius(toppos,0.5)
+			for _,i in pairs(entitiesnearby) do
+				if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
+					i:remove()
+				end
+			end
+		end,
 	},
 	{
 		_position = "022",
@@ -427,3 +502,60 @@ minetest.register_abm({
 	end,
 })
 
+minetest.register_node("celevator:car_top_box_off",{
+	description = "Car-top Inspection Box, Off State (you hacker you!)",
+	drop = "",
+	groups = {
+		not_in_creative_inventory = 1,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.422,-0.5,0.086,0.414,-0.45,0.359},
+		},
+	},
+	tiles = {
+		"celevator_cartopinsp_off.png",
+		"celevator_cabinet_sides.png",
+	},
+})
+
+minetest.register_node("celevator:car_top_box_on",{
+	description = "Car-top Inspection Box, On State (you hacker you!)",
+	drop = "",
+	groups = {
+		not_in_creative_inventory = 1,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.422,-0.5,0.086,0.414,-0.45,0.359},
+		},
+	},
+	tiles = {
+		"celevator_cartopinsp_on.png",
+		"celevator_cabinet_sides.png",
+	},
+})
+
+minetest.register_entity("celevator:car_top_box",{
+	initial_properties = {
+		visual = "wielditem",
+		visual_size = vector.new(0.667,0.667,0.667),
+		wield_item = "celevator:car_top_box_off",
+		static_save = false,
+		pointable = false,
+	},
+})
+
+minetest.register_abm({
+	label = "Respawn car-top inspection boxes",
+	nodenames = {"celevator:car_021"},
+	interval = 1,
+	chance = 1,
+	action = updatecartopbox,
+})
