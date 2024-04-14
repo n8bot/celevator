@@ -881,7 +881,7 @@ local arrowenabled = {
 mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
 mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
-mem.flash_fs = false
+mem.flash_fs = (mem.carstate == "fs1" or mem.carstate == "fs2")
 mem.flash_is = mem.carstate == "indep"
 
 mem.lanterns = {}
