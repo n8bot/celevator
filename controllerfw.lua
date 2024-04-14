@@ -852,6 +852,8 @@ else
 	mem.showrunning = false
 end
 
+local oldpifloor = mem.pifloor
+
 mem.pifloor = mem.params.floornames[getpos(true)]
 local hidepi = {
 	bfdemand = true,
@@ -863,6 +865,11 @@ local hidepi = {
 	inspconflict = true,
 }
 if hidepi[mem.carstate] then mem.pifloor = "--" end
+
+if mem.pifloor ~= oldpifloor and mem.carstate == "normal" then
+	drivecmd({command="pibeep"})
+end
+
 local arrowenabled = {
 	normal = true,
 	fs1 = true,

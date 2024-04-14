@@ -234,3 +234,7 @@ end
 function celevator.drives.null.updatecopformspec()
 	--No car means no COP
 end
+
+function celevator.drives.null.pibeep()
+	--No car means no PI, no PI means no beep
+end

@@ -435,6 +435,8 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 					celevator.drives[drivetype].movedoors(drivepos,"close")
 				elseif command.command == "resetfault" then
 					celevator.drives[drivetype].resetfault(drivepos)
+				elseif command.command == "pibeep" then
+					celevator.drives[drivetype].pibeep(drivepos)
 				end
 			end
 		end

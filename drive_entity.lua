@@ -563,6 +563,22 @@ function celevator.drives.entity.resetfault(pos)
 	minetest.get_meta(pos):set_string("fault","")
 end
 
+function celevator.drives.entity.pibeep(drivepos)
+	local drivemeta = minetest.get_meta(drivepos)
+	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
+	if not origin then
+		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
+		drivemeta:set_string("fault","badorigin")
+		return
+	end
+	local apos = tonumber(drivemeta:get_string("apos")) or 0
+	local beeppos = vector.add(origin,vector.new(0,apos+2,0))
+	minetest.sound_play("celevator_pi_beep",{
+		pos = beeppos,
+		gain = 1,
+	},true)
+end
+
 local function carsearch(pos)
 	for i=1,500,1 do
 		local searchpos = vector.subtract(pos,vector.new(0,i,0))
