@@ -857,6 +857,30 @@ elseif mem.screenstate == "status" then
 	end
 	fs("button[1,10;3,1;faults;Fault History]")
 	fs("button[4.5,10;3,1;parameters;Edit Parameters]")
+	local redon = "celevator_led_red_on.png"
+	local redoff = "celevator_led_red_off.png"
+	local yellowon = "celevator_led_yellow_on.png"
+	local yellowoff = "celevator_led_yellow_off.png"
+	local greenon = "celevator_led_green_on.png"
+	local greenoff = "celevator_led_green_off.png"
+	fs(string.format("image[7,1;0.7,0.7;%s]",mem.carstate == "fault" and redon or redoff))
+	fs("label[8,1.35;FAULT]")
+	fs(string.format("image[7,1.9;0.7,0.7;%s]",(mem.carstate == "mrinspect" or mem.carstate == "carinspect" or mem.carstate == "inspconflict") and yellowon or yellowoff))
+	fs("label[8,2.25;INSP/ACCESS]")
+	fs(string.format("image[7,2.8;0.7,0.7;%s]",mem.carstate == "normal" and greenon or greenoff))
+	fs("label[8,3.15;NORMAL OPERATION]")
+	fs(string.format("image[7,3.7;0.7,0.7;%s]",mem.drive.status.vel > 0.01 and yellowon or yellowoff))
+	fs("label[8,4.05;UP]")
+	fs(string.format("image[7,4.6;0.7,0.7;%s]",math.abs(mem.drive.status.vel) > 0.01 and yellowon or yellowoff))
+	fs("label[8,4.95;DRIVE CMD]")
+	fs(string.format("image[7,5.5;0.7,0.7;%s]",mem.drive.status.vel < -0.01 and yellowon or yellowoff))
+	fs("label[8,5.85;DOWN]")
+	fs(string.format("image[7,6.4;0.7,0.7;%s]",math.abs(mem.drive.status.vel) > math.min(0.4,mem.params.contractspeed/2) and yellowon or yellowoff))
+	fs("label[8,6.75;HIGH SPEED]")
+	fs(string.format("image[7,7.3;0.7,0.7;%s]",math.abs(gettarget(getpos(true))-mem.drive.status.apos) < 0.5 and greenon or greenoff))
+	fs("label[8,7.65;DOOR ZONE]")
+	fs(string.format("image[7,8.2;0.7,0.7;%s]",mem.doorstate == "closed" and greenon or greenoff))
+	fs("label[8,8.55;DOORS LOCKED]")
 	fs("style[*;font=mono]")
 	local stopswimg = "celevator_toggle_switch.png"..(mem.controllerstopsw and "^\\[transformFY" or "")
 	fs(string.format("image_button[1,5;1,1.33;%s;stopsw;;false;false;%s]",stopswimg,stopswimg))
