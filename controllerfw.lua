@@ -685,57 +685,79 @@ if mem.carmotion then
 	end
 end
 
-if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep" or mem.carstate == "fs2") and mem.doorstate == "closed" and not mem.carmotion then
-	if mem.direction == "up" then
-		if getnextcallabove("up") then
-			mem.direction = "up"
-			gotofloor(getnextcallabove("up"))
-		elseif gethighestdowncall() then
-			mem.direction = "down"
-			gotofloor(gethighestdowncall())
-		elseif getlowestupcall() then
-			gotofloor(getlowestupcall())
-		elseif getnextcallbelow("down") then
-			mem.direction = "down"
-			gotofloor(getnextcallbelow("down"))
+if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep" or mem.carstate == "fs2") and mem.doorstate == "closed" then
+	if not mem.carmotion then
+		if mem.direction == "up" then
+			if getnextcallabove("up") then
+				mem.direction = "up"
+				gotofloor(getnextcallabove("up"))
+			elseif gethighestdowncall() then
+				mem.direction = "down"
+				gotofloor(gethighestdowncall())
+			elseif getlowestupcall() then
+				gotofloor(getlowestupcall())
+			elseif getnextcallbelow("down") then
+				mem.direction = "down"
+				gotofloor(getnextcallbelow("down"))
+			else
+				mem.direction = nil
+			end
+		elseif mem.direction == "down" then
+			if getnextcallbelow("down") then
+				gotofloor(getnextcallbelow("down"))
+			elseif getlowestupcall() then
+				mem.direction = "up"
+				gotofloor(getlowestupcall())
+			elseif gethighestdowncall() then
+				gotofloor(gethighestdowncall())
+			elseif getnextcallabove("up") then
+				mem.direction = "up"
+				gotofloor(getnextcallabove())
+			else
+				mem.direction = nil
+			end
 		else
-			mem.direction = nil
+			if getnextcallabove("up") then
+				mem.direction = "up"
+				gotofloor(getnextcallabove())
+			elseif getnextcallbelow("down") then
+				mem.direction = "down"
+				gotofloor(getnextcallbelow("down"))
+			elseif getlowestupcall() then
+				mem.direction = "up"
+				gotofloor(getlowestupcall())
+			elseif gethighestdowncall() then
+				mem.direction = "down"
+				gotofloor(gethighestdowncall())
+			end
 		end
-	elseif mem.direction == "down" then
-		if getnextcallbelow("down") then
-			gotofloor(getnextcallbelow("down"))
-		elseif getlowestupcall() then
-			mem.direction = "up"
-			gotofloor(getlowestupcall())
-		elseif gethighestdowncall() then
-			gotofloor(gethighestdowncall())
-		elseif getnextcallabove("up") then
-			mem.direction = "up"
-			gotofloor(getnextcallabove())
-		else
-			mem.direction = nil
+		if mem.carstate == "normal" and mem.capturesw and not mem.direction then
+			mem.upcalls = {}
+			mem.dncalls = {}
+			mem.carstate = "capture"
+		elseif mem.carstate == "capture" and mem.direction then
+			mem.carstate = "normal"
 		end
-	else
-		if getnextcallabove("up") then
-			mem.direction = "up"
-			gotofloor(getnextcallabove())
-		elseif getnextcallbelow("down") then
-			mem.direction = "down"
-			gotofloor(getnextcallbelow("down"))
-		elseif getlowestupcall() then
-			mem.direction = "up"
-			gotofloor(getlowestupcall())
-		elseif gethighestdowncall() then
-			mem.direction = "down"
-			gotofloor(gethighestdowncall())
+	elseif (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test") and mem.carmotion then
+		if mem.drive.status.vel > 0 then
+			local nextup = getnextcallabove("up")
+			if nextup then
+				mem.direction = "up"
+				local target = gettarget(nextup)
+				if target < mem.drive.status.dpos and target > mem.drive.status.neareststop then
+					gotofloor(nextup)
+				end
+			end
+		elseif mem.drive.status.vel < 0 then
+			local nextdown = getnextcallbelow("down")
+			if nextdown then
+				mem.direction = "down"
+				local target = gettarget(nextdown)
+				if target > mem.drive.status.dpos and target < mem.drive.status.neareststop then
+					gotofloor(nextdown)
+				end
+			end
 		end
-	end
-	if mem.carstate == "normal" and mem.capturesw and not mem.direction then
-		mem.upcalls = {}
-		mem.dncalls = {}
-		mem.carstate = "capture"
-	elseif mem.carstate == "capture" and mem.direction then
-		mem.carstate = "normal"
 	end
 end
 

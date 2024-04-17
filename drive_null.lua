@@ -222,6 +222,7 @@ function celevator.drives.null.getstatus(pos,call2)
 		ret.vel = tonumber(meta:get_string("vel")) or 0
 		ret.maxvel = tonumber(meta:get_string("maxvel")) or 0.2
 		ret.doorstate = meta:get_string("doorstate")
+		ret.neareststop = ret.apos+(ret.vel*2)
 		return ret
 	end
 end

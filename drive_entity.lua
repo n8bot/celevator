@@ -463,7 +463,6 @@ minetest.register_globalstep(celevator.drives.entity.step)
 
 function celevator.drives.entity.moveto(pos,target)
 	local meta = minetest.get_meta(pos)
-	if meta:get_string("state") ~= "stopped" then return end
 	local carid = minetest.get_meta(pos):get_int("carid")
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not (carinfo and carinfo.machinepos) then return end
@@ -477,27 +476,40 @@ function celevator.drives.entity.moveto(pos,target)
 		meta:set_string("fault","outofbounds")
 		return
 	end
-	meta:set_string("dpos",tostring(target))
-	meta:set_string("state","start")
-	meta:set_string("startpos",meta:get_string("apos"))
-	local hash = minetest.hash_node_position(pos)
-	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
-	local running = false
-	for _,dhash in ipairs(entitydrives_running) do
-		if hash == dhash then
-			running = true
-			break
+	if meta:get_string("state") ~= "stopped" then
+		local apos = tonumber(meta:get_string("apos"))
+		local vel = tonumber(meta:get_string("vel"))
+		if vel > 0 then
+			if target < apos+(vel*2) then return end
+		elseif vel < 0 then
+			if target > apos-(vel*-2) then return end
+		else
+			return
 		end
 	end
-	if not running then
-		table.insert(entitydrives_running,hash)
-		celevator.storage:set_string("entitydrives_running",minetest.serialize(entitydrives_running))
-		--Controller needs to see something so it knows the drive is running
-		local apos = tonumber(meta:get_string("apos"))
-		if apos and apos > target then
-			meta:set_string("vel","-0.0001")
-		else
-			meta:set_string("vel","0.0001")
+	meta:set_string("dpos",tostring(target))
+	if meta:get_string("state") == "stopped" then
+		meta:set_string("state","start")
+		meta:set_string("startpos",meta:get_string("apos"))
+		local hash = minetest.hash_node_position(pos)
+		local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
+		local running = false
+		for _,dhash in ipairs(entitydrives_running) do
+			if hash == dhash then
+				running = true
+				break
+			end
+		end
+		if not running then
+			table.insert(entitydrives_running,hash)
+			celevator.storage:set_string("entitydrives_running",minetest.serialize(entitydrives_running))
+			--Controller needs to see something so it knows the drive is running
+			local apos = tonumber(meta:get_string("apos"))
+			if apos and apos > target then
+				meta:set_string("vel","-0.0001")
+			else
+				meta:set_string("vel","0.0001")
+			end
 		end
 	end
 end
@@ -540,7 +552,7 @@ function celevator.drives.entity.getstatus(pos,call2)
 	local node = minetest.get_node(pos)
 	if node.name == "ignore" and not call2 then
 		minetest.forceload_block(pos,true)
-		return celevator.drives.null.get_status(pos,true)
+		return celevator.drives.entity.get_status(pos,true)
 	elseif node.name ~= "celevator:drive" then
 		minetest.log("error","[celevator] [entity drive] Could not load drive status at "..minetest.pos_to_string(pos))
 		return {fault = "metaload"}
@@ -554,6 +566,7 @@ function celevator.drives.entity.getstatus(pos,call2)
 		ret.state = meta:get_string("state")
 		ret.doorstate = meta:get_string("doorstate")
 		ret.fault = meta:get_string("fault")
+		ret.neareststop = ret.apos+(ret.vel*2)
 		if ret.fault == "" then ret.fault = nil end
 		return ret
 	end
