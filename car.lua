@@ -276,6 +276,8 @@ local pieces = {
 			"celevator_car_ceiling.png",
 			"celevator_car_wallpaper.png",
 			"celevator_cabinet_sides.png",
+			"celevator_cabinet_sides.png",
+			"celevator_dooroperator_left.png",
 		},
 	},
 	{
@@ -363,6 +365,7 @@ local pieces = {
 			"celevator_cabinet_sides.png",
 			"celevator_car_wallpaper.png",
 			"celevator_cabinet_sides.png",
+			"celevator_dooroperator_right.png",
 		},
 	},
 	{
