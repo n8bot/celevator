@@ -63,6 +63,7 @@ local faultnames = {
 	drivemetaload = "Drive Metadata Load Failure",
 	drivebadorigin = "Drive Origin Invalid",
 	drivedoorinterlock = "Attempted to Move Doors With Car in Motion",
+	driveoutofbounds = "Target Position Out of Bounds",
 }
 
 local function drivecmd(command)
@@ -100,10 +101,12 @@ local function gotofloor(floor)
 		command = "setmaxvel",
 		maxvel = mem.params.contractspeed
 	})
-	drivecmd({
-		command = "moveto",
-		pos = gettarget(floor)
-	})
+	if gettarget(floor) ~= mem.drive.status.apos then
+		drivecmd({
+			command = "moveto",
+			pos = gettarget(floor)
+		})
+	end
 	interrupt(0,"checkdrive")
 	juststarted = true
 end
@@ -608,14 +611,14 @@ elseif mem.testsw then
 	mem.upcalls = {}
 	mem.dncalls = {}
 	if mem.carstate ~= "resync" then mem.carstate = "test" end
-	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "carinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
 	end
 elseif mem.capturesw then
 	mem.upcalls = {}
 	mem.dncalls = {}
-	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
+	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "carinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
 	elseif mem.carstate ~= "resync" and not mem.direction then

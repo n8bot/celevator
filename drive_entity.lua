@@ -275,11 +275,20 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			ok = false
 		end
 		for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
+			i:set_velocity(vector.new(0,0,0))
 			if i:is_player() then
 				local ppos = i:get_pos()
-				if top then ppos.y = ppos.y+1 end
+				ppos.y=ppos.y-0.4
+				if top then ppos.y = ppos.y+1.1 end
 				i:set_pos(ppos)
 				minetest.after(0.5,i.set_pos,i,ppos)
+			elseif i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door" then
+				local epos = i:get_pos()
+				epos.y = math.floor(epos.y+0.5)
+				if i:get_luaentity().name == "celevator:car_top_box" then
+					epos.y = epos.y+0.1
+				end
+				i:set_pos(epos)
 			end
 		end
 	end
@@ -455,6 +464,19 @@ minetest.register_globalstep(celevator.drives.entity.step)
 function celevator.drives.entity.moveto(pos,target)
 	local meta = minetest.get_meta(pos)
 	if meta:get_string("state") ~= "stopped" then return end
+	local carid = minetest.get_meta(pos):get_int("carid")
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.machinepos) then return end
+	local origin = minetest.string_to_pos(meta:get_string("origin"))
+	if not origin then
+		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(pos))
+		meta:set_string("fault","badorigin")
+		return
+	end
+	if target < 0 or origin.y + target > (carinfo.machinepos.y-3) then
+		meta:set_string("fault","outofbounds")
+		return
+	end
 	meta:set_string("dpos",tostring(target))
 	meta:set_string("state","start")
 	meta:set_string("startpos",meta:get_string("apos"))
@@ -470,7 +492,13 @@ function celevator.drives.entity.moveto(pos,target)
 	if not running then
 		table.insert(entitydrives_running,hash)
 		celevator.storage:set_string("entitydrives_running",minetest.serialize(entitydrives_running))
-		meta:set_string("vel","0.0001") --Controller needs to see something so it knows the drive is running
+		--Controller needs to see something so it knows the drive is running
+		local apos = tonumber(meta:get_string("apos"))
+		if apos and apos > target then
+			meta:set_string("vel","-0.0001")
+		else
+			meta:set_string("vel","0.0001")
+		end
 	end
 end
 
@@ -489,10 +517,10 @@ function celevator.drives.entity.estop(pos)
 	local handles = celevator.drives.entity.entityinfo[hash].handles
 	meta:set_string("state","stopped")
 	meta:set_string("vel","0")
-	celevator.drives.entity.entitiestonodes(handles)
+	local carid = meta:get_int("carid")
+	celevator.drives.entity.entitiestonodes(handles,carid)
 	stopbuzz(pos)
 	motorsound(pos,"idle")
-	local carid = meta:get_int("carid")
 	if carid ~= 0 then celevator.drives.entity.sheavetonode(carid) end
 	minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 end
