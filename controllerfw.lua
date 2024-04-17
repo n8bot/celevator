@@ -180,6 +180,7 @@ local function open()
 	drivecmd({command = "open"})
 	interrupt(0.2,"checkopen")
 	interrupt(10,"opentimeout")
+	interrupt(nil,"closetimeout")
 end
 
 local function close()
@@ -187,6 +188,7 @@ local function close()
 	drivecmd({command = "close"})
 	interrupt(0.2,"checkclosed")
 	interrupt(10,"closetimeout")
+	interrupt(nil,"opentimeout")
 end
 
 mem.formspec = ""
@@ -469,7 +471,7 @@ elseif event.type == "cop" then
 		end
 		if fields.close and mem.doorstate == "open" then
 			interrupt(0,"close")
-		elseif fields.open and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
+		elseif fields.open and (mem.doorstate == "closed" or mem.doorstate == "closing") and not (mem.carmotion or juststarted) then
 			open()
 		elseif fields.callcancel and (mem.carstate == "indep" or mem.carstate == "fs2") then
 			mem.carcalls = {}
