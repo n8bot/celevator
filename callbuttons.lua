@@ -36,7 +36,7 @@ local validstates = {
 }
 
 function celevator.callbutton.setlight(pos,dir,newstate)
-	local node = minetest.get_node(pos)
+	local node = celevator.get_node(pos)
 	if minetest.get_item_group(node.name,"_celevator_callbutton") ~= 1 then return end
 	if dir == "up" then
 		if minetest.get_item_group(node.name,"_celevator_callbutton_has_up") ~= 1 then return end

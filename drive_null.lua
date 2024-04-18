@@ -94,7 +94,7 @@ function celevator.drives.null.step(dtime)
 	for i,hash in ipairs(nulldrives_running) do
 		save = true
 		local pos = minetest.get_position_from_hash(hash)
-		local node = minetest.get_node(pos)
+		local node = celevator.get_node(pos)
 		local sound = false
 		if node.name == "ignore" then
 			minetest.forceload_block(pos,true)

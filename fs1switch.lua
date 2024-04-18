@@ -70,7 +70,7 @@ function celevator.fs1switch.setled(pos,on)
 		["celevator:fs1switch_off"] = "celevator:fs1switch_off_lit",
 		["celevator:fs1switch_reset"] = "celevator:fs1switch_reset_lit",
 	}
-	local node = minetest.get_node(pos)
+	local node = celevator.get_node(pos)
 	if on and onstates[node.name] then
 		node.name = onstates[node.name]
 		minetest.swap_node(pos,node)

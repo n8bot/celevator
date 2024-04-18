@@ -93,7 +93,7 @@ end
 
 local function controllerleds(pos,running)
 	local toppos = vector.add(pos,vector.new(0,1,0))
-	local node = minetest.get_node(toppos)
+	local node = celevator.get_node(toppos)
 	local sparams = {
 		pos = toppos,
 	}
@@ -397,12 +397,12 @@ function celevator.controller.iscontroller(pos,call2)
 end
 
 function celevator.controller.finddrive(pos)
-	local node = minetest.get_node(pos)
+	local node = celevator.get_node(pos)
 	local dir = minetest.facedir_to_dir(node.param2)
 	local drivepos = vector.add(pos,vector.new(0,1,0))
 	drivepos = vector.add(drivepos,vector.rotate_around_axis(dir,vector.new(0,-1,0),math.pi/2))
 	drivepos = vector.round(drivepos)
-	local drivename = minetest.get_node(drivepos).name
+	local drivename = celevator.get_node(drivepos).name
 	return drivepos,minetest.registered_nodes[drivename]._celevator_drive_type
 end
 
@@ -440,7 +440,7 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				end
 			end
 		end
-		local node = minetest.get_node(pos)
+		local node = celevator.get_node(pos)
 		local oldmem = minetest.deserialize(meta:get_string("mem")) or {}
 		local oldupbuttonlights = oldmem.upcalls or {}
 		local olddownbuttonlights = oldmem.dncalls or {}

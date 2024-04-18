@@ -10,4 +10,5 @@ read_globals = {
 	"screwdriver",
 	"minetest",
 	"table.copy",
+	"VoxelManip",
 }

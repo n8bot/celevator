@@ -75,13 +75,13 @@ function celevator.pi.updatedisplay(pos)
 	local meta = minetest.get_meta(pos)
 	local text = meta:get_string("text")
 	local entity = minetest.add_entity(pos,"celevator:pi_entity")
-	local fdir = minetest.facedir_to_dir(minetest.get_node(pos).param2)
+	local fdir = minetest.facedir_to_dir(celevator.get_node(pos).param2)
 	local uparrow = meta:get_int("uparrow") > 0
 	local downarrow = meta:get_int("downarrow") > 0
 	local flash_fs = meta:get_int("flash_fs") > 0
 	local flash_is = meta:get_int("flash_is") > 0
 	local flashtimer = meta:get_int("flashtimer") > 0
-	local islantern = minetest.get_item_group(minetest.get_node(pos).name,"_celevator_lantern") == 1
+	local islantern = minetest.get_item_group(celevator.get_node(pos).name,"_celevator_lantern") == 1
 	local etex = celevator.pi.generatetexture(text,uparrow,downarrow,islantern)
 	if flash_fs then
 		if flashtimer then etex = celevator.pi.generatetexture(" FS",uparrow,downarrow,islantern) end
@@ -98,7 +98,7 @@ function celevator.pi.updatedisplay(pos)
 end
 
 function celevator.pi.flash(pos,what)
-	if minetest.get_item_group(minetest.get_node(pos).name,"_celevator_pi") ~= 1 then return end
+	if minetest.get_item_group(celevator.get_node(pos).name,"_celevator_pi") ~= 1 then return end
 	local meta = minetest.get_meta(pos)
 	if what == "FS" then
 		meta:set_int("flash_is",0)
@@ -114,7 +114,7 @@ function celevator.pi.flash(pos,what)
 end
 
 function celevator.pi.settext(pos,text)
-	if minetest.get_item_group(minetest.get_node(pos).name,"_celevator_pi") ~= 1 then return end
+	if minetest.get_item_group(celevator.get_node(pos).name,"_celevator_pi") ~= 1 then return end
 	local meta = minetest.get_meta(pos)
 	if string.len(text) < 3 then
 		text = string.rep(" ",3-string.len(text))..text
@@ -124,7 +124,7 @@ function celevator.pi.settext(pos,text)
 end
 
 function celevator.pi.setarrow(pos,which,active)
-	if minetest.get_item_group(minetest.get_node(pos).name,"_celevator_pi") ~= 1 then return end
+	if minetest.get_item_group(celevator.get_node(pos).name,"_celevator_pi") ~= 1 then return end
 	local meta = minetest.get_meta(pos)
 	if which == "up" then
 		meta:set_int("uparrow",active and 1 or 0)
@@ -195,7 +195,7 @@ minetest.register_node("celevator:pi",{
 })
 
 function celevator.lantern.setlight(pos,dir,newstate)
-	local node = minetest.get_node(pos)
+	local node = celevator.get_node(pos)
 	if minetest.get_item_group(node.name,"_celevator_lantern") ~= 1 then return end
 	if dir == "up" then
 		if minetest.get_item_group(node.name,"_celevator_lantern_has_up") ~= 1 then return end

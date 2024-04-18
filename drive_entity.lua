@@ -191,22 +191,22 @@ function celevator.drives.entity.gathercar(pos,yaw,nodes)
 	local hash = minetest.hash_node_position(pos)
 	if nodes[hash] then return nodes end
 	nodes[hash] = true
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_xp") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_xp") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(1,0,0),vector.new(0,1,0),yaw)),yaw,nodes)
 	end
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_xm") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_xm") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(-1,0,0),vector.new(0,1,0),yaw)),yaw,nodes)
 	end
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_yp") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_yp") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.new(0,1,0)),yaw,nodes)
 	end
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_ym") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_ym") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.new(0,-1,0)),yaw,nodes)
 	end
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_zp") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_zp") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),yaw)),yaw,nodes)
 	end
-	if minetest.get_item_group(minetest.get_node(pos).name,"_connects_zm") == 1 then
+	if minetest.get_item_group(celevator.get_node(pos).name,"_connects_zm") == 1 then
 		celevator.drives.entity.gathercar(vector.add(pos,vector.rotate_around_axis(vector.new(0,0,-1),vector.new(0,1,0),yaw)),yaw,nodes)
 	end
 	return nodes
@@ -215,7 +215,7 @@ end
 function celevator.drives.entity.nodestoentities(nodes,ename)
 	local refs = {}
 	for _,pos in ipairs(nodes) do
-		local node = minetest.get_node(pos)
+		local node = celevator.get_node(pos)
 		local attach = minetest.get_objects_inside_radius(pos,0.9)
 		local eref = minetest.add_entity(pos,(ename or "celevator:car_moving"))
 		eref:set_properties({
@@ -301,7 +301,7 @@ function celevator.drives.entity.step(dtime)
 	for i,hash in ipairs(entitydrives_running) do
 		save = true
 		local pos = minetest.get_position_from_hash(hash)
-		local node = minetest.get_node(pos)
+		local node = celevator.get_node(pos)
 		local sound = false
 		if node.name == "ignore" then
 			minetest.forceload_block(pos,true)
@@ -334,7 +334,7 @@ function celevator.drives.entity.step(dtime)
 						end
 					end
 					local startv = vector.add(origin,vector.new(0,startpos,0))
-					local hashes = celevator.drives.entity.gathercar(startv,minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(startv).param2)))
+					local hashes = celevator.drives.entity.gathercar(startv,minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(startv).param2)))
 					local nodes = {}
 					for carhash in pairs(hashes) do
 						local carpos = minetest.get_position_from_hash(carhash)
@@ -344,7 +344,7 @@ function celevator.drives.entity.step(dtime)
 							table.insert(nodes,carpos)
 						end
 					end
-					local carparam2 = minetest.get_node(nodes[1]).param2
+					local carparam2 = celevator.get_node(nodes[1]).param2
 					meta:set_int("carparam2",carparam2)
 					local handles = celevator.drives.entity.nodestoentities(nodes)
 					celevator.drives.entity.entityinfo[hash] = {
@@ -591,12 +591,12 @@ function celevator.drives.entity.movedoors(drivepos,direction)
 	end
 	local apos = tonumber(drivemeta:get_string("apos")) or 0
 	local carpos = vector.add(origin,vector.new(0,apos,0))
-	local carnode = minetest.get_node(carpos)
+	local carnode = celevator.get_node(carpos)
 	local hwdoorpos = vector.add(carpos,vector.rotate_around_axis(minetest.fourdir_to_dir(carnode.param2),vector.new(0,1,0),math.pi))
-	if direction == "open" and (minetest.get_item_group(minetest.get_node(hwdoorpos).name,"_celevator_hwdoor_root") == 1 or drivemeta:get_string("doorstate") == "closing") then
+	if direction == "open" and (minetest.get_item_group(celevator.get_node(hwdoorpos).name,"_celevator_hwdoor_root") == 1 or drivemeta:get_string("doorstate") == "closing") then
 		celevator.doors.hwopen(hwdoorpos,drivepos)
 		drivemeta:set_string("doorstate","opening")
-	elseif direction == "close" and minetest.get_node(hwdoorpos).name == "celevator:hwdoor_placeholder" then
+	elseif direction == "close" and celevator.get_node(hwdoorpos).name == "celevator:hwdoor_placeholder" then
 		celevator.doors.hwclose(hwdoorpos,drivepos)
 		drivemeta:set_string("doorstate","closing")
 	end
@@ -625,7 +625,7 @@ end
 local function carsearch(pos)
 	for i=1,500,1 do
 		local searchpos = vector.subtract(pos,vector.new(0,i,0))
-		local node = minetest.get_node(searchpos)
+		local node = celevator.get_node(searchpos)
 		if minetest.get_item_group(node.name,"_celevator_car") == 1 then
 			local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
 			local offsettext = minetest.registered_nodes[node.name]._position
@@ -661,7 +661,7 @@ local function updatecarpos(pos)
 				drivemeta:set_int("carid",carid)
 			end
 		end
-		local caryaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(carpos).param2))
+		local caryaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(carpos).param2))
 		local carnodes = celevator.drives.entity.gathercar(carpos,caryaw)
 		for hash in pairs(carnodes) do
 			local carmeta = minetest.get_meta(minetest.get_position_from_hash(hash))
@@ -827,7 +827,7 @@ minetest.register_entity("celevator:sheave_moving",{
 function celevator.drives.entity.sheavetoentity(carid)
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not (carinfo and carinfo.machinepos) then return end
-	local dir = minetest.fourdir_to_dir(minetest.get_node(carinfo.machinepos).param2)
+	local dir = minetest.fourdir_to_dir(celevator.get_node(carinfo.machinepos).param2)
 	local pos = vector.add(carinfo.machinepos,vector.multiply(dir,-1))
 	minetest.set_node(pos,{
 		name = "celevator:sheave",
@@ -842,7 +842,7 @@ end
 function celevator.drives.entity.sheavetonode(carid)
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not (carinfo and carinfo.machinepos) then return end
-	local dir = minetest.fourdir_to_dir(minetest.get_node(carinfo.machinepos).param2)
+	local dir = minetest.fourdir_to_dir(celevator.get_node(carinfo.machinepos).param2)
 	local pos = vector.add(carinfo.machinepos,vector.multiply(dir,-1))
 	local erefs = celevator.drives.entity.sheaverefs[carid]
 	if erefs and erefs[1] then
@@ -872,10 +872,10 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 	end
 	local apos = tonumber(drivemeta:get_string("apos")) or 0
 	local carpos = vector.add(origin,vector.new(0,apos,0))
-	local carnodes = celevator.drives.entity.gathercar(carpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(carpos).param2)))
+	local carnodes = celevator.drives.entity.gathercar(carpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(carpos).param2)))
 	for hash in pairs(carnodes) do
 		local piecepos = minetest.get_position_from_hash(hash)
-		local piece = minetest.get_node(piecepos)
+		local piece = celevator.get_node(piecepos)
 		if piece.name == "celevator:car_010" then
 			minetest.get_meta(piecepos):set_string("formspec",copformspec)
 		elseif piece.name == "celevator:car_000" then

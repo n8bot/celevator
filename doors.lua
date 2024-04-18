@@ -188,7 +188,7 @@ function celevator.doors.hwopen(pos,drivepos)
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if not hwdoors_moving[hash] then
-		local param2 = minetest.get_node(pos).param2
+		local param2 = celevator.get_node(pos).param2
 		local fdir = minetest.fourdir_to_dir(param2)
 		local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
 		local positions = {
@@ -201,7 +201,7 @@ function celevator.doors.hwopen(pos,drivepos)
 		}
 		local oldnodes = {}
 		for i,position in ipairs(positions) do
-			oldnodes[i] = minetest.get_node(position)
+			oldnodes[i] = celevator.get_node(position)
 		end
 		local erefs = celevator.drives.entity.nodestoentities(positions,"celevator:hwdoor_moving")
 		hwdoors_moving[hash] = {
@@ -220,7 +220,7 @@ function celevator.doors.hwopen(pos,drivepos)
 		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 		local carpos = vector.add(pos,fdir)
-		if minetest.get_node(carpos).name == "celevator:car_000" then
+		if celevator.get_node(carpos).name == "celevator:car_000" then
 			celevator.doors.caropen(carpos)
 		end
 	elseif hwdoors_moving[hash].direction == "close" then
@@ -229,7 +229,7 @@ function celevator.doors.hwopen(pos,drivepos)
 		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
 		local fdir = minetest.fourdir_to_dir(hwdoors_moving[hash].param2)
 		local carpos = vector.add(pos,fdir)
-		if minetest.get_node(carpos).name == "celevator:car_000" then
+		if celevator.get_node(carpos).name == "celevator:car_000" then
 			celevator.doors.caropen(carpos)
 		end
 		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=hwdoors_moving[hash].param2})
@@ -248,9 +248,9 @@ function celevator.doors.hwclose(pos,drivepos)
 	local pmeta = minetest.get_meta(pos)
 	local state = pmeta:get_string("state")
 	if state ~= "open" then return end
-	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 	local carpos = vector.add(pos,fdir)
-	if minetest.get_node(carpos).name == "celevator:car_000" then
+	if celevator.get_node(carpos).name == "celevator:car_000" then
 		celevator.doors.carclose(carpos)
 	end
 	local data = minetest.deserialize(pmeta:get_string("data"))
@@ -408,7 +408,7 @@ function celevator.doors.carstep(dtime)
 				minetest.get_meta(data.positions[1]):set_string("doorstate","open")
 				cardoors_moving[hash] = nil
 			elseif data.direction == "close" then
-				local fdir = minetest.fourdir_to_dir(minetest.get_node(data.positions[1]).param2)
+				local fdir = minetest.fourdir_to_dir(celevator.get_node(data.positions[1]).param2)
 				celevator.doors.spawncardoors(data.positions[1],vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi))
 				minetest.get_meta(data.positions[1]):set_string("doorstate","closed")
 				cardoors_moving[hash] = nil
@@ -456,7 +456,7 @@ function celevator.doors.caropen(pos)
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if not cardoors_moving[hash] then
-		local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+		local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 		local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
 		local positions = {
 			pos,
@@ -504,7 +504,7 @@ function celevator.doors.carclose(pos)
 	if state ~= "open" then return end
 	local data = minetest.deserialize(meta:get_string("doordata"))
 	if not data then return end
-	local dir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local dir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 	data.direction = "close"
 	data.time = 0
 	local erefs = celevator.doors.spawncardoors(pos,dir)
