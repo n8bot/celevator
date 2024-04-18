@@ -1016,7 +1016,7 @@ for i=1,floorcount,1 do
 	local yp = (coprows-row+1)*1.25+1
 	local xp = col*1.25
 	local tex = mem.carcalls[i] and litimg or unlitimg
-	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%d;false;false;%s]",xp,yp,tex,i,i,litimg)
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,minetest.formspec_escape(mem.params.floornames[i]),litimg)
 end
 
 local doxp = (copcols == 1) and 0.5 or 1.25
