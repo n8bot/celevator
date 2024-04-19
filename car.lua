@@ -408,7 +408,7 @@ local pieces = {
 
 for _,def in ipairs(pieces) do
 	def.groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 		_celevator_car = 1,
 	}
 	local xp = tonumber(string.sub(def._position,1,1))
@@ -435,8 +435,9 @@ for _,def in ipairs(pieces) do
 	def.paramtype = "light"
 	def.paramtype2 = "4dir"
 	def.drawtype = "nodebox"
-	def.description = "Car "..def._position
+	def.description = "Car "..def._position.." (you hacker you!)"
 	def.light_source = 9
+	def.drop = ""
 	def.on_receive_fields = function(pos,_,fields,player)
 		local meta = minetest.get_meta(pos)
 		local carid = meta:get_int("carid")
@@ -470,6 +471,22 @@ for _,def in ipairs(pieces) do
 	if def._position == "000" then
 		def.on_construct = function(pos)
 			minetest.get_meta(pos):set_string("doorstate","closed")
+		end
+		def.on_punch = function(pos,_,player)
+			if player.is_fake_player then return end
+			local name = player:get_player_name()
+			local sneak = player:get_player_control().sneak
+			if not sneak then return end
+			if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				minetest.record_protection_violation(pos,name)
+				return
+			end
+			local hash = minetest.hash_node_position(pos)
+			local fs = "formspec_version[7]size[6,4]"
+			fs = fs.."label[0.5,1;Really remove this car?]"
+			fs = fs.."button_exit[0.5,2;2,1;yes;Yes]"
+			fs = fs.."button_exit[3,2;2,1;no;No]"
+			minetest.show_formspec(name,string.format("celevator:remove_car_%d",hash),fs)
 		end
 	end
 	minetest.register_node("celevator:car_"..def._position,def)
@@ -577,3 +594,92 @@ minetest.register_abm({
 	chance = 1,
 	action = updatecartopbox,
 })
+
+minetest.register_node("celevator:car",{
+	description = "Elevator Car",
+	paramtype2 = "4dir",
+	buildable_to = true,
+	inventory_image = "celevator_car_inventory.png",
+	wield_image = "celevator_car_wield.png",
+	wield_scale = vector.new(1,1,10),
+	tiles = {"celevator_transparent.png"},
+	after_place_node = function(pos,player)
+		if not player:is_player() then
+			minetest.remove_node(pos)
+			return true
+		end
+		local name = player:get_player_name()
+		local newnode = minetest.get_node(pos)
+		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		for x=0,1,1 do
+			for y=0,2,1 do
+				for z=0,2,1 do
+					local offsetdesc = string.format("%dm to the right, %dm up, and %dm back",x,y,z)
+					local placeoffset = vector.new(x,y,z)
+					local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
+					local replaces = minetest.get_node(placepos).name
+					if not (minetest.registered_nodes[replaces] and minetest.registered_nodes[replaces].buildable_to) then
+						minetest.chat_send_player(name,string.format("Can't place car here - position %s is blocked!",offsetdesc))
+						minetest.remove_node(pos)
+						return true
+					end
+					if minetest.is_protected(placepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+						minetest.chat_send_player(name,string.format("Can't place car here - position %s is protected!",offsetdesc))
+						minetest.record_protection_violation(placepos,name)
+						minetest.remove_node(pos)
+						return true
+					end
+				end
+			end
+		end
+		for x=0,1,1 do
+			for y=0,2,1 do
+				for z=0,2,1 do
+					local piecename = string.format("celevator:car_%d%d%d",x,y,z)
+					local placeoffset = vector.new(x,y,z)
+					local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
+					minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+				end
+			end
+		end
+	end,
+})
+
+minetest.register_on_player_receive_fields(function(_,formname,fields)
+	if string.sub(formname,1,21) ~= "celevator:remove_car_" then return false end
+	if not fields.yes then return true end
+	local hash = tonumber(string.sub(formname,22,-1))
+	if not hash then return true end
+	local rootpos = minetest.get_position_from_hash(hash)
+	local rootdir = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(rootpos).param2))
+	local toberemoved = {
+		["celevator:car_top_box"] = true,
+		["celevator:incar_pi_entity"] = true,
+		["celevator:car_door"] = true,
+	}
+	for x=0,1,1 do
+		for y=0,2,1 do
+			for z=0,2,1 do
+				local piecename = string.format("celevator:car_%d%d%d",x,y,z)
+				local pieceoffset = vector.new(x,y,z)
+				local piecepos = vector.add(rootpos,vector.rotate_around_axis(pieceoffset,vector.new(0,1,0),rootdir))
+				if minetest.get_node(piecepos).name == piecename then
+					minetest.remove_node(piecepos)
+					local erefs = minetest.get_objects_inside_radius(piecepos,0.5)
+					for _,ref in pairs(erefs) do
+						if toberemoved[ref:get_luaentity().name] then
+							ref:remove()
+						end
+					end
+				end
+			end
+		end
+	end
+	local cartopboxpos = vector.add(rootpos,vector.rotate_around_axis(vector.new(0,3,1),vector.new(0,1,0),rootdir))
+	local erefs = minetest.get_objects_inside_radius(cartopboxpos,0.5)
+	for _,ref in pairs(erefs) do
+		if toberemoved[ref:get_luaentity().name] then
+			ref:remove()
+		end
+	end
+end)

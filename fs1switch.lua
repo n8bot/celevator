@@ -98,12 +98,13 @@ local switchstates = {"off","on","reset"}
 
 for _,switchpos in ipairs(switchstates) do
 	minetest.register_node("celevator:fs1switch_"..switchpos,{
-		description = "Fire Service Phase 1 Keyswitch"..(switchpos == "off" and "" or string.format(" (%s state - you hacker you!)",switchpos)),
+		description = "Elevator Fire Service Phase 1 Keyswitch"..(switchpos == "off" and "" or string.format(" (%s state - you hacker you!)",switchpos)),
 		groups = {
 			dig_immediate = 2,
 			not_in_creative_inventory = (switchpos == "off" and 0 or 1),
 			_celevator_fs1switch = 1,
 		},
+		inventory_image = "celevator_fs1switch_off.png",
 		drop = "celevator:fs1switch_off",
 		tiles = {
 			"celevator_cabinet_sides.png",
@@ -140,7 +141,7 @@ for _,switchpos in ipairs(switchstates) do
 		on_destruct = unpair,
 	})
 	minetest.register_node("celevator:fs1switch_"..switchpos.."_lit",{
-		description = "Fire Service Phase 1 Keyswitch"..string.format(" (%s state, lit - you hacker you!)",switchpos),
+		description = "Elevator Fire Service Phase 1 Keyswitch"..string.format(" (%s state, lit - you hacker you!)",switchpos),
 		groups = {
 			dig_immediate = 2,
 			not_in_creative_inventory = 1,

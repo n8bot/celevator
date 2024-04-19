@@ -137,7 +137,7 @@ local function decelsound(pos)
 end
 
 minetest.register_node("celevator:drive",{
-	description = celevator.drives.entity.name,
+	description = "Elevator "..celevator.drives.entity.name,
 	groups = {
 		cracky = 1,
 		_celevator_drive = 1,
@@ -673,7 +673,7 @@ local function updatecarpos(pos)
 end
 
 minetest.register_node("celevator:machine",{
-	description = "Hoist Machine",
+	description = "Elevator Hoist Machine",
 	groups = {
 		dig_immediate = 2,
 		_celevator_machine = 1,
@@ -688,6 +688,9 @@ minetest.register_node("celevator:machine",{
 		"celevator_machine_front.png",
 		"celevator_machine_front.png",
 	},
+	inventory_image = "celevator_machine_inventory.png",
+	wield_image = "celevator_machine_inventory.png",
+	wield_scale = vector.new(1,1,3),
 	drawtype = "nodebox",
 	node_box = {
 		type = "fixed",
@@ -705,10 +708,68 @@ minetest.register_node("celevator:machine",{
 			{-0.5,-0.25,-0.05,-0.35,-0.15,0.05} -- Shaft from motor
 		},
 	},
-	after_place_node = function(pos)
-		updatecarpos(pos)
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-1.5,-0.5,-0.5,0.5,0.5,0.5},
+			{-0.5,-0.5,-0.8,0.5,0.5,-0.5},
+		},
+	},
+	after_place_node = function(pos,player)
+		if not player:is_player() then
+			minetest.remove_node(pos)
+			return true
+		end
+		local newnode = minetest.get_node(pos)
+		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		local motorpos = vector.add(pos,vector.rotate_around_axis(vector.new(-1,0,0),vector.new(0,1,0),facedir))
+		local motorreplaces = minetest.get_node(motorpos).name
+		local sheavepos = vector.add(pos,vector.rotate_around_axis(vector.new(0,0,-1),vector.new(0,1,0),facedir))
+		local sheavereplaces = minetest.get_node(sheavepos).name
+		local name = player:get_player_name()
+		if not (minetest.registered_nodes[motorreplaces] and minetest.registered_nodes[motorreplaces].buildable_to) then
+			minetest.chat_send_player(name,"Can't place machine here - no room for the motor (to the left)!")
+			minetest.remove_node(pos)
+			return true
+		end
+		if minetest.is_protected(motorpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			minetest.chat_send_player(name,"Can't place machine here - space for the motor (to the left) is protected!")
+			minetest.record_protection_violation(motorpos,name)
+			minetest.remove_node(pos)
+			return true
+		end
+		if not (minetest.registered_nodes[sheavereplaces] and minetest.registered_nodes[sheavereplaces].buildable_to) then
+			minetest.chat_send_player(name,"Can't place machine here - no room for the sheave (in front)!")
+			minetest.remove_node(pos)
+			return true
+		end
+		if minetest.is_protected(sheavepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			minetest.chat_send_player(name,"Can't place machine here - space for the sheave (in front) is protected!")
+			minetest.record_protection_violation(sheavepos,name)
+			minetest.remove_node(pos)
+			return true
+		end
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+		minetest.set_node(motorpos,{name="celevator:motor",param2=newnode.param2})
+		minetest.set_node(sheavepos,{name="celevator:sheave",param2=newnode.param2})
+	end,
+	after_dig_node = function(pos,node)
+		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+		local motorpos = vector.add(pos,vector.rotate_around_axis(vector.new(-1,0,0),vector.new(0,1,0),facedir))
+		if minetest.get_node(motorpos).name == "celevator:motor" then
+			minetest.remove_node(motorpos)
+		end
+		local sheavepos = vector.add(pos,vector.rotate_around_axis(vector.new(0,0,-1),vector.new(0,1,0),facedir))
+		if minetest.get_node(sheavepos).name == "celevator:sheave" then
+			minetest.remove_node(sheavepos)
+		end
+		local erefs = minetest.get_objects_inside_radius(sheavepos,0.5)
+		for _,ref in pairs(erefs) do
+			if ref:get_luaentity().name == "celevator:sheave_moving" then
+				ref:remove()
+			end
+		end
 	end,
 	on_punch = function(pos)
 		local meta = minetest.get_meta(pos)
@@ -726,15 +787,17 @@ minetest.register_node("celevator:machine",{
 			local meta = minetest.get_meta(pos)
 			meta:set_int("carid",carid)
 			meta:set_string("formspec","")
+			updatecarpos(pos)
 		end
 	end,
 })
 
 minetest.register_node("celevator:motor",{
-	description = "Hoist Motor",
+	description = "Hoist Motor (you hacker you!)",
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	tiles = {
@@ -757,13 +820,18 @@ minetest.register_node("celevator:motor",{
 			{-0.4,0.1,-0.2,0,0.3,0.2}, -- Junction box
 		},
 	},
+	selection_box = {
+		type = "fixed",
+		fixed = {},
+	},
 })
 
 minetest.register_node("celevator:sheave",{
-	description = "Sheave",
+	description = "Sheave (you hacker you!)",
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	tiles = {
@@ -785,13 +853,18 @@ minetest.register_node("celevator:sheave",{
 			{-0.2,-0.3,0.2,0.2,-0.2,0.5},
 		},
 	},
+	selection_box = {
+		type = "fixed",
+		fixed = {},
+	},
 })
 
 minetest.register_node("celevator:sheave_centered",{
-	description = "Centered Sheave",
+	description = "Centered Sheave (you hacker you!)",
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	tiles = {
@@ -813,6 +886,10 @@ minetest.register_node("celevator:sheave_centered",{
 			{-0.2,-0.4,0.2,0.2,-0.3,0.5},
 		},
 	},
+	selection_box = {
+		type = "fixed",
+		fixed = {},
+	},
 })
 
 minetest.register_entity("celevator:sheave_moving",{
@@ -821,6 +898,7 @@ minetest.register_entity("celevator:sheave_moving",{
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "celevator:sheave_centered",
 		static_save = false,
+		pointable = false,
 	},
 })
 

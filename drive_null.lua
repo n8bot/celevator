@@ -55,6 +55,7 @@ minetest.register_node("celevator:drive_null",{
 	description = celevator.drives.null.name,
 	groups = {
 		cracky = 1,
+		not_in_creative_inventory = 1,
 	},
 	tiles = {
 		"celevator_cabinet_sides.png",

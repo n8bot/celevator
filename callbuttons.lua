@@ -1,19 +1,32 @@
 celevator.callbutton = {}
 
-local function makebuttontex(dir,upon,downon)
+local function makebuttontex(dir,upon,downon,inventory)
 	local tex = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png:22,24=celevator_callbutton_panel.png"
+	if inventory then tex = "[combine:32x32:5,0=celevator_callbutton_panel.png" end
 	if dir == "up" then
-		tex = tex..":24,35=celevator_callbutton_up.png"
+		if inventory then
+			tex = tex..":7,11=celevator_callbutton_up.png"
+		else
+			tex = tex..":24,35=celevator_callbutton_up.png"
+		end
 		if upon then
 			tex = tex..":33,36=celevator_callbutton_light.png"
 		end
 	elseif dir == "down" then
-		tex = tex..":24,35=celevator_callbutton_down.png"
+		if inventory then
+			tex = tex..":7,11=celevator_callbutton_down.png"
+		else
+			tex = tex..":24,35=celevator_callbutton_down.png"
+		end
 		if downon then
 			tex = tex..":33,36=celevator_callbutton_light.png"
 		end
 	elseif dir == "both" then
-		tex = tex..":24,28=celevator_callbutton_up.png:24,43=celevator_callbutton_down.png"
+		if inventory then
+			tex = tex..":7,4=celevator_callbutton_up.png:7,19=celevator_callbutton_down.png"
+		else
+			tex = tex..":24,28=celevator_callbutton_up.png:24,43=celevator_callbutton_down.png"
+		end
 		if upon then
 			tex = tex..":33,29=celevator_callbutton_light.png"
 		end
@@ -105,7 +118,7 @@ for _,state in ipairs(validstates) do
 	if state[2] then nname = nname.."_upon" end
 	if state[3] then nname = nname.."_downon" end
 	local idle = not (state[2] or state[3])
-	local description = string.format("%s Call Button%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	local description = string.format("Elevator %s Call Button%s%s",state[4],(state[1] == "both" and "s" or ""),(idle and "" or " (on state, you hacker you!)"))
 	minetest.register_node(nname,{
 		description = description,
 		groups = {
@@ -117,6 +130,7 @@ for _,state in ipairs(validstates) do
 			_celevator_callbutton_up_lit = (state[2] and 1 or 0),
 			_celevator_callbutton_down_lit = (state[3] and 1 or 0),
 		},
+		inventory_image = makebuttontex(state[1],state[2],state[3],true),
 		drop = dropname,
 		tiles = {
 			boringside,

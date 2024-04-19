@@ -135,7 +135,7 @@ function celevator.pi.setarrow(pos,which,active)
 end
 
 minetest.register_node("celevator:pi",{
-	description = "Position Indicator",
+	description = "Elevator Position Indicator",
 	groups = {
 		dig_immediate = 2,
 		_celevator_pi = 1,
@@ -148,6 +148,7 @@ minetest.register_node("celevator:pi",{
 		boringside,
 		displaytex,
 	},
+	inventory_image = "[combine:32x32:0,5=celevator_pi_background.png",
 	paramtype = "light",
 	paramtype2 = "facedir",
 	drawtype = "nodebox",
@@ -305,7 +306,7 @@ for _,state in ipairs(validstates) do
 	if state[2] then nname = nname.."_upon" end
 	if state[3] then nname = nname.."_downon" end
 	local idle = not (state[2] or state[3])
-	local description = string.format("%s Position Indicator/Lantern Combo%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	local description = string.format("Elevator %s Position Indicator/Lantern Combo%s",state[4],(idle and "" or " (on state, you hacker you!)"))
 	minetest.register_node(nname,{
 		description = description,
 		groups = {
@@ -327,6 +328,7 @@ for _,state in ipairs(validstates) do
 			boringside,
 			makepilanterntex(state[1],state[2],state[3])
 		},
+		inventory_image = string.format("[combine:42x42:5,0=celevator_pi_lantern_background_%s.png",(state[1] == "both" and "updown" or state[1])),
 		paramtype = "light",
 		paramtype2 = "facedir",
 		drawtype = "nodebox",
@@ -385,9 +387,10 @@ for _,state in ipairs(validstates) do
 	if state[2] then nname = nname.."_upon" end
 	if state[3] then nname = nname.."_downon" end
 	idle = not (state[2] or state[3])
-	description = string.format("%s Lantern%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	description = string.format("Elevator %s Lantern%s",state[4],(idle and "" or " (on state, you hacker you!)"))
 	minetest.register_node(nname,{
 		description = description,
+		inventory_image = string.format("[combine:32x32:0,5=celevator_lantern_background_%s.png",(state[1] == "both" and "updown" or state[1])),
 		groups = {
 			dig_immediate = 2,
 			not_in_creative_inventory = (idle and 0 or 1),

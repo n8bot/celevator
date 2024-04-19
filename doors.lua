@@ -3,7 +3,7 @@ celevator.doors = {}
 celevator.doors.erefs = {}
 
 minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
-	description = "Glass Hoistway Door (fast, bottom)",
+	description = "Glass Hoistway Door (fast, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -13,9 +13,11 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 		"celevator_door_glass_topbottom.png^[transformFY",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 		_celevator_hwdoor_root = 1,
+		oddly_breakable_by_hand = 2,
 	},
+	drop = "celevator:hwdoor_glass",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -26,10 +28,30 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 			{-0.5,-0.5,0.4,0.5,0.5,0.5},
 		},
 	},
+	after_dig_node = function(pos,node)
+		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+		local xnames = {
+			[0] = "fast",
+			[1] = "slow",
+		}
+		local ynames = {
+			[0] = "bottom",
+			[1] = "middle",
+			[2] = "top",
+		}
+		for x=0,1,1 do
+			for y=0,2,1 do
+				local piecename = string.format("celevator:hwdoor_%s_glass_%s",xnames[x],ynames[y])
+				local pieceoffset = vector.new(x,y,0)
+				local piecepos = vector.add(pos,vector.rotate_around_axis(pieceoffset,vector.new(0,1,0),facedir))
+				if minetest.get_node(piecepos).name == piecename then minetest.remove_node(piecepos) end
+			end
+		end
+	end,
 })
 
 minetest.register_node("celevator:hwdoor_fast_glass_middle",{
-	description = "Glass Hoistway Door (fast, middle)",
+	description = "Glass Hoistway Door (fast, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -39,8 +61,9 @@ minetest.register_node("celevator:hwdoor_fast_glass_middle",{
 		"celevator_door_glass_middle.png",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -54,7 +77,7 @@ minetest.register_node("celevator:hwdoor_fast_glass_middle",{
 })
 
 minetest.register_node("celevator:hwdoor_fast_glass_top",{
-	description = "Glass Hoistway Door (fast, top)",
+	description = "Glass Hoistway Door (fast, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -64,8 +87,9 @@ minetest.register_node("celevator:hwdoor_fast_glass_top",{
 		"celevator_door_glass_topbottom.png",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -79,7 +103,7 @@ minetest.register_node("celevator:hwdoor_fast_glass_top",{
 })
 
 minetest.register_node("celevator:hwdoor_slow_glass_bottom",{
-	description = "Glass Hoistway Door (slow, bottom)",
+	description = "Glass Hoistway Door (slow, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -89,8 +113,9 @@ minetest.register_node("celevator:hwdoor_slow_glass_bottom",{
 		"celevator_door_glass_topbottom.png^[transformFY",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -104,7 +129,7 @@ minetest.register_node("celevator:hwdoor_slow_glass_bottom",{
 })
 
 minetest.register_node("celevator:hwdoor_slow_glass_middle",{
-	description = "Glass Hoistway Door (slow, middle)",
+	description = "Glass Hoistway Door (slow, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -114,8 +139,9 @@ minetest.register_node("celevator:hwdoor_slow_glass_middle",{
 		"celevator_door_glass_middle.png",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -129,7 +155,7 @@ minetest.register_node("celevator:hwdoor_slow_glass_middle",{
 })
 
 minetest.register_node("celevator:hwdoor_slow_glass_top",{
-	description = "Glass Hoistway Door (slow, top)",
+	description = "Glass Hoistway Door (slow, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -139,8 +165,9 @@ minetest.register_node("celevator:hwdoor_slow_glass_top",{
 		"celevator_door_glass_topbottom.png",
 	},
 	groups = {
-		dig_immediate = 2,
+		not_in_creative_inventory = 1,
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "nodebox",
@@ -154,10 +181,14 @@ minetest.register_node("celevator:hwdoor_slow_glass_top",{
 })
 
 minetest.register_node("celevator:hwdoor_placeholder",{
-	description = "Hoistway Door Open-State Placeholder",
+	description = "Hoistway Door Open-State Placeholder (you hacker you!)",
+	groups = {
+		not_in_creative_inventory = 1,
+	},
 	tiles = {
 		"celevator_transparent.png",
 	},
+	drop = "",
 	paramtype = "light",
 	paramtype2 = "4dir",
 	drawtype = "airlike",
@@ -536,5 +567,60 @@ minetest.register_abm({
 		end
 		local fdir = minetest.facedir_to_dir(minetest.get_node(pos).param2)
 		celevator.doors.spawncardoors(pos,fdir)
+	end,
+})
+
+minetest.register_node("celevator:hwdoor_glass",{
+	description = "Glass Elevator Hoistway Door",
+	paramtype2 = "4dir",
+	buildable_to = true,
+	inventory_image = "celevator_door_glass_inventory.png",
+	wield_image = "celevator_door_glass_inventory.png",
+	wield_scale = vector.new(1,3,1),
+	tiles = {"celevator_transparent.png"},
+	after_place_node = function(pos,player)
+		if not player:is_player() then
+			minetest.remove_node(pos)
+			return true
+		end
+		local name = player:get_player_name()
+		local newnode = minetest.get_node(pos)
+		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		local xnames = {
+			[0] = "fast",
+			[1] = "slow",
+		}
+		local ynames = {
+			[0] = "bottom",
+			[1] = "middle",
+			[2] = "top",
+		}
+		for x=0,1,1 do
+			for y=0,2,1 do
+				local offsetdesc = string.format("%dm to the right and %dm up",x,y)
+				local placeoffset = vector.new(x,y,0)
+				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
+				local replaces = minetest.get_node(placepos).name
+				if not (minetest.registered_nodes[replaces] and minetest.registered_nodes[replaces].buildable_to) then
+					minetest.chat_send_player(name,string.format("Can't place car here - position %s is blocked!",offsetdesc))
+					minetest.remove_node(pos)
+					return true
+				end
+				if minetest.is_protected(placepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+					minetest.chat_send_player(name,string.format("Can't place car here - position %s is protected!",offsetdesc))
+					minetest.record_protection_violation(placepos,name)
+					minetest.remove_node(pos)
+					return true
+				end
+			end
+		end
+		for x=0,1,1 do
+			for y=0,2,1 do
+				local piecename = string.format("celevator:hwdoor_%s_glass_%s",xnames[x],ynames[y])
+				local placeoffset = vector.new(x,y,0)
+				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
+				minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+			end
+		end
 	end,
 })

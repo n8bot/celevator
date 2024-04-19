@@ -117,7 +117,7 @@ local function controllerleds(pos,running)
 end
 
 minetest.register_node("celevator:controller",{
-	description = "Controller",
+	description = "Elevator Controller",
 	groups = {
 		cracky = 1,
 	},
