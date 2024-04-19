@@ -528,6 +528,17 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		if (mem.copformspec ~= oldmem.copformspec or mem.switchformspec ~= oldmem.switchformspec) and drivetype then
 			minetest.after(0.25,celevator.drives[drivetype].updatecopformspec,drivepos)
 		end
+		for _,message in ipairs(mem.messages) do
+			local destinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",message.carid)))
+			if destinfo and destinfo.dispatcherpos then
+				celevator.dispatcher.run(destinfo.dispatcherpos,{
+					type = "controllermsg",
+					source = mem.carid,
+					channel = message.channel,
+					msg = message.message,
+				})
+			end
+		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:controller_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")

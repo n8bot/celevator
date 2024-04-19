@@ -8,6 +8,7 @@ local components = {
 	"callbuttons",
 	"pilantern",
 	"fs1switch",
+	"dispatcher",
 }
 
 for _,v in ipairs(components) do

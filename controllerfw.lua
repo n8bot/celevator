@@ -2,6 +2,16 @@ local pos,event,mem = ...
 
 local changedinterrupts = {}
 
+mem.messages = {}
+
+local function send(carid,channel,message)
+	table.insert(mem.messages,{
+		carid = carid,
+		channel = channel,
+		message = message,
+	})
+end
+
 local function fault(ftype,fatal)
 	if fatal then mem.fatalfault = true end
 	if not mem.activefaults then mem.activefaults = {} end
@@ -527,6 +537,31 @@ elseif event.type == "cartopbox" then
 			pos = math.floor(mem.drive.status.apos)-1
 		})
 	end
+elseif event.type == "dispatchermsg" then
+	if event.channel == "pairrequest" and mem.screenstate == "oobe_dispatcherconnect" then
+		mem.params.floornames = event.msg.floornames
+		mem.params.floorheights = event.msg.floorheights
+		mem.activefaults = {}
+		mem.faultlog = {}
+		mem.fatalfault = false
+		mem.state = "configured"
+		mem.screenstate = "status"
+		mem.screenpage = 1
+		mem.carstate = "bfdemand"
+		if mem.doorstate == "closed" then
+			drivecmd({
+				command = "setmaxvel",
+				maxvel = mem.params.contractspeed,
+			})
+			drivecmd({command = "resetpos"})
+			interrupt(0.1,"checkdrive")
+			mem.carmotion = true
+			juststarted = true
+		else
+			close()
+		end
+		send(event.source,"pairok",mem)
+	end
 end
 
 local oldstate = mem.carstate
@@ -787,10 +822,11 @@ elseif mem.screenstate == "oobe_groupmode" then
 	fs("button[1,3;2,1;simplex;Simplex]")
 	fs("label[1,4.5;This will be the only elevator in the group. Hall calls will be handled by this controller.]")
 	fs("button[1,6;2,1;group;Group]")
-	fs("label[1,7.5;This elevator will participate in a group with others. Hall calls will be handled by a dispatcher. (not implemented)]")
+	fs("label[1,7.5;This elevator will participate in a group with others. Hall calls will be handled by a dispatcher.]")
 elseif mem.screenstate == "oobe_dispatcherconnect" then
-	fs("button[1,10;2,1;back;< Back]")
-	fs("label[1,1;Not yet implemented. Press Back.]")
+	fs("button[1,10;2,1;back;< Cancel]")
+	fs("label[1,1;Waiting for connection from dispatcher...]")
+	fs(string.format("label[1,1.5;This controller's car ID is: %d]",mem.carid))
 elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
 	if mem.screenstate == "oobe_floortable" then
 		fs("label[1,1;Enter details of all floors this elevator will serve, then press Done.]")
