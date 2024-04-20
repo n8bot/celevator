@@ -584,6 +584,7 @@ minetest.register_entity("celevator:car_top_box",{
 		wield_item = "celevator:car_top_box_off",
 		static_save = false,
 		pointable = false,
+		glow = minetest.LIGHT_MAX,
 	},
 })
 

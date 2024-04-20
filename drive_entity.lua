@@ -183,6 +183,7 @@ minetest.register_entity("celevator:car_moving",{
 		wield_item = "default:dirt",
 		static_save = false,
 		glow = minetest.LIGHT_MAX,
+		pointable = false,
 	},
 })
 

@@ -212,6 +212,7 @@ minetest.register_entity("celevator:hwdoor_moving",{
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "default:dirt",
 		static_save = false,
+		pointable = false,
 	},
 })
 
@@ -462,6 +463,7 @@ minetest.register_entity("celevator:car_door",{
 		wield_item = "default:dirt",
 		static_save = false,
 		pointable = false,
+		glow = minetest.LIGHT_MAX,
 	},
 })
 

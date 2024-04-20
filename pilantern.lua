@@ -11,6 +11,7 @@ minetest.register_entity("celevator:pi_entity",{
 		collisionbox = {0,0,0,0,0,0,},
 		textures = {"celevator_transparent.png",},
 		static_save = false,
+		glow = minetest.LIGHT_MAX,
 	},
 })
 
@@ -21,6 +22,7 @@ minetest.register_entity("celevator:incar_pi_entity",{
 		collisionbox = {0,0,0,0,0,0,},
 		textures = {"celevator_transparent.png",},
 		static_save = false,
+		glow = minetest.LIGHT_MAX,
 	},
 	on_step = function(self)
 		local pos = self.object:get_pos()
@@ -152,6 +154,7 @@ minetest.register_node("celevator:pi",{
 	paramtype = "light",
 	paramtype2 = "facedir",
 	drawtype = "nodebox",
+	light_source = 3,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -303,8 +306,15 @@ local validstates = {
 for _,state in ipairs(validstates) do
 	local nname = "celevator:pilantern_"..state[1]
 	local dropname = nname
-	if state[2] then nname = nname.."_upon" end
-	if state[3] then nname = nname.."_downon" end
+	local light = 0
+	if state[2] then
+		nname = nname.."_upon"
+		light = light + 4
+	end
+	if state[3] then
+		nname = nname.."_downon"
+		light = light + 4
+	end
 	local idle = not (state[2] or state[3])
 	local description = string.format("Elevator %s Position Indicator/Lantern Combo%s",state[4],(idle and "" or " (on state, you hacker you!)"))
 	minetest.register_node(nname,{
@@ -332,6 +342,7 @@ for _,state in ipairs(validstates) do
 		paramtype = "light",
 		paramtype2 = "facedir",
 		drawtype = "nodebox",
+		light_source = light + 3,
 		node_box = {
 			type = "fixed",
 			fixed = {
@@ -441,6 +452,7 @@ for _,state in ipairs(validstates) do
 		end,
 		paramtype = "light",
 		paramtype2 = "facedir",
+		light_source = light,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
