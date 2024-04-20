@@ -50,12 +50,26 @@ local function rightclick(pos,node,player)
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not carinfo then return end
 	local controllerpos = carinfo.controllerpos
+	local dispatcher = false
+	if not controllerpos then
+		controllerpos = carinfo.dispatcherpos
+		dispatcher = true
+	end
+	if not controllerpos then return end
 	local controllermeta = minetest.get_meta(controllerpos)
 	if controllermeta:get_int("carid") ~= carid then return end
 	if node.name == "celevator:fs1switch_reset" or node.name == "celevator:fs1switch_reset_lit" then
-		celevator.controller.handlefs1switch(controllerpos,false)
+		if dispatcher then
+			celevator.dispatcher.handlefs1switch(controllerpos,false)
+		else
+			celevator.controller.handlefs1switch(controllerpos,false)
+		end
 	elseif node.name == "celevator:fs1switch_on" or node.name == "celevator:fs1switch_on_lit" then
-		celevator.controller.handlefs1switch(controllerpos,true)
+		if dispatcher then
+			celevator.dispatcher.handlefs1switch(controllerpos,true)
+		else
+			celevator.controller.handlefs1switch(controllerpos,true)
+		end
 	end
 end
 

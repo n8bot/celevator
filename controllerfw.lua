@@ -615,6 +615,9 @@ elseif event.type == "dispatchermsg" then
 	elseif event.channel == "carcall" and mem.carstate == "normal" then
 		mem.carcalls[event.msg] = true
 		send(event.source,"status",mem)
+	elseif event.channel == "fs1switch" then
+		mem.fs1switch = event.msg
+		mem.fs1led = event.msg
 	end
 end
 

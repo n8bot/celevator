@@ -683,6 +683,12 @@ elseif event.type == "callbutton" then
 	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
 		mem.dncalls[event.landing] = true
 	end
+elseif event.type == "fs1switch" then
+	mem.fs1switch = event.state
+	mem.fs1led = event.state
+	for _,carid in ipairs(mem.params.carids) do
+		send(carid,"fs1switch",event.state)
+	end
 end
 
 fs("formspec_version[6]")

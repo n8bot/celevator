@@ -396,7 +396,7 @@ function celevator.dispatcher.handlecallbutton(dispatcherpos,landing,dir)
 	celevator.dispatcher.run(dispatcherpos,event)
 end
 
-function celevator.controller.handlefs1switch(dispatcherpos,on)
+function celevator.dispatcher.handlefs1switch(dispatcherpos,on)
 	local event = {
 		type = "fs1switch",
 		state = on,
