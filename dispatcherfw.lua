@@ -29,6 +29,26 @@ local function getpos(carid)
 	return 1
 end
 
+local function getdpos(carid)
+	local floormap = {}
+	local floorheights = {}
+	for i=1,#mem.params.floornames,1 do
+		if mem.params.floorsserved[carid][i] then
+			table.insert(floormap,i)
+			table.insert(floorheights,mem.params.floorheights[i])
+		elseif #floorheights > 0 then
+			floorheights[#floorheights] = floorheights[#floorheights]+mem.params.floorheights[i]
+		end
+	end
+	local ret = 0
+	local searchpos = mem.carstatus[carid].target
+	for k,v in ipairs(floorheights) do
+		ret = ret+v
+		if ret > searchpos then return floormap[k] end
+	end
+	return 1
+end
+
 local function cartorealfloor(carid,floor)
 	if type(floor) == "table" then
 		local ret = {}
@@ -206,6 +226,12 @@ local function buildstopsequence(carid,startfloor,direction,target,targetdir)
 	end
 	local carpos = startfloor
 	local sequence = {}
+	local vel = mem.carstatus[carid].vel
+	if vel > 0 then
+		direction = "up"
+	elseif vel < 0 then
+		direction = "down"
+	end
 	repeat
 		local src = carpos
 		carpos,direction = predictnextstop(carid,carpos,direction,carcalls,upcalls,dncalls)
@@ -447,6 +473,7 @@ elseif event.channel == "pairok" then
 			carcalls = {},
 			doorstate = event.msg.doorstate,
 			position = event.msg.drive.status.apos or 0,
+			target = event.msg.drive.status.dpos or 0,
 			state = event.msg.carstate,
 			direction = event.msg.direction,
 			vel = event.msg.drive.status.vel or 0,
@@ -467,6 +494,7 @@ elseif event.channel == "status" then
 		carcalls = event.msg.carcalls,
 		doorstate = event.msg.doorstate,
 		position = event.msg.drive.status.apos or 0,
+		target = event.msg.drive.status.dpos or 0,
 		state = event.msg.carstate,
 		direction = event.msg.direction,
 		vel = event.msg.drive.status.vel,
@@ -530,12 +558,50 @@ elseif event.type == "abm" or event.iid == "run" then
 			mem.upcalls[i] = nil
 		end
 	end
+	for i in pairs(mem.assignedup) do
+		if mem.upcalls[i] then
+			local eligiblecars = {}
+			local permanent = false
+			for _,carid in pairs(mem.params.carids) do
+				if getdpos(carid) == i and mem.carstatus[carid].direction == "up" then permanent = true end
+				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
+					local serveshigher = false
+					for floor in pairs(mem.params.floorsserved[carid]) do
+						if floor > i then
+							serveshigher = true
+							break
+						end
+					end
+					if serveshigher then eligiblecars[carid] = true end
+				end
+			end
+			if not permanent then
+				local besteta = 999
+				local bestcar
+				for carid in pairs(eligiblecars) do
+					local eta = calculateeta(carid,i,"up")
+					if eta < besteta then
+						besteta = eta
+						bestcar = carid
+					end
+				end
+				if mem.upeta[i]-besteta > 15 and mem.upeta[i]/besteta > 2 then
+					send(mem.assignedup[i],"groupupcancel",realtocarfloor(mem.assignedup[i],i))
+					mem.upeta[i] = besteta
+					send(bestcar,"groupupcall",realtocarfloor(bestcar,i))
+					mem.assignedup[i] = bestcar
+				end
+			end
+		end
+	end
 	for floor,carid in pairs(mem.assignedup) do
 		mem.upeta[floor] = calculateeta(carid,floor,"up")
 	end
 	for i in pairs(unassigneddn) do
 		local eligiblecars = {}
+		local permanent = false
 		for _,carid in pairs(mem.params.carids) do
+			if getdpos(carid) == i and mem.carstatus[carid].direction == "down" then permanent = true end
 			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 				local serveslower = false
 				for floor in pairs(mem.params.floorsserved[carid]) do
@@ -547,21 +613,55 @@ elseif event.type == "abm" or event.iid == "run" then
 				if serveslower then eligiblecars[carid] = true end
 			end
 		end
-		local besteta = 999
-		local bestcar
-		for carid in pairs(eligiblecars) do
-			local eta = calculateeta(carid,i,"down")
-			if eta < besteta then
-				besteta = eta
-				bestcar = carid
+		if not permanent then
+			local besteta = 999
+			local bestcar
+			for carid in pairs(eligiblecars) do
+				local eta = calculateeta(carid,i,"down")
+				if eta < besteta then
+					besteta = eta
+					bestcar = carid
+				end
+			end
+			mem.upeta[i] = besteta
+			if bestcar then
+				send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
+				mem.assigneddn[i] = bestcar
+			else
+				mem.dncalls[i] = nil
 			end
 		end
-		mem.upeta[i] = besteta
-		if bestcar then
-			send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
-			mem.assigneddn[i] = bestcar
-		else
-			mem.upcalls[i] = nil
+	end
+	for i in pairs(mem.assigneddn) do
+		if mem.dncalls[i] then
+			local eligiblecars = {}
+			for _,carid in pairs(mem.params.carids) do
+				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
+					local serveslower = false
+					for floor in pairs(mem.params.floorsserved[carid]) do
+						if floor < i then
+							serveslower = true
+							break
+						end
+					end
+					if serveslower then eligiblecars[carid] = true end
+				end
+			end
+			local besteta = 999
+			local bestcar
+			for carid in pairs(eligiblecars) do
+				local eta = calculateeta(carid,i,"down")
+				if eta < besteta then
+					besteta = eta
+					bestcar = carid
+				end
+			end
+			if mem.dneta[i]-besteta > 15 and mem.dneta[i]/besteta > 2 then
+				send(mem.assigneddn[i],"groupdncancel",realtocarfloor(mem.assigneddn[i],i))
+				mem.dneta[i] = besteta
+				send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
+				mem.assigneddn[i] = bestcar
+			end
 		end
 	end
 	for floor,carid in pairs(mem.assigneddn) do
@@ -732,6 +832,11 @@ elseif mem.screenstate == "status" then
 			local carfloor = realtocarfloor(carid,floor)
 			if carfloor then
 				local ccdot = mem.carstatus[carid].carcalls[carfloor] and "*" or ""
+				local groupup = mem.carstatus[carid].groupupcalls[carfloor] and minetest.colorize("#55FF55","^") or ""
+				local swingup = mem.carstatus[carid].swingupcalls[carfloor] and minetest.colorize("#FFFF55","^") or ""
+				local swingdn = mem.carstatus[carid].swingdncalls[carfloor] and minetest.colorize("#FFFF55","v") or ""
+				local groupdn = mem.carstatus[carid].groupdncalls[carfloor] and minetest.colorize("#FF5555","v") or ""
+				ccdot = groupup..swingup..ccdot..swingdn..groupdn
 				if getpos(carid) == floor then
 					local cargraphics = {
 						open = "\\[   \\]",

@@ -608,6 +608,10 @@ elseif event.type == "dispatchermsg" then
 		mem.groupupcalls[event.msg] = true
 	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
 		mem.groupdncalls[event.msg] = true
+	elseif event.channel == "groupupcancel" then
+		mem.groupupcalls[event.msg] = nil
+	elseif event.channel == "groupdncancel" then
+		mem.groupdncalls[event.msg] = nil
 	elseif event.channel == "carcall" and mem.carstate == "normal" then
 		mem.carcalls[event.msg] = true
 		send(event.source,"status",mem)
