@@ -171,6 +171,7 @@ minetest.register_node("celevator:drive",{
 		meta:set_string("state","uninit")
 		meta:set_string("startpos","0")
 		meta:set_string("doorstate","closed")
+		meta:mark_as_private({"apos","dpos","vel","maxvel","state","startpos","doorstate"})
 		update_ui(pos)
 	end,
 	on_destruct = stopbuzz,
@@ -468,6 +469,7 @@ minetest.register_globalstep(celevator.drives.entity.step)
 
 function celevator.drives.entity.moveto(pos,target)
 	local meta = celevator.get_meta(pos)
+	meta:mark_as_private({"apos","dpos","vel","maxvel","state","startpos","doorstate"})
 	local carid = celevator.get_meta(pos):get_int("carid")
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not (carinfo and carinfo.machinepos) then return end
