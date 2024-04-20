@@ -274,7 +274,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 		elseif not ok then
 			eref:remove()
 		else
-			ok = false
+			if not pos then ok = false end
 		end
 		if pos then
 			for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
