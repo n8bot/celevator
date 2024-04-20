@@ -207,6 +207,11 @@ local function fs(element)
 	mem.formspec = mem.formspec..element
 end
 
+if type(mem.groupupcalls) ~= "table" then mem.groupupcalls = {} end
+if type(mem.groupdncalls) ~= "table" then mem.groupdncalls = {} end
+if type(mem.swingupcalls) ~= "table" then mem.swingupcalls = {} end
+if type(mem.swingdncalls) ~= "table" then mem.swingdncalls = {} end
+
 if event.type == "program" then
 	mem.carstate = "uninit"
 	mem.editingfloor = 1
@@ -215,6 +220,10 @@ if event.type == "program" then
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
 	mem.screenpage = 1
 	mem.scrollfollowscar = true
 	mem.controllerstopsw = false
@@ -360,9 +369,17 @@ elseif event.type == "ui" then
 			if event.fields[string.format("carcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "test" or mem.carstate == "capture" or mem.carstate == "indep") then
 				mem.carcalls[i] = true
 			elseif event.fields[string.format("upcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
-				mem.upcalls[i] = true
+				if mem.params.groupmode == "group" then
+					mem.swingupcalls[i] = true
+				else
+					mem.upcalls[i] = true
+				end
 			elseif event.fields[string.format("downcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
-				mem.dncalls[i] = true
+				if mem.params.groupmode == "group" then
+					mem.swingdncalls[i] = true
+				else
+					mem.dncalls[i] = true
+				end
 			end
 		end
 		if event.fields.scrollup then
@@ -443,10 +460,18 @@ elseif event.iid == "closed" and (mem.doorstate == "closing" or mem.doorstate ==
 			juststarted = true
 	end
 elseif event.type == "callbutton" and mem.carstate == "normal" then
-	if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
-		mem.upcalls[event.landing] = true
-	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
-		mem.dncalls[event.landing] = true
+	if mem.params.groupmode == "group" then
+		if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+			mem.swingupcalls[event.landing] = true
+		elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+			mem.swingdncalls[event.landing] = true
+		end
+	else
+		if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+			mem.upcalls[event.landing] = true
+		elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+			mem.dncalls[event.landing] = true
+		end
 	end
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
@@ -561,6 +586,31 @@ elseif event.type == "dispatchermsg" then
 			close()
 		end
 		send(event.source,"pairok",mem)
+	elseif event.channel == "newfloortable" then
+		mem.params.floornames = event.msg.floornames
+		mem.params.floorheights = event.msg.floorheights
+		mem.carstate = "bfdemand"
+		if mem.doorstate == "closed" then
+			drivecmd({
+				command = "setmaxvel",
+				maxvel = mem.params.contractspeed,
+			})
+			drivecmd({command = "resetpos"})
+			interrupt(0.1,"checkdrive")
+			mem.carmotion = true
+			juststarted = true
+		else
+			close()
+		end
+	elseif event.channel == "getstatus" then
+		send(event.source,"status",mem)
+	elseif event.channel == "groupupcall" and mem.carstate == "normal" then
+		mem.groupupcalls[event.msg] = true
+	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
+		mem.groupdncalls[event.msg] = true
+	elseif event.channel == "carcall" and mem.carstate == "normal" then
+		mem.carcalls[event.msg] = true
+		send(event.source,"status",mem)
 	end
 end
 
@@ -572,6 +622,10 @@ if mem.fatalfault then
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	mem.direction = nil
 elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstate == "floortable_edit" then
 	mem.carstate = "stop"
@@ -579,12 +633,20 @@ elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstat
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	mem.direction = nil
 elseif mem.controllerinspectsw and mem.cartopinspectsw then
 	mem.carstate = "inspconflict"
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	mem.direction = nil
 	drivecmd({command="estop"})
 elseif mem.controllerinspectsw and not mem.cartopinspectsw then
@@ -592,6 +654,10 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	mem.direction = nil
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
 elseif mem.cartopinspectsw and not mem.controllerinspectsw then
@@ -599,12 +665,20 @@ elseif mem.cartopinspectsw and not mem.controllerinspectsw then
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	mem.direction = nil
 	if oldstate ~= "carinspect" then drivecmd({command="estop"}) end
 elseif mem.fs2sw == "on" then
 	mem.carstate = "fs2"
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	if oldstate ~= "fs2" then mem.carcalls = {} end
 	if mem.doorstate == "open" and oldstate ~= "fs2" then interrupt(nil,"close") end
 elseif mem.fs2sw == "hold" then
@@ -612,12 +686,20 @@ elseif mem.fs2sw == "hold" then
 	mem.upcalls = {}
 	mem.dncalls = {}
 	mem.carcalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	if mem.doorstate == "open" then interrupt(nil,"close") end
 elseif mem.fs1switch then
 	mem.carstate = "fs1"
 	mem.carcalls = {}
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	interrupt(nil,"close")
 	if getpos() ~= (mem.params.mainlanding or 1) then
 		if not (mem.carmotion or juststarted) then
@@ -636,6 +718,10 @@ elseif mem.indsw then
 	if mem.carstate ~= "resync" then mem.carstate = "indep" end
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
@@ -647,6 +733,10 @@ elseif mem.indsw then
 elseif mem.testsw then
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	if mem.carstate ~= "resync" then mem.carstate = "test" end
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "carinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
@@ -655,6 +745,10 @@ elseif mem.testsw then
 elseif mem.capturesw then
 	mem.upcalls = {}
 	mem.dncalls = {}
+	mem.swingupcalls = {}
+	mem.swingdncalls = {}
+	mem.groupupcalls = {}
+	mem.groupdncalls = {}
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "carinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
@@ -685,8 +779,12 @@ if mem.carmotion then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
+				mem.swingupcalls[getpos()] = nil
+				mem.groupupcalls[getpos()] = nil
 			elseif mem.direction == "down" then
 				mem.dncalls[getpos()] = nil
+				mem.swingdncalls[getpos()] = nil
+				mem.groupdncalls[getpos()] = nil
 			end
 			if getpos() >= #mem.params.floornames then
 				mem.direction = "down"
@@ -717,6 +815,17 @@ if mem.carmotion then
 				mem.carstate = "normal"
 			end
 		end
+	end
+end
+
+if mem.params.groupmode == "group" then
+	mem.upcalls = table.copy(mem.groupupcalls)
+	mem.dncalls = table.copy(mem.groupdncalls)
+	for i in pairs(mem.swingupcalls) do
+		mem.upcalls[i] = true
+	end
+	for i in pairs(mem.swingdncalls) do
+		mem.dncalls[i] = true
 	end
 end
 
@@ -893,10 +1002,18 @@ elseif mem.screenstate == "status" then
 		fs(string.format("image_button[13.25,%f;0.75,0.75;celevator_fs_bg.png;carcall%d;%s]",ypos-0.25,floornum,ccdot))
 		if floornum < maxfloor then
 			local arrow = mem.upcalls[floornum] and minetest.colorize("#55FF55","^") or ""
+			if mem.params.groupmode == "group" then
+				arrow = mem.groupupcalls[floornum] and minetest.colorize("#55FF55","^") or ""
+				arrow = (mem.swingupcalls[floornum] and minetest.colorize("#FFFF55","^") or "")..arrow
+			end
 			fs(string.format("image_button[12.25,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",ypos-0.25,floornum,arrow))
 		end
 		if floornum > 1 then
 			local arrow = mem.dncalls[floornum] and minetest.colorize("#FF5555","v") or ""
+			if mem.params.groupmode == "group" then
+				arrow = mem.swingdncalls[floornum] and minetest.colorize("#FFFF55","v") or ""
+				arrow = (mem.groupdncalls[floornum] and minetest.colorize("#FF5555","v") or "")..arrow
+			end
 			fs(string.format("image_button[14.25,%f;0.75,0.75;celevator_fs_bg.png;downcall%d;%s]",ypos-0.25,floornum,arrow))
 		end
 	end

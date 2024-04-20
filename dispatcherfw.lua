@@ -9,6 +9,40 @@ end
 
 mem.messages = {}
 
+local function getpos(carid)
+	local floormap = {}
+	local floorheights = {}
+	for i=1,#mem.params.floornames,1 do
+		if mem.params.floorsserved[carid][i] then
+			table.insert(floormap,i)
+			table.insert(floorheights,mem.params.floorheights[i])
+		elseif #floorheights > 0 then
+			floorheights[#floorheights] = floorheights[#floorheights]+mem.params.floorheights[i]
+		end
+	end
+	local ret = 0
+	local searchpos = mem.carstatus[carid].position
+	for k,v in ipairs(floorheights) do
+		ret = ret+v
+		if ret > searchpos then return floormap[k] end
+	end
+	return 1
+end
+
+local function realtocarfloor(carid,floor)
+	local map = {}
+	for i=1,#mem.params.floornames,1 do
+		if mem.params.floorsserved[carid][i] then
+			table.insert(map,i)
+		end
+	end
+	local pmap = {}
+	for k,v in pairs(map) do
+		pmap[v] = k
+	end
+	return pmap[floor]
+end
+
 local function send(carid,channel,message)
 	table.insert(mem.messages,{
 		carid = carid,
@@ -112,6 +146,7 @@ elseif event.type == "ui" then
 			mem.screenstate = (mem.screenstate == "oobe_connections" and "oobe_connection" or "connection")
 		elseif event.fields.edit then
 			mem.screenstate = (mem.screenstate == "oobe_connections" and "oobe_connection" or "connection")
+			mem.newconnfloors = mem.params.floorsserved[mem.params.carids[mem.editingconnection]]
 		elseif event.fields.add then
 			mem.newconnfloors = {}
 			for i in ipairs(mem.params.floornames) do
@@ -140,7 +175,6 @@ elseif event.type == "ui" then
 				end
 			end
 			send(tonumber(fields.carid),"pairrequest",{
-				dispatcherid = mem.carid,
 				floornames = floornames,
 				floorheights = floorheights,
 			})
@@ -149,9 +183,44 @@ elseif event.type == "ui" then
 			local floor = #mem.params.floornames-exp.index+1
 			mem.newconnfloors[floor] = not mem.newconnfloors[floor]
 		end
+	elseif mem.screenstate == "oobe_connection" or mem.screenstate == "connection" then
+		local exp = event.fields.floors and minetest.explode_textlist_event(event.fields.floors) or {}
+		if event.fields.back then
+			mem.screenstate = (mem.screenstate == "oobe_connection" and "oobe_connections" or "connections")
+		elseif event.fields.save then
+			mem.screenstate = (mem.screenstate == "oobe_connection" and "oobe_connections" or "connections")
+			local floornames = {}
+			local floorheights = {}
+			for i=1,#mem.params.floornames,1 do
+				if mem.newconnfloors[i] then
+					table.insert(floornames,mem.params.floornames[i])
+					table.insert(floorheights,mem.params.floorheights[i])
+				elseif #floornames > 0 then
+					floorheights[#floorheights] = floorheights[#floorheights]+mem.params.floorheights[i]
+				end
+			end
+			send(mem.params.carids[mem.editingconnection],"newfloortable",{
+				floornames = floornames,
+				floorheights = floorheights,
+			})
+		elseif exp.type == "CHG" then
+			local floor = #mem.params.floornames-exp.index+1
+			mem.newconnfloors[floor] = not mem.newconnfloors[floor]
+		end
 	elseif mem.screenstate == "oobe_connectionfailed" or mem.screenstate == "connectionfailed" then
 		if fields.back then
 			mem.screenstate = (mem.screenstate == "oobe_connectionfailed" and "oobe_newconnection" or "newconnection")
+		end
+	elseif mem.screenstate == "status" then
+		for k,v in pairs(fields) do
+			if string.sub(k,1,7) == "carcall" then
+				local car = tonumber(string.sub(k,8,9))
+				local floor = tonumber(string.sub(k,10,-1))
+				if v and car and floor then
+					local carid = mem.params.carids[car]
+					send(carid,"carcall",realtocarfloor(carid,floor))
+				end
+			end
 		end
 	end
 elseif event.iid == "connecttimeout" then
@@ -165,19 +234,39 @@ elseif event.channel == "pairok" then
 		interrupt(nil,"connecttimeout")
 		mem.screenstate = (mem.screenstate == "oobe_connecting" and "oobe_connections" or "connections")
 		mem.carstatus[event.source] = {
-			upcalls = {},
-			dncalls = {},
+			groupupcalls = {},
+			groupdncalls = {},
+			swingupcalls = {},
+			swingdncalls = {},
 			carcalls = {},
+			doorstate = event.msg.doorstate,
 			position = event.msg.drive.status.apos or 0,
 			state = event.msg.carstate,
+			direction = event.msg.direction,
 		}
 		mem.params.floorsserved[event.source] = mem.newconnfloors
 		table.insert(mem.params.carids,event.source)
 	end
+elseif event.channel == "status" then
+	mem.carstatus[event.source] = {
+		groupupcalls = event.msg.groupupcalls,
+		groupdncalls = event.msg.groupdncalls,
+		swingupcalls = event.msg.swingupcalls,
+		swingdncalls = event.msg.swingdncalls,
+		carcalls = event.msg.carcalls,
+		doorstate = event.msg.doorstate,
+		position = event.msg.drive.status.apos or 0,
+		state = event.msg.carstate,
+		direction = event.msg.direction,
+	}
+elseif event.type == "abm" then
+	for _,carid in ipairs(mem.params.carids) do
+		send(carid,"getstatus")
+	end
 end
 
 fs("formspec_version[6]")
-fs("size[16,12]")
+fs("size[20,12]")
 fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
 
 if mem.screenstate == "oobe_welcome" then
@@ -239,7 +328,7 @@ elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections"
 		for i=#mem.params.carids,1,-1 do
 			fs(string.format("Car %d - ID #%d",i,mem.params.carids[i])..(i==1 and "" or ","))
 		end
-		fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
+		fs(";"..tostring(#mem.params.carids-mem.editingconnection+1)..";false]")
 	else
 		fs("label[1,2;No Connections]")
 	end
@@ -258,8 +347,8 @@ elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnect
 		if numfloors >= 2 then fs("button[13,10;2,1;connect;Connect >]") end
 	else
 		fs("label[1,1;NEW CONNECTION]")
-		fs("button[1,10;2,1;back;< Back]")
-		if numfloors >= 2 then fs("button[13,10;2,1;connect;Connect >]") end
+		fs("button[1,10;2,1;back;Back]")
+		if numfloors >= 2 then fs("button[13,10;2,1;connect;Connect]") end
 	end
 	fs("textlist[8,2;6,7;floors;")
 	for i=#mem.params.floornames,1,-1 do
@@ -267,6 +356,27 @@ elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnect
 	end
 	fs(";0;false]")
 	fs("field[2,3;4,1;carid;Car ID;]")
+elseif mem.screenstate == "oobe_connection" or mem.screenstate == "connection" then
+	local numfloors = 0
+	for _,v in ipairs(mem.newconnfloors) do
+		if v then numfloors = numfloors + 1 end
+	end
+	if mem.screenstate == "oobe_newconnection" then
+		fs("label[1,1;Enter the car ID and select the floors served (click them to toggle), then click Connect.]")
+		fs("label[1,1.3;You must select at least two floors.]")
+		fs("button[1,10;2,1;back;< Back]")
+		if numfloors >= 2 then fs("button[13,10;2,1;save;Save >]") end
+	else
+		fs("label[1,1;EDIT CONNECTION]")
+		fs("button[1,10;2,1;back;< Back]")
+		if numfloors >= 2 then fs("button[13,10;2,1;save;Save >]") end
+	end
+	fs("textlist[8,2;6,7;floors;")
+	for i=#mem.params.floornames,1,-1 do
+		fs(string.format("%s - %s",minetest.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
+	end
+	fs(";0;false]")
+	fs("label[2,3;Car ID: "..mem.params.carids[mem.editingconnection].."]")
 elseif mem.screenstate == "oobe_connecting" or mem.screenstate == "connecting" then
 	fs("label[1,1;Connecting to controller...]")
 elseif mem.screenstate == "oobe_connectionfailed" or mem.screenstate == "connectionfailed" then
@@ -274,6 +384,54 @@ elseif mem.screenstate == "oobe_connectionfailed" or mem.screenstate == "connect
 	fs("label[4,5;Make sure the car ID is correct and]")
 	fs("label[4,5.5;that the controller is ready to pair.]")
 	fs("button[1,10;2,1;back;< Back]")
+elseif mem.screenstate == "status" then
+	if not mem.screenpage then mem.screenpage = 1 end
+	fs("label[1,1;GROUP DISPLAY]")
+	fs("box[1.5,1.5;0.1,10;#AAAAAAFF]")
+	fs("box[18.5,1.5;0.1,10;#AAAAAAFF]")
+	fs("label[0.55,11.5;UP]")
+	fs("label[18.85,11.5;DOWN]")
+	fs("style_type[image_button;font=mono;font_size=*0.75]")
+	for car=1,#mem.params.carids,1 do
+		local xp = 1.7+(car-1)
+		local carid = mem.params.carids[car]
+		local carstate = mem.carstatus[carid].state
+		fs(string.format("label[%f,11;CAR %d]",xp,car))
+		fs(string.format("label[%f,11.35;%s]",xp+0.1,minetest.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT"))))
+	end
+	local lowestfloor = (mem.screenpage-1)*10+1
+	for i=1,math.min(10,#mem.params.floornames-lowestfloor+1),1 do
+		local yp = 9.75-0.8*(i-1)
+		local floor = i+lowestfloor-1
+		fs(string.format("label[0.9,%f;%s]",yp+0.35,mem.params.floornames[floor]))
+		if floor < #mem.params.floornames then fs(string.format("image_button[0.15,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",yp,floor,"")) end
+		fs(string.format("label[18.65,%f;%s]",yp+0.35,mem.params.floornames[floor]))
+		if floor > 1 then fs(string.format("image_button[19.1,%f;0.75,0.75;celevator_fs_bg.png;dncall%d;%s]",yp,floor,"")) end
+		for car=1,#mem.params.carids,1 do
+			local xp = 1.7+(car-1)
+			local carid = mem.params.carids[car]
+			local carfloor = realtocarfloor(carid,floor)
+			if carfloor then
+				local ccdot = mem.carstatus[carid].carcalls[carfloor] and "*" or ""
+				if getpos(carid) == floor then
+					local cargraphics = {
+						open = "\\[   \\]",
+						opening = "\\[< >\\]",
+						closing = "\\[> <\\]",
+						closed = "\\[ | \\]",
+						testtiming = "\\[ | \\]",
+					}
+					ccdot = cargraphics[mem.carstatus[carid].doorstate]
+					if mem.carstatus[carid].direction == "up" then
+						ccdot = minetest.colorize("#55FF55",ccdot)
+					elseif mem.carstatus[carid].direction == "down" then
+						ccdot = minetest.colorize("#FF5555",ccdot)
+					end
+				end
+				fs(string.format("image_button[%f,%f;0.75,0.75;celevator_fs_bg.png;carcall%02d%d;%s]",xp,yp,car,floor,ccdot))
+			end
+		end
+	end
 end
 
 mem.infotext = string.format("ID: %d",mem.carid)
