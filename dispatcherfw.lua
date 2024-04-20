@@ -29,7 +29,31 @@ local function getpos(carid)
 	return 1
 end
 
+local function cartorealfloor(carid,floor)
+	if type(floor) == "table" then
+		local ret = {}
+		for i in pairs(floor) do
+			ret[cartorealfloor(carid,i)] = true
+		end
+		return ret
+	end
+	local map = {}
+	for i=1,#mem.params.floornames,1 do
+		if mem.params.floorsserved[carid][i] then
+			table.insert(map,i)
+		end
+	end
+	return map[floor]
+end
+
 local function realtocarfloor(carid,floor)
+	if type(floor) == "table" then
+		local ret = {}
+		for i in pairs(floor) do
+			ret[realtocarfloor(carid,i)] = true
+		end
+		return ret
+	end
 	local map = {}
 	for i=1,#mem.params.floornames,1 do
 		if mem.params.floorsserved[carid][i] then
@@ -51,6 +75,166 @@ local function send(carid,channel,message)
 	})
 end
 
+local function getnextcallabove(carid,dir,startpos,carcalls,upcalls,dncalls)
+	for i=(startpos or getpos(carid)),#mem.params.floorheights,1 do
+		if not dir then
+			if carcalls[i] then
+				return i,"car"
+			elseif upcalls[i] then
+				return i,"up"
+			elseif dncalls[i] then
+				return i,"down"
+			end
+		elseif dir == "up" then
+			if carcalls[i] then
+				return i,"car"
+			elseif upcalls[i] then
+				return i,"up"
+			end
+		elseif dir == "down" then
+			if carcalls[i] then
+				return i,"car"
+			elseif dncalls[i] then
+				return i,"down"
+			end
+		end
+	end
+end
+
+local function getnextcallbelow(carid,dir,startpos,carcalls,upcalls,dncalls)
+	for i=(startpos or getpos(carid)),1,-1 do
+		if not dir then
+			if carcalls[i] then
+				return i,"car"
+			elseif upcalls[i] then
+				return i,"up"
+			elseif dncalls[i] then
+				return i,"down"
+			end
+		elseif dir == "up" then
+			if carcalls[i] then
+				return i,"car"
+			elseif upcalls[i] then
+				return i,"up"
+			end
+		elseif dir == "down" then
+			if carcalls[i] then
+				return i,"car"
+			elseif dncalls[i] then
+				return i,"down"
+			end
+		end
+	end
+end
+
+local function getlowestupcall(upcalls)
+	for i=1,#mem.params.floornames,1 do
+		if upcalls[i] then return i end
+	end
+end
+
+local function gethighestdowncall(dncalls)
+	for i=#mem.params.floornames,1,-1 do
+		if dncalls[i] then return i end
+	end
+end
+
+local function gettarget(floor)
+	local target = 0
+	if floor == 1 then return 0 end
+	for i=1,floor-1,1 do
+		target = target+mem.params.floorheights[i]
+	end
+	return target
+end
+
+local function predictnextstop(carid,startpos,direction,carcalls,upcalls,dncalls)
+	if direction == "up" then
+		if getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls),"up"
+		elseif gethighestdowncall(dncalls) then
+			return gethighestdowncall(dncalls),"down"
+		elseif getlowestupcall(upcalls) then
+			return getlowestupcall(upcalls),"up"
+		elseif getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls),"down"
+		else
+			return
+		end
+	elseif direction == "down" then
+		if getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls),"down"
+		elseif getlowestupcall(upcalls) then
+			return getlowestupcall(upcalls),"up"
+		elseif gethighestdowncall(dncalls) then
+			return gethighestdowncall(dncalls),"down"
+		elseif getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallabove(carid,nil,startpos,carcalls,upcalls,dncalls),"up"
+		else
+			return
+		end
+	else
+		if getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallabove(carid,nil,startpos,carcalls,upcalls,dncalls),"up"
+		elseif getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls) then
+			return getnextcallbelow(carid,"down",startpos,carcalls,upcalls,dncalls),"down"
+		elseif getlowestupcall(upcalls) then
+			return getlowestupcall(upcalls),"up"
+		elseif gethighestdowncall(dncalls) then
+			return gethighestdowncall(dncalls),"down"
+		end
+	end
+end
+
+local function estimatetraveltime(carid,src,dest)
+	local srcpos = gettarget(src)
+	local dstpos = gettarget(dest)
+	local estimate = math.abs(srcpos-dstpos)
+	estimate = estimate/mem.carstatus[carid].contractspeed
+	estimate = estimate+(mem.carstatus[carid].contractspeed*2)
+	return estimate
+end
+
+local function buildstopsequence(carid,startfloor,direction,target,targetdir)
+	local carcalls = cartorealfloor(carid,mem.carstatus[carid].carcalls)
+	local upcalls = cartorealfloor(carid,mem.carstatus[carid].upcalls)
+	local dncalls = cartorealfloor(carid,mem.carstatus[carid].dncalls)
+	if targetdir == "up" then
+		upcalls[target] = true
+	elseif targetdir == "down" then
+		dncalls[target] = true
+	end
+	local carpos = startfloor
+	local sequence = {}
+	repeat
+		local src = carpos
+		carpos,direction = predictnextstop(carid,carpos,direction,carcalls,upcalls,dncalls)
+		carcalls[carpos] = nil
+		if direction == "up" then
+			upcalls[carpos] = nil
+		elseif direction == "down" then
+			dncalls[carpos] = nil
+		end
+		table.insert(sequence,{
+			src = src,
+			dest = carpos,
+		})
+	until (carpos == target and direction == targetdir) or #sequence > 100
+	return sequence
+end
+
+local function calculateeta(carid,floor,direction)
+	local sequence = buildstopsequence(carid,getpos(carid),mem.carstatus[carid].direction,floor,direction)
+	local eta = 0
+	for k,v in ipairs(sequence) do
+		eta = eta+estimatetraveltime(carid,v.src,v.dest)
+		if k < #sequence then
+			eta = eta+mem.carstatus[carid].doortimer+9
+		end
+	end
+	return eta
+end
+
 mem.formspec = ""
 
 local function fs(element)
@@ -64,6 +248,12 @@ if event.type == "program" then
 	mem.screenpage = 1
 	mem.editingconnection = 1
 	mem.newconncarid = 0
+	mem.upcalls = {}
+	mem.dncalls = {}
+	mem.assignedup = {}
+	mem.assigneddn = {}
+	mem.upeta = {}
+	mem.dneta = {}
 	if not mem.params then
 		mem.params = {
 			carids = {},
@@ -220,6 +410,20 @@ elseif event.type == "ui" then
 					local carid = mem.params.carids[car]
 					send(carid,"carcall",realtocarfloor(carid,floor))
 				end
+			elseif string.sub(k,1,6) == "upcall" then
+				local floor = tonumber(string.sub(k,7,-1))
+				if v and floor and not mem.upcalls[floor] then
+					mem.upcalls[floor] = true
+					mem.upeta[floor] = 0
+					interrupt(0,"run")
+				end
+			elseif string.sub(k,1,6) == "dncall" then
+				local floor = tonumber(string.sub(k,7,-1))
+				if v and floor and not mem.dncalls[floor] then
+					mem.dncalls[floor] = true
+					mem.dneta[floor] = 0
+					interrupt(0,"run")
+				end
 			end
 		end
 	end
@@ -238,11 +442,16 @@ elseif event.channel == "pairok" then
 			groupdncalls = {},
 			swingupcalls = {},
 			swingdncalls = {},
+			upcalls = {},
+			dncalls = {},
 			carcalls = {},
 			doorstate = event.msg.doorstate,
 			position = event.msg.drive.status.apos or 0,
 			state = event.msg.carstate,
 			direction = event.msg.direction,
+			vel = event.msg.drive.status.vel or 0,
+			contractspeed = event.msg.params.contractspeed,
+			doortimer = event.msg.params.doortimer,
 		}
 		mem.params.floorsserved[event.source] = mem.newconnfloors
 		table.insert(mem.params.carids,event.source)
@@ -253,15 +462,121 @@ elseif event.channel == "status" then
 		groupdncalls = event.msg.groupdncalls,
 		swingupcalls = event.msg.swingupcalls,
 		swingdncalls = event.msg.swingdncalls,
+		upcalls = event.msg.upcalls,
+		dncalls = event.msg.dncalls,
 		carcalls = event.msg.carcalls,
 		doorstate = event.msg.doorstate,
 		position = event.msg.drive.status.apos or 0,
 		state = event.msg.carstate,
 		direction = event.msg.direction,
+		vel = event.msg.drive.status.vel,
+		contractspeed = event.msg.params.contractspeed,
+		doortimer = event.msg.params.doortimer,
 	}
-elseif event.type == "abm" then
+	if event.msg.carstate == "normal" and event.msg.doorstate == "opening" then
+		local floor = getpos(event.source)
+		if event.msg.direction == "up" then
+			mem.upcalls[floor] = nil
+		elseif event.msg.direction == "down" then
+			mem.dncalls[floor] = nil
+		end
+	end
+elseif event.type == "abm" or event.iid == "run" then
+	interrupt(1.5,"run")
+	if not mem.upcalls then mem.upcalls = {} end
+	if not mem.dncalls then mem.dncalls = {} end
+	if not mem.upeta then mem.upeta = {} end
+	if not mem.dneta then mem.dneta = {} end
+	if not mem.assignedup then mem.assignedup = {} end
+	if not mem.assigneddn then mem.assigneddn = {} end
+	local unassignedup = table.copy(mem.upcalls)
+	local unassigneddn = table.copy(mem.dncalls)
+	for _,carid in ipairs(mem.params.carids) do
+		for floor in pairs(mem.carstatus[carid].groupupcalls) do
+			unassignedup[cartorealfloor(carid,floor)] = nil
+		end
+		for floor in pairs(mem.carstatus[carid].groupdncalls) do
+			unassigneddn[cartorealfloor(carid,floor)] = nil
+		end
+	end
+	for i in pairs(unassignedup) do
+		local eligiblecars = {}
+		for _,carid in pairs(mem.params.carids) do
+			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
+				local serveshigher = false
+				for floor in pairs(mem.params.floorsserved[carid]) do
+					if floor > i then
+						serveshigher = true
+						break
+					end
+				end
+				if serveshigher then eligiblecars[carid] = true end
+			end
+		end
+		local besteta = 999
+		local bestcar
+		for carid in pairs(eligiblecars) do
+			local eta = calculateeta(carid,i,"up")
+			if eta < besteta then
+				besteta = eta
+				bestcar = carid
+			end
+		end
+		mem.upeta[i] = besteta
+		if bestcar then
+			send(bestcar,"groupupcall",realtocarfloor(bestcar,i))
+			mem.assignedup[i] = bestcar
+		else
+			mem.upcalls[i] = nil
+		end
+	end
+	for floor,carid in pairs(mem.assignedup) do
+		mem.upeta[floor] = calculateeta(carid,floor,"up")
+	end
+	for i in pairs(unassigneddn) do
+		local eligiblecars = {}
+		for _,carid in pairs(mem.params.carids) do
+			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
+				local serveslower = false
+				for floor in pairs(mem.params.floorsserved[carid]) do
+					if floor < i then
+						serveslower = true
+						break
+					end
+				end
+				if serveslower then eligiblecars[carid] = true end
+			end
+		end
+		local besteta = 999
+		local bestcar
+		for carid in pairs(eligiblecars) do
+			local eta = calculateeta(carid,i,"down")
+			if eta < besteta then
+				besteta = eta
+				bestcar = carid
+			end
+		end
+		mem.upeta[i] = besteta
+		if bestcar then
+			send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
+			mem.assigneddn[i] = bestcar
+		else
+			mem.upcalls[i] = nil
+		end
+	end
+	for floor,carid in pairs(mem.assigneddn) do
+		mem.dneta[floor] = calculateeta(carid,floor,"down")
+	end
+	interrupt(0.5,"getstatus")
+elseif event.iid == "getstatus" then
 	for _,carid in ipairs(mem.params.carids) do
 		send(carid,"getstatus")
+	end
+elseif event.type == "callbutton" then
+	if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+		mem.upcalls[event.landing] = true
+	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+		mem.dncalls[event.landing] = true
 	end
 end
 
@@ -404,9 +719,13 @@ elseif mem.screenstate == "status" then
 		local yp = 9.75-0.8*(i-1)
 		local floor = i+lowestfloor-1
 		fs(string.format("label[0.9,%f;%s]",yp+0.35,mem.params.floornames[floor]))
-		if floor < #mem.params.floornames then fs(string.format("image_button[0.15,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",yp,floor,"")) end
+		local uplabel = ""
+		if mem.upcalls[floor] then uplabel = minetest.colorize("#55FF55",math.floor(mem.upeta[floor] or 0)) end
+		if floor < #mem.params.floornames then fs(string.format("image_button[0.15,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",yp,floor,uplabel)) end
 		fs(string.format("label[18.65,%f;%s]",yp+0.35,mem.params.floornames[floor]))
-		if floor > 1 then fs(string.format("image_button[19.1,%f;0.75,0.75;celevator_fs_bg.png;dncall%d;%s]",yp,floor,"")) end
+		local dnlabel = ""
+		if mem.dncalls[floor] then dnlabel = minetest.colorize("#FF5555",math.floor(mem.dneta[floor] or 0)) end
+		if floor > 1 then fs(string.format("image_button[19.1,%f;0.75,0.75;celevator_fs_bg.png;dncall%d;%s]",yp,floor,dnlabel)) end
 		for car=1,#mem.params.carids,1 do
 			local xp = 1.7+(car-1)
 			local carid = mem.params.carids[car]

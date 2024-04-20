@@ -185,20 +185,38 @@ for _,state in ipairs(validstates) do
 			if carid == 0 then return end
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 			if not carinfo then return end
-			local controllerpos = carinfo.controllerpos
+			local controllerpos = carinfo.controllerpos or carinfo.dispatcherpos
+			local isdispatcher = carinfo.dispatcherpos
+			if not controllerpos then return end
 			local controllermeta = minetest.get_meta(controllerpos)
 			if controllermeta:get_int("carid") ~= carid then return end
 			local landing = meta:get_int("landing")
 			if state[1] == "up" then
-				celevator.controller.handlecallbutton(controllerpos,landing,"up")
+				if isdispatcher then
+					celevator.dispatcher.handlecallbutton(controllerpos,landing,"up")
+				else
+					celevator.controller.handlecallbutton(controllerpos,landing,"up")
+				end
 			elseif state[1] == "down" then
-				celevator.controller.handlecallbutton(controllerpos,landing,"down")
+				if isdispatcher then
+					celevator.dispatcher.handlecallbutton(controllerpos,landing,"down")
+				else
+					celevator.controller.handlecallbutton(controllerpos,landing,"down")
+				end
 			elseif state[1] == "both" then
 				local dir = disambiguatedir(pos,clicker)
 				if dir == "up" then
-					celevator.controller.handlecallbutton(controllerpos,landing,"up")
+					if isdispatcher then
+						celevator.dispatcher.handlecallbutton(controllerpos,landing,"up")
+					else
+						celevator.controller.handlecallbutton(controllerpos,landing,"up")
+					end
 				elseif dir == "down" then
-					celevator.controller.handlecallbutton(controllerpos,landing,"down")
+					if isdispatcher then
+						celevator.dispatcher.handlecallbutton(controllerpos,landing,"down")
+					else
+						celevator.controller.handlecallbutton(controllerpos,landing,"down")
+					end
 				end
 			end
 		end,
