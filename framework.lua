@@ -9,3 +9,12 @@ function celevator.get_node(pos)
 	VoxelManip(pos,pos)
 	return minetest.get_node(pos)
 end
+
+function celevator.get_meta(pos)
+	if minetest.get_node_or_nil(pos) then
+		return minetest.get_meta(pos)
+	else
+		VoxelManip(pos,pos)
+		return minetest.get_meta(pos)
+	end
+end

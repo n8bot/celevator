@@ -267,28 +267,32 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			if minetest.get_item_group(eref:get_properties().wield_item,"_connects_yp") ~= 1 then top = true end
 			minetest.set_node(pos,node)
 			eref:remove()
-			if carid then minetest.get_meta(pos):set_int("carid",carid) end
+			if carid then celevator.get_meta(pos):set_int("carid",carid) end
 		elseif pos and eref:get_luaentity().name == "celevator:incar_pi_entity" then
 			pos = vector.new(pos.x,math.floor(pos.y+0.5),pos.z)
 			eref:set_pos(pos)
+		elseif not ok then
+			eref:remove()
 		else
 			ok = false
 		end
-		for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
-			i:set_velocity(vector.new(0,0,0))
-			if i:is_player() then
-				local ppos = i:get_pos()
-				ppos.y=ppos.y-0.4
-				if top then ppos.y = ppos.y+1.1 end
-				i:set_pos(ppos)
-				minetest.after(0.5,i.set_pos,i,ppos)
-			elseif i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door" then
-				local epos = i:get_pos()
-				epos.y = math.floor(epos.y+0.5)
-				if i:get_luaentity().name == "celevator:car_top_box" then
-					epos.y = epos.y+0.1
+		if pos then
+			for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
+				i:set_velocity(vector.new(0,0,0))
+				if i:is_player() then
+					local ppos = i:get_pos()
+					ppos.y=ppos.y-0.4
+					if top then ppos.y = ppos.y+1.1 end
+					i:set_pos(ppos)
+					minetest.after(0.5,i.set_pos,i,ppos)
+				elseif i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door" then
+					local epos = i:get_pos()
+					epos.y = math.floor(epos.y+0.5)
+					if i:get_luaentity().name == "celevator:car_top_box" then
+						epos.y = epos.y+0.1
+					end
+					i:set_pos(epos)
 				end
-				i:set_pos(epos)
 			end
 		end
 	end
@@ -308,7 +312,7 @@ function celevator.drives.entity.step(dtime)
 		elseif node.name ~= "celevator:drive" then
 			table.remove(entitydrives_running,i)
 		else
-			local meta = minetest.get_meta(pos)
+			local meta = celevator.get_meta(pos)
 			local carid = meta:get_int("carid")
 			local state = meta:get_string("state")
 			if not (state == "running" or state == "start" or state == "fakerunning") then
@@ -462,8 +466,8 @@ end
 minetest.register_globalstep(celevator.drives.entity.step)
 
 function celevator.drives.entity.moveto(pos,target)
-	local meta = minetest.get_meta(pos)
-	local carid = minetest.get_meta(pos):get_int("carid")
+	local meta = celevator.get_meta(pos)
+	local carid = celevator.get_meta(pos):get_int("carid")
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not (carinfo and carinfo.machinepos) then return end
 	local origin = minetest.string_to_pos(meta:get_string("origin"))
@@ -520,7 +524,7 @@ function celevator.drives.entity.resetpos(pos)
 end
 
 function celevator.drives.entity.estop(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = celevator.get_meta(pos)
 	if meta:get_string("state") ~= "running" then return end
 	local apos = math.floor(tonumber(meta:get_string("apos"))+0.5)
 	meta:set_string("dpos",tostring(apos))
@@ -539,7 +543,7 @@ end
 
 
 function celevator.drives.entity.setmaxvel(pos,maxvel)
-	local meta = minetest.get_meta(pos)
+	local meta = celevator.get_meta(pos)
 	meta:set_string("maxvel",tostring(maxvel))
 end
 
@@ -557,7 +561,7 @@ function celevator.drives.entity.getstatus(pos,call2)
 		minetest.log("error","[celevator] [entity drive] Could not load drive status at "..minetest.pos_to_string(pos))
 		return {fault = "metaload"}
 	else
-		local meta = minetest.get_meta(pos)
+		local meta = celevator.get_meta(pos)
 		local ret = {}
 		ret.apos = tonumber(meta:get_string("apos")) or 0
 		ret.dpos = tonumber(meta:get_string("dpos")) or 0
@@ -575,7 +579,7 @@ end
 function celevator.drives.entity.movedoors(drivepos,direction)
 	local drivehash = minetest.hash_node_position(drivepos)
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
-	local drivemeta = minetest.get_meta(drivepos)
+	local drivemeta = celevator.get_meta(drivepos)
 	for _,hash in pairs(entitydrives_running) do
 		if drivehash == hash then
 			minetest.log("error","[celevator] [entity drive] Attempted to open doors while drive at "..minetest.pos_to_string(drivepos).." was still moving")
@@ -603,11 +607,11 @@ function celevator.drives.entity.movedoors(drivepos,direction)
 end
 
 function celevator.drives.entity.resetfault(pos)
-	minetest.get_meta(pos):set_string("fault","")
+	celevator.get_meta(pos):set_string("fault","")
 end
 
 function celevator.drives.entity.pibeep(drivepos)
-	local drivemeta = minetest.get_meta(drivepos)
+	local drivemeta = celevator.get_meta(drivepos)
 	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
 	if not origin then
 		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
@@ -640,12 +644,12 @@ local function carsearch(pos)
 end
 
 local function updatecarpos(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = celevator.get_meta(pos)
 	if meta:get_int("carid") == 0 then return end
 	local carpos = carsearch(pos)
 	if carpos then
 		meta:set_string("origin",minetest.pos_to_string(carpos))
-		minetest.get_meta(carpos):set_string("machinepos",minetest.pos_to_string(pos))
+		celevator.get_meta(carpos):set_string("machinepos",minetest.pos_to_string(pos))
 		meta:set_string("infotext",string.format("Using car with origin %s",minetest.pos_to_string(carpos)))
 		local carid = meta:get_int("carid")
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
@@ -654,7 +658,7 @@ local function updatecarpos(pos)
 		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 		local drivepos = celevator.controller.finddrive(carinfo.controllerpos)
 		if drivepos then
-			local drivemeta = minetest.get_meta(drivepos)
+			local drivemeta = celevator.get_meta(drivepos)
 			if drivemeta:get_string("state") == "uninit" then
 				drivemeta:set_string("origin",minetest.pos_to_string(carpos))
 				drivemeta:set_string("state","stopped")
@@ -664,7 +668,7 @@ local function updatecarpos(pos)
 		local caryaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(carpos).param2))
 		local carnodes = celevator.drives.entity.gathercar(carpos,caryaw)
 		for hash in pairs(carnodes) do
-			local carmeta = minetest.get_meta(minetest.get_position_from_hash(hash))
+			local carmeta = celevator.get_meta(minetest.get_position_from_hash(hash))
 			carmeta:set_int("carid",carid)
 		end
 	else
@@ -935,13 +939,13 @@ end
 function celevator.drives.entity.updatecopformspec(drivepos)
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
 	if entitydrives_running[minetest.hash_node_position(drivepos)] then return end
-	local drivemeta = minetest.get_meta(drivepos)
+	local drivemeta = celevator.get_meta(drivepos)
 	local carid = drivemeta:get_int("carid")
 	if carid == 0 then return end
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not carinfo then return end
-	local copformspec = minetest.get_meta(carinfo.controllerpos):get_string("copformspec")
-	local switchformspec = minetest.get_meta(carinfo.controllerpos):get_string("switchformspec")
+	local copformspec = celevator.get_meta(carinfo.controllerpos):get_string("copformspec")
+	local switchformspec = celevator.get_meta(carinfo.controllerpos):get_string("switchformspec")
 	local origin = minetest.string_to_pos(drivemeta:get_string("origin"))
 	if not origin then
 		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(drivepos))
@@ -949,15 +953,17 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 		return
 	end
 	local apos = tonumber(drivemeta:get_string("apos")) or 0
-	local carpos = vector.add(origin,vector.new(0,apos,0))
-	local carnodes = celevator.drives.entity.gathercar(carpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(carpos).param2)))
-	for hash in pairs(carnodes) do
-		local piecepos = minetest.get_position_from_hash(hash)
-		local piece = celevator.get_node(piecepos)
-		if piece.name == "celevator:car_010" then
-			minetest.get_meta(piecepos):set_string("formspec",copformspec)
-		elseif piece.name == "celevator:car_000" then
-			minetest.get_meta(piecepos):set_string("formspec",switchformspec)
+	if apos == math.floor(apos) then
+		local carpos = vector.add(origin,vector.new(0,apos,0))
+		local carnodes = celevator.drives.entity.gathercar(carpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(celevator.get_node(carpos).param2)))
+		for hash in pairs(carnodes) do
+			local piecepos = minetest.get_position_from_hash(hash)
+			local piece = celevator.get_node(piecepos)
+			if piece.name == "celevator:car_010" then
+				celevator.get_meta(piecepos):set_string("formspec",copformspec)
+			elseif piece.name == "celevator:car_000" then
+				celevator.get_meta(piecepos):set_string("formspec",switchformspec)
+			end
 		end
 	end
 end

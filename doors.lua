@@ -247,7 +247,7 @@ function celevator.doors.hwopen(pos,drivepos)
 		celevator.doors.erefs[hash] = erefs
 		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
 		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=param2})
-		local pmeta = minetest.get_meta(pos)
+		local pmeta = celevator.get_meta(pos)
 		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 		local carpos = vector.add(pos,fdir)
@@ -264,7 +264,7 @@ function celevator.doors.hwopen(pos,drivepos)
 			celevator.doors.caropen(carpos)
 		end
 		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=hwdoors_moving[hash].param2})
-		local pmeta = minetest.get_meta(pos)
+		local pmeta = celevator.get_meta(pos)
 		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 	end
@@ -276,7 +276,7 @@ function celevator.doors.hwclose(pos,drivepos)
 	if hwdoors_moving[hash] then
 		return
 	end
-	local pmeta = minetest.get_meta(pos)
+	local pmeta = celevator.get_meta(pos)
 	local state = pmeta:get_string("state")
 	if state ~= "open" then return end
 	local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
@@ -334,8 +334,8 @@ function celevator.doors.hwstep(dtime)
 					for i=1,6,1 do
 						celevator.doors.erefs[hash][i]:remove()
 					end
-					minetest.get_meta(data.positions[1]):set_string("state","open")
-					minetest.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","open")
+					celevator.get_meta(data.positions[1]):set_string("state","open")
+					if hwdoors_moving[hash].drivepos then celevator.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","open") end
 					hwdoors_moving[hash] = nil
 				end
 			elseif data.direction == "close" then
@@ -352,7 +352,7 @@ function celevator.doors.hwstep(dtime)
 						celevator.doors.erefs[hash][i]:set_pos(data.positions[i])
 					end
 					celevator.drives.entity.entitiestonodes(celevator.doors.erefs[hash])
-					minetest.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","closed")
+					if hwdoors_moving[hash].drivepos then celevator.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","closed") end
 					hwdoors_moving[hash] = nil
 				end
 			end
@@ -363,13 +363,15 @@ function celevator.doors.hwstep(dtime)
 						celevator.doors.erefs[hash][i]:remove()
 					end
 				end
-				minetest.get_meta(data.positions[1]):set_string("state","open")
+				celevator.get_meta(data.positions[1]):set_string("state","open")
+				if hwdoors_moving[hash].drivepos then celevator.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","open") end
 				hwdoors_moving[hash] = nil
 			elseif data.direction == "close" then
 				for i=1,6,1 do
 					minetest.set_node(data.positions[i],data.nodes[i])
 				end
-				minetest.get_meta(data.positions[1]):set_string("state","closed")
+				celevator.get_meta(data.positions[1]):set_string("state","closed")
+				if hwdoors_moving[hash].drivepos then celevator.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","closed") end
 				hwdoors_moving[hash] = nil
 			end
 		end
@@ -409,7 +411,7 @@ function celevator.doors.carstep(dtime)
 					for i=1,6,1 do
 						celevator.doors.erefs[hash][i]:remove()
 					end
-					minetest.get_meta(data.positions[1]):set_string("doorstate","open")
+					celevator.get_meta(data.positions[1]):set_string("doorstate","open")
 					cardoors_moving[hash] = nil
 				end
 			elseif data.direction == "close" then
@@ -425,7 +427,7 @@ function celevator.doors.carstep(dtime)
 					for i=1,6,1 do
 						celevator.doors.erefs[hash][i]:set_velocity(vector.new(0,0,0))
 					end
-					minetest.get_meta(data.positions[1]):set_string("doorstate","closed")
+					celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
 					cardoors_moving[hash] = nil
 				end
 			end
@@ -436,12 +438,12 @@ function celevator.doors.carstep(dtime)
 						celevator.doors.erefs[hash][i]:remove()
 					end
 				end
-				minetest.get_meta(data.positions[1]):set_string("doorstate","open")
+				celevator.get_meta(data.positions[1]):set_string("doorstate","open")
 				cardoors_moving[hash] = nil
 			elseif data.direction == "close" then
 				local fdir = minetest.fourdir_to_dir(celevator.get_node(data.positions[1]).param2)
 				celevator.doors.spawncardoors(data.positions[1],vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi))
-				minetest.get_meta(data.positions[1]):set_string("doorstate","closed")
+				celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
 				cardoors_moving[hash] = nil
 			end
 		end
@@ -514,7 +516,7 @@ function celevator.doors.caropen(pos)
 		}
 		celevator.doors.erefs[hash] = erefs
 		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
-		local meta = minetest.get_meta(pos)
+		local meta = celevator.get_meta(pos)
 		meta:set_string("doordata",minetest.serialize(cardoors_moving[hash]))
 		meta:set_string("doorstate","opening")
 	elseif cardoors_moving[hash].direction == "close" then
@@ -530,7 +532,7 @@ function celevator.doors.carclose(pos)
 	if cardoors_moving[hash] then
 		return
 	end
-	local meta = minetest.get_meta(pos)
+	local meta = celevator.get_meta(pos)
 	local state = meta:get_string("doorstate")
 	if state ~= "open" then return end
 	local data = minetest.deserialize(meta:get_string("doordata"))

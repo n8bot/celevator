@@ -452,6 +452,11 @@ elseif event.type == "ui" then
 				end
 			end
 		end
+		if fields.scrollup and (mem.screenpage-1)*10+1 < #mem.params.floornames then
+			mem.screenpage = mem.screenpage + 1
+		elseif fields.scrolldown and mem.screenpage > 1 then
+			mem.screenpage = mem.screenpage - 1
+		end
 	end
 elseif event.iid == "connecttimeout" then
 	if mem.screenstate == "oobe_connecting" then
@@ -855,6 +860,12 @@ elseif mem.screenstate == "status" then
 				fs(string.format("image_button[%f,%f;0.75,0.75;celevator_fs_bg.png;carcall%02d%d;%s]",xp,yp,car,floor,ccdot))
 			end
 		end
+	end
+	if lowestfloor > 1 then
+		fs("image_button[6,0.5;0.75,0.75;celevator_menu_arrow.png^\\[transformFY;scrolldown;;false;false;celevator_menu_arrow.png^\\[transformFY]")
+	end
+	if lowestfloor+9 < #mem.params.floornames then
+		fs("image_button[5,0.5;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]")
 	end
 end
 
