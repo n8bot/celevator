@@ -537,8 +537,8 @@ elseif event.type == "abm" or event.iid == "run" then
 		for _,carid in pairs(mem.params.carids) do
 			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 				local serveshigher = false
-				for floor in pairs(mem.params.floorsserved[carid]) do
-					if floor > i then
+				for floor,served in pairs(mem.params.floorsserved[carid]) do
+					if floor > i and served then
 						serveshigher = true
 						break
 					end
@@ -571,8 +571,8 @@ elseif event.type == "abm" or event.iid == "run" then
 				if getdpos(carid) == i and mem.carstatus[carid].direction == "up" then permanent = true end
 				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 					local serveshigher = false
-					for floor in pairs(mem.params.floorsserved[carid]) do
-						if floor > i then
+					for floor,served in pairs(mem.params.floorsserved[carid]) do
+						if floor > i and served then
 							serveshigher = true
 							break
 						end
@@ -609,8 +609,8 @@ elseif event.type == "abm" or event.iid == "run" then
 			if getdpos(carid) == i and mem.carstatus[carid].direction == "down" then permanent = true end
 			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 				local serveslower = false
-				for floor in pairs(mem.params.floorsserved[carid]) do
-					if floor < i then
+				for floor,served in pairs(mem.params.floorsserved[carid]) do
+					if floor < i and served then
 						serveslower = true
 						break
 					end
@@ -643,8 +643,8 @@ elseif event.type == "abm" or event.iid == "run" then
 			for _,carid in pairs(mem.params.carids) do
 				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 					local serveslower = false
-					for floor in pairs(mem.params.floorsserved[carid]) do
-						if floor < i then
+					for floor,served in pairs(mem.params.floorsserved[carid]) do
+						if floor < i and served then
 							serveslower = true
 							break
 						end
