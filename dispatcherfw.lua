@@ -559,7 +559,7 @@ elseif event.type == "abm" or event.iid == "run" then
 		end
 	end
 	for i in pairs(mem.assignedup) do
-		if mem.upcalls[i] then
+		if mem.upcalls[i] and mem.upeta[i] then
 			local eligiblecars = {}
 			local permanent = false
 			for _,carid in pairs(mem.params.carids) do
@@ -623,7 +623,7 @@ elseif event.type == "abm" or event.iid == "run" then
 					bestcar = carid
 				end
 			end
-			mem.upeta[i] = besteta
+			mem.dneta[i] = besteta
 			if bestcar then
 				send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
 				mem.assigneddn[i] = bestcar
@@ -633,7 +633,7 @@ elseif event.type == "abm" or event.iid == "run" then
 		end
 	end
 	for i in pairs(mem.assigneddn) do
-		if mem.dncalls[i] then
+		if mem.dncalls[i] and mem.dneta[i] then
 			local eligiblecars = {}
 			for _,carid in pairs(mem.params.carids) do
 				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
