@@ -307,7 +307,7 @@ local pieces = {
 				local boxpos = vector.add(pos,vector.new(0,1,0))
 				local erefs = minetest.get_objects_inside_radius(boxpos,0.5)
 				for _,ref in pairs(erefs) do
-					if ref:get_luaentity().name == "celevator:car_top_box" then
+					if ref:get_luaentity() and ref:get_luaentity().name == "celevator:car_top_box" then
 						local state = ref:get_properties().wield_item
 						if state == "celevator:car_top_box_off" then
 							state = "celevator:car_top_box_on"
