@@ -505,7 +505,7 @@ function celevator.doors.caropen(pos)
 		for _,dpos in ipairs(positions) do
 			local objs = minetest.get_objects_inside_radius(dpos,0.1)
 			for _,obj in pairs(objs) do
-				if obj:get_luaentity() and obj:get_luaentity().name then
+				if obj:get_luaentity() and obj:get_luaentity().name == "celevator:car_door" then
 					table.insert(erefs,obj)
 				end
 			end
