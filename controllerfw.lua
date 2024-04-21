@@ -363,6 +363,24 @@ elseif event.type == "ui" then
 			mem.screenstate = "floortable"
 		elseif event.fields.cancel then
 			mem.screenstate = "status"
+		elseif event.fields.resetdoors then
+			mem.screenstate = "status"
+			if mem.doorstate ~= "closed" then close() end
+		elseif event.fields.resetcontroller then
+			mem.screenstate = "status"
+			mem.carstate = "bfdemand"
+			if mem.doorstate == "closed" then
+				drivecmd({
+					command = "setmaxvel",
+					maxvel = mem.params.contractspeed,
+				})
+				drivecmd({command = "resetpos"})
+				interrupt(0.1,"checkdrive")
+				mem.carmotion = true
+				juststarted = true
+			else
+				close()
+			end
 		end
 	elseif mem.screenstate == "status" then
 		for i=1,#mem.params.floornames,1 do
@@ -1091,10 +1109,13 @@ elseif mem.screenstate == "parameters" then
 	fs("label[1,1;EDIT PARAMETERS]")
 	fs("button[1,10;3,1;save;Save]")
 	fs("button[4.5,10;3,1;cancel;Cancel]")
-	fs("button[8,10;3,1;floortable;Edit Floor Table]")
+	if mem.params.groupmode == "simplex" then fs("button[8,10;3,1;floortable;Edit Floor Table]") end
 	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
 	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
 	fs(string.format("field[1,7;3,1;mainlanding;Main Landing;%d]",mem.params.mainlanding or 1))
+	fs("style[resetdoors,resetcontroller;bgcolor=#DD3333]")
+	fs("button[12,1;3,1;resetdoors;Reset Doors]")
+	fs("button[12,2.5;3,1;resetcontroller;Reset Controller]")
 elseif mem.screenstate == "faults" then
 	fs("label[1,1;FAULT HISTORY]")
 	if #mem.faultlog > 0 then

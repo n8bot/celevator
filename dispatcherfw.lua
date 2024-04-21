@@ -305,7 +305,23 @@ elseif event.type == "ui" then
 		if event.fields.back then
 			mem.screenstate = "oobe_welcome"
 		elseif event.fields.next then
-			mem.screenstate = (mem.screenstate == "oobe_floortable" and "oobe_connections" or "parameters")
+			for _,carid in ipairs(mem.params.carids) do
+				local floornames = {}
+				local floorheights = {}
+				for i=1,#mem.params.floornames,1 do
+					if mem.params.floorsserved[carid][i] then
+						table.insert(floornames,mem.params.floornames[i])
+						table.insert(floorheights,mem.params.floorheights[i])
+					elseif #floornames > 0 then
+						floorheights[#floorheights] = floorheights[#floorheights]+mem.params.floorheights[i]
+					end
+				end
+				send(carid,"newfloortable",{
+					floornames = floornames,
+					floorheights = floorheights,
+				})
+			end
+			mem.screenstate = (mem.screenstate == "oobe_floortable" and "oobe_connections" or "menu")
 			mem.screenpage = 1
 		elseif exp.type == "CHG" then
 			mem.editingfloor = #mem.params.floornames-exp.index+1
@@ -353,7 +369,7 @@ elseif event.type == "ui" then
 		if event.fields.back then
 			mem.screenstate = "oobe_floortable"
 		elseif event.fields.next and #mem.params.carids > 0 then
-			mem.screenstate = (mem.screenstate == "oobe_connections" and "status" or "parameters")
+			mem.screenstate = (mem.screenstate == "oobe_connections" and "status" or "menu")
 			mem.screenpage = 1
 		elseif exp.type == "CHG" then
 			mem.editingconnection = #mem.params.carids-exp.index+1
@@ -456,6 +472,16 @@ elseif event.type == "ui" then
 			mem.screenpage = mem.screenpage + 1
 		elseif fields.scrolldown and mem.screenpage > 1 then
 			mem.screenpage = mem.screenpage - 1
+		elseif fields.menu then
+			mem.screenstate = "menu"
+		end
+	elseif mem.screenstate == "menu" then
+		if fields.back then
+			mem.screenstate = "status"
+		elseif fields.floortable then
+			mem.screenstate = "floortable"
+		elseif fields.connections then
+			mem.screenstate = "connections"
 		end
 	end
 elseif event.iid == "connecttimeout" then
@@ -514,7 +540,7 @@ elseif event.channel == "status" then
 			mem.dncalls[floor] = nil
 		end
 	end
-elseif event.type == "abm" or event.iid == "run" then
+elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status" or mem.screenstate == "menu") then
 	interrupt(1.5,"run")
 	if not mem.upcalls then mem.upcalls = {} end
 	if not mem.dncalls then mem.dncalls = {} end
@@ -691,6 +717,11 @@ elseif event.type == "fs1switch" then
 	end
 end
 
+if not (mem.screenstate == "status" or mem.screenstate == "menu") then
+	mem.upcalls = {}
+	mem.dncalls = {}
+end
+
 fs("formspec_version[6]")
 fs("size[20,12]")
 fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
@@ -758,9 +789,9 @@ elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections"
 	else
 		fs("label[1,2;No Connections]")
 	end
-	if #mem.params.carids < 16 then fs("button[8,2;2,1;add;New Connection]") end
-	if #mem.params.carids > 0 then fs("button[8,3.5;2,1;edit;Edit Connection]") end
-	if #mem.params.carids > 0 then fs("button[8,5;2,1;remove;Remove Connection]") end
+	if #mem.params.carids < 16 then fs("button[8,2;3,1;add;New Connection]") end
+	if #mem.params.carids > 0 then fs("button[8,3.5;3,1;edit;Edit Connection]") end
+	if #mem.params.carids > 0 then fs("button[8,5;3,1;remove;Remove Connection]") end
 elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnection" then
 	local numfloors = 0
 	for _,v in ipairs(mem.newconnfloors) do
@@ -817,6 +848,7 @@ elseif mem.screenstate == "status" then
 	fs("box[18.5,1.5;0.1,10;#AAAAAAFF]")
 	fs("label[0.55,11.5;UP]")
 	fs("label[18.85,11.5;DOWN]")
+	fs("button[15,0.5;2,1;menu;Menu]")
 	fs("style_type[image_button;font=mono;font_size=*0.75]")
 	for car=1,#mem.params.carids,1 do
 		local xp = 1.7+(car-1)
@@ -873,6 +905,11 @@ elseif mem.screenstate == "status" then
 	if lowestfloor+9 < #mem.params.floornames then
 		fs("image_button[5,0.5;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]")
 	end
+	elseif mem.screenstate == "menu" then
+		fs("label[1,1;MAIN MENU]")
+		fs("button[1,3;3,1;floortable;Edit Floor Table]")
+		fs("button[1,4.5;3,1;connections;Edit Connections]")
+		fs("button[1,10;3,1;back;< Back]")
 end
 
 mem.infotext = string.format("ID: %d",mem.carid)
