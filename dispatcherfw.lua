@@ -251,7 +251,14 @@ end
 
 local function calculateeta(carid,floor,direction)
 	local sequence = buildstopsequence(carid,getpos(carid),mem.carstatus[carid].direction,floor,direction)
-	local eta = 0
+	local doorstate = mem.carstatus[carid].doorstate
+	local doortimes = {
+		closed = 0,
+		closing = 3,
+		open = 10,
+		opening = 13,
+	}
+	local eta = doortimes[doorstate] or 0
 	for k,v in ipairs(sequence) do
 		eta = eta+estimatetraveltime(carid,v.src,v.dest)
 		if k < #sequence then
