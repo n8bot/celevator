@@ -541,7 +541,7 @@ elseif event.channel == "status" then
 		end
 	end
 elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status" or mem.screenstate == "menu") then
-	interrupt(1.5,"run")
+	interrupt(5,"run")
 	if not mem.upcalls then mem.upcalls = {} end
 	if not mem.dncalls then mem.dncalls = {} end
 	if not mem.upeta then mem.upeta = {} end
