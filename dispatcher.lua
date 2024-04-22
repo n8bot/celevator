@@ -368,7 +368,7 @@ function celevator.dispatcher.run(pos,event)
 		if celevator.dispatcher.running[hash] then
 			table.insert(celevator.dispatcher.equeue[hash],event)
 			celevator.storage:set_string("dispatcher_equeue",minetest.serialize(celevator.dispatcher.equeue))
-			if #celevator.dispatcher.equeue[hash] > 5 then
+			if #celevator.dispatcher.equeue[hash] > 20 then
 				local message = "[celevator] [dispatcher] Async process for dispatcher at %s is falling behind, %d events in queue"
 				minetest.log("warning",string.format(message,minetest.pos_to_string(pos),#celevator.dispatcher.equeue[hash]))
 			end
