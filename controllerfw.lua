@@ -478,18 +478,24 @@ elseif event.iid == "closed" and (mem.doorstate == "closing" or mem.doorstate ==
 			juststarted = true
 	end
 elseif event.type == "callbutton" and mem.carstate == "normal" then
-	if mem.params.groupmode == "group" then
-		if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
-			mem.swingupcalls[event.landing] = true
-		elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
-			mem.swingdncalls[event.landing] = true
+	if mem.doorstate == "closed" or mem.direction ~= event.dir or getpos() ~= event.landing then
+		if mem.params.groupmode == "group" then
+			if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+				mem.swingupcalls[event.landing] = true
+			elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+				mem.swingdncalls[event.landing] = true
+			end
+		else
+			if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
+				mem.upcalls[event.landing] = true
+			elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
+				mem.dncalls[event.landing] = true
+			end
 		end
-	else
-		if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
-			mem.upcalls[event.landing] = true
-		elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
-			mem.dncalls[event.landing] = true
-		end
+	elseif mem.direction == event.dir and mem.doorstate == "open" then
+		interrupt(mem.params.doortimer,"close")
+	elseif mem.direction == event.dir and mem.doorstate == "closing" then
+		open()
 	end
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
@@ -518,7 +524,19 @@ elseif event.type == "cop" then
 			if string.sub(k,1,7) == "carcall" then
 				local landing = tonumber(string.sub(k,8,-1))
 				if v and landing and landing >= 1 and landing <= #mem.params.floorheights then
-					mem.carcalls[landing] = true
+					if getpos() == landing then
+						if mem.carstate == "normal" or mem.carstate == "indep" then
+							if mem.doorstate == "closing" then
+								open()
+							elseif mem.doorstate == "open" then
+								interrupt(mem.params.doortimer,"close")
+							elseif mem.doorstate == "closed" then
+								mem.carcalls[landing] = true
+							end
+						end
+					else
+						mem.carcalls[landing] = true
+					end
 				end
 			end
 		end

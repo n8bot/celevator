@@ -581,15 +581,19 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 		end
 		local besteta = 999
 		local bestcar
+		local alreadyserved
 		for carid in pairs(eligiblecars) do
 			local eta = calculateeta(carid,i,"up")
 			if eta < besteta then
 				besteta = eta
 				bestcar = carid
 			end
+			if getpos(carid) == i and mem.carstatus[carid].direction == "up" and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open") then
+				alreadyserved = true
+			end
 		end
 		mem.upeta[i] = besteta
-		if bestcar then
+		if bestcar and not alreadyserved then
 			send(bestcar,"groupupcall",realtocarfloor(bestcar,i))
 			mem.assignedup[i] = bestcar
 		else
@@ -654,15 +658,19 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 		if not permanent then
 			local besteta = 999
 			local bestcar
+			local alreadyserved = false
 			for carid in pairs(eligiblecars) do
 				local eta = calculateeta(carid,i,"down")
 				if eta < besteta then
 					besteta = eta
 					bestcar = carid
 				end
+				if getpos(carid) == i and mem.carstatus[carid].direction == "down" and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open") then
+					alreadyserved = true
+				end
 			end
 			mem.dneta[i] = besteta
-			if bestcar then
+			if bestcar and not alreadyserved then
 				send(bestcar,"groupdncall",realtocarfloor(bestcar,i))
 				mem.assigneddn[i] = bestcar
 			else
