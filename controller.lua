@@ -384,16 +384,9 @@ minetest.register_node("celevator:controller_top_open_running",{
 	},
 })
 
-function celevator.controller.iscontroller(pos,call2)
-	local node = minetest.get_node(pos)
-	if node.name == "ignore" and not call2 then
-		minetest.forceload_block(pos)
-		return celevator.controller.iscontroller(pos,true)
-	elseif node.name == "celevator:controller" or node.name == "celevator:controller_open" then
-		return true
-	else
-		return false
-	end
+function celevator.controller.iscontroller(pos)
+	local node = celevator.get_node(pos)
+	return (node.name == "celevator:controller" or node.name == "celevator:controller_open")
 end
 
 function celevator.controller.finddrive(pos)
