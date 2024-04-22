@@ -260,7 +260,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 	for _,eref in ipairs(refs) do
 		local pos = eref:get_pos()
 		local top = false
-		if pos and (eref:get_luaentity().name == "celevator:car_moving" or eref:get_luaentity().name == "celevator:hwdoor_moving") then
+		if pos and eref:get_luaentity() and (eref:get_luaentity().name == "celevator:car_moving" or eref:get_luaentity().name == "celevator:hwdoor_moving") then
 			pos = vector.round(pos)
 			local node = {
 				name = eref:get_properties().wield_item,
@@ -270,7 +270,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			minetest.set_node(pos,node)
 			eref:remove()
 			if carid then celevator.get_meta(pos):set_int("carid",carid) end
-		elseif pos and eref:get_luaentity().name == "celevator:incar_pi_entity" then
+		elseif pos and eref:get_luaentity() and eref:get_luaentity().name == "celevator:incar_pi_entity" then
 			pos = vector.new(pos.x,math.floor(pos.y+0.5),pos.z)
 			eref:set_pos(pos)
 		elseif not ok then
@@ -287,10 +287,10 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 					if top then ppos.y = ppos.y+1.1 end
 					i:set_pos(ppos)
 					minetest.after(0.5,i.set_pos,i,ppos)
-				elseif i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door" then
+				elseif i:get_luaentity() and (i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door") then
 					local epos = i:get_pos()
 					epos.y = math.floor(epos.y+0.5)
-					if i:get_luaentity().name == "celevator:car_top_box" then
+					if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
 						epos.y = epos.y+0.1
 					end
 					i:set_pos(epos)
@@ -773,7 +773,7 @@ minetest.register_node("celevator:machine",{
 		end
 		local erefs = minetest.get_objects_inside_radius(sheavepos,0.5)
 		for _,ref in pairs(erefs) do
-			if ref:get_luaentity().name == "celevator:sheave_moving" then
+			if ref:get_luaentity() and ref:get_luaentity().name == "celevator:sheave_moving" then
 				ref:remove()
 			end
 		end

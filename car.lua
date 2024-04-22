@@ -679,7 +679,7 @@ minetest.register_on_player_receive_fields(function(_,formname,fields)
 	local cartopboxpos = vector.add(rootpos,vector.rotate_around_axis(vector.new(0,3,1),vector.new(0,1,0),rootdir))
 	local erefs = minetest.get_objects_inside_radius(cartopboxpos,0.5)
 	for _,ref in pairs(erefs) do
-		if toberemoved[ref:get_luaentity().name] then
+		if ref:get_luaentity() and toberemoved[ref:get_luaentity().name] then
 			ref:remove()
 		end
 	end
