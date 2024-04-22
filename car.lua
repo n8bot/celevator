@@ -668,7 +668,7 @@ minetest.register_on_player_receive_fields(function(_,formname,fields)
 					minetest.remove_node(piecepos)
 					local erefs = minetest.get_objects_inside_radius(piecepos,0.5)
 					for _,ref in pairs(erefs) do
-						if toberemoved[ref:get_luaentity().name] then
+						if ref:get_luaentity() and toberemoved[ref:get_luaentity().name] then
 							ref:remove()
 						end
 					end
