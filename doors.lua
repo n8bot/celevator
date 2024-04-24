@@ -516,12 +516,31 @@ function celevator.doors.caropen(pos)
 			time = 0,
 			opendir = vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2),
 		}
+		minetest.sound_play("celevator_door_open",{
+			pos = pos,
+			gain = 0.4,
+			max_hear_distance = 10
+		},true)
 		celevator.doors.erefs[hash] = erefs
 		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
 		local meta = celevator.get_meta(pos)
 		meta:set_string("doordata",minetest.serialize(cardoors_moving[hash]))
 		meta:set_string("doorstate","opening")
 	elseif cardoors_moving[hash].direction == "close" then
+		if cardoors_moving[hash].soundhandle then
+			minetest.sound_stop(cardoors_moving[hash].soundhandle)
+		end
+		minetest.sound_play("celevator_door_reverse",{
+			pos = pos,
+			gain = 1,
+			max_hear_distance = 10
+		},true)
+		minetest.sound_play("celevator_door_open",{
+			pos = pos,
+			gain = 0.4,
+			start_time = math.max(0,2.75-cardoors_moving[hash].time),
+			max_hear_distance = 10
+		},true)
 		cardoors_moving[hash].direction = "open"
 		cardoors_moving[hash].time = math.pi-cardoors_moving[hash].time
 		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
@@ -552,6 +571,11 @@ function celevator.doors.carclose(pos)
 		erefs[i]:set_pos(vector.add(erefs[i]:get_pos(),soffset))
 	end
 	celevator.doors.erefs[hash] = erefs
+	data.soundhandle = minetest.sound_play("celevator_door_close",{
+		pos = pos,
+		gain = 0.3,
+		max_hear_distance = 10
+	})
 	cardoors_moving[hash] = data
 	celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
 end
