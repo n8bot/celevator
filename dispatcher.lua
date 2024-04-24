@@ -151,7 +151,7 @@ minetest.register_node("celevator:dispatcher",{
 		node = minetest.get_node(pos)
 		node.name = "celevator:dispatcher_top_open"
 		minetest.swap_node(pos,node)
-		minetest.sound_play("doors_steel_door_open",{
+		minetest.sound_play("celevator_cabinet_open",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10
@@ -210,7 +210,7 @@ minetest.register_node("celevator:dispatcher_open",{
 		node = minetest.get_node(pos)
 		node.name = "celevator:dispatcher_top"
 		minetest.swap_node(pos,node)
-		minetest.sound_play("doors_steel_door_close",{
+		minetest.sound_play("celevator_cabinet_close",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10

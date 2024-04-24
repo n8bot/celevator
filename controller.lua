@@ -182,7 +182,7 @@ minetest.register_node("celevator:controller",{
 			node.name = "celevator:controller_top_open"
 		end
 		minetest.swap_node(pos,node)
-		minetest.sound_play("doors_steel_door_open",{
+		minetest.sound_play("celevator_cabinet_open",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10
@@ -242,7 +242,7 @@ minetest.register_node("celevator:controller_open",{
 			node.name = "celevator:controller_top"
 		end
 		minetest.swap_node(pos,node)
-		minetest.sound_play("doors_steel_door_close",{
+		minetest.sound_play("celevator_cabinet_close",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10
