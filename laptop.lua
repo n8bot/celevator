@@ -1,0 +1,298 @@
+laptop.register_app("celevator",{
+	app_name = "mView",
+	app_info = "Remote interface for MTronic XT elevator controllers",
+	app_icon = "celevator_laptop_icon.png",
+	formspec_func = function(_,mtos)
+		local ram = mtos.bdev:get_app_storage("ram","celevator")
+		local mem = mtos.bdev:get_app_storage("hdd","celevator")
+		if not mem.connections then mem.connections = {} end
+		if not ram.screenstate then ram.screenstate = (#mem.connections > 0 and "connections" or "welcome") end
+		if not mem.selectedconnection then mem.selectedconnection = 1 end
+		if not mem.screenpage then mem.screenpage = 1 end
+		if not mem.newconnection then mem.newconnection = {} end
+		local fs = ""
+		if ram.screenstate == "welcome" then
+			fs = fs.."background9[5.5,1;4,2;celevator_fs_bg.png;false;3]"
+			fs = fs.."image[5.75,1;4,2;celevator_logo.png]"
+			fs = fs..mtos.theme:get_label("2,4","Welcome to the mView remote interface for MTronic XT elevator controllers!")
+			fs = fs..mtos.theme:get_label("2,6","Add a connection to get started.")
+			fs = fs..mtos.theme:get_button("5.5,7;4,1","major","connections","Add/Edit Connections")
+		elseif ram.screenstate == "connections" then
+			fs = fs..mtos.theme:get_label("0.5,0.5","MANAGE CONNECTIONS")
+			if #mem.connections > 0 then
+				fs = fs.."textlist[1,2;6,7;connection;"
+				for i=#mem.connections,1,-1 do
+					local text = string.format("ID %d - %s",mem.connections[i].carid,mem.connections[i].name)
+					fs = fs..minetest.formspec_escape(text)
+					fs = fs..(i==1 and "" or ",")
+				end
+				fs = fs..";"..tostring(#mem.connections-mem.selectedconnection+1)..";false]"
+			else
+				fs = fs..mtos.theme:get_label("1,2","No Connections")
+			end
+			fs = fs..mtos.theme:get_button("8,2;3,1","major","new","New Connection")
+			if mem.connections[mem.selectedconnection] then
+				fs = fs..mtos.theme:get_button("8,3;3,1","major","edit","Edit Connection")
+				fs = fs..mtos.theme:get_button("8,4;3,1","major","delete","Delete Connection")
+				fs = fs..mtos.theme:get_button("8,7;3,1","major","connect","Connect >")
+				if #mem.connections > mem.selectedconnection then fs = fs..mtos.theme:get_button("8,5;3,1","major","moveup","Move Up") end
+				if mem.selectedconnection > 1 then fs = fs..mtos.theme:get_button("8,6;3,1","major","movedown","Move Down") end
+			end
+		elseif ram.screenstate == "newconnection" then
+			fs = fs..mtos.theme:get_label("0.5,0.5","NEW CONNECTION")
+			fs = fs..mtos.theme:get_label("0.5,1","Please enter the ID you would like to connect to and a name for the connection.")
+			fs = fs..mtos.theme:get_label("0.7,1.8","ID")
+			fs = fs..mtos.theme:get_label("3.7,1.8","Name")
+			fs = fs..string.format("field[1,2.5;2,1;carid;;%s]",minetest.formspec_escape(mem.newconnection.carid))
+			fs = fs..string.format("field[4,2.5;4,1;name;;%s]",minetest.formspec_escape(mem.newconnection.name))
+			fs = fs..mtos.theme:get_button("3,4;3,1","major","save","Save")
+			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel","Cancel")
+		elseif ram.screenstate == "notfound" then
+			fs = fs..mtos.theme:get_label("0.5,0.5","Error")
+			fs = fs..mtos.theme:get_label("0.5,1","Could not find a controller or dispatcher with the given ID.")
+			fs = fs..mtos.theme:get_label("0.5,1.3","Please check the ID number and try again.")
+			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
+		elseif ram.screenstate == "controllerstatus" then
+			local connection = mem.connections[mem.selectedconnection]
+			local pos = connection.pos
+			if celevator.controller.iscontroller(pos) then
+				local meta = minetest.get_meta(pos)
+				local cmem = minetest.deserialize(meta:get_string("mem"))
+				if not cmem then return end
+				local modenames = {
+					normal = "Normal Operation",
+					uninit = "Uninitialized",
+					resync = "Position Sync - Floor",
+					bfdemand = "Position Sync - Terminal",
+					fault = "Fault",
+					stop = "Emergency Stop",
+					mrinspect = "Machine Room Inspection",
+					carinspect = "Car Top Inspection",
+					inspconflict = "Inspection Conflict",
+					fs1 = "Fire Service - Phase 1",
+					fs2 = "Fire Service - Phase 2",
+					fs2hold = "Fire Service - Phase 2 Hold",
+					indep = "Independent Service",
+					capture = "Captured",
+					test = "Test Mode",
+				}
+				local doorstates = {
+					open = "Open",
+					opening = "Opening",
+					closing = "Closing",
+					closed = "Closed",
+					testtiming = "Closed",
+				}
+				local carpos = 0
+				local carfloor = 0
+				local searchpos = cmem.drive.status.apos
+				for k,v in ipairs(cmem.params.floorheights) do
+					carpos = carpos+v
+					if carpos > searchpos then
+						carfloor = k
+						break
+					end
+				end
+				fs = fs..mtos.theme:get_label("1,1",string.format("Connected to %s (ID %d)",minetest.formspec_escape(connection.name),connection.carid))
+				fs = fs..mtos.theme:get_label("1,2",modenames[cmem.carstate])
+				fs = fs..mtos.theme:get_label("1,2.5",string.format("Doors %s",doorstates[cmem.doorstate]))
+				local pi = minetest.formspec_escape(cmem.params.floornames[carfloor])
+				fs = fs..mtos.theme:get_label("1,3",string.format("Position: %0.02fm Speed: %+0.02fm/s PI: %s",cmem.drive.status.apos,cmem.drive.status.vel,pi))
+				if #cmem.faultlog > 0 then
+					fs = fs..mtos.theme:get_label("1,3.5","Fault(s) Active")
+				else
+					fs = fs..mtos.theme:get_label("1,3.5","No Current Faults")
+				end
+				fs = fs.."background9[10,0.3;4.2,10;celevator_fs_bg.png;false;3]"
+				fs = fs.."style_type[image_button;font=mono;font_size=*0.75]"
+				fs = fs.."box[10.8,0.75;0.1,9;#AAAAAAFF]"
+				fs = fs.."box[11.808,0.75;0.05,9;#AAAAAAFF]"
+				fs = fs.."box[12.708,0.75;0.05,9;#AAAAAAFF]"
+				fs = fs.."box[13.725,0.75;0.1,9;#AAAAAAFF]"
+				fs = fs.."label[11.25,0.3;UP]"
+				fs = fs.."label[12.042,0.3;CAR]"
+				fs = fs.."label[12.825,0.3;DOWN]"
+				local maxfloor = #cmem.params.floornames
+				local bottom = (cmem.screenpage-1)*10+1
+				for i=0,9,1 do
+					local ypos = (11-(i*0.9))*0.9-0.75
+					local floornum = bottom+i
+					if floornum > maxfloor then break end
+					fs = fs..string.format("label[10.125,%f;%s]",ypos-0.2,minetest.formspec_escape(cmem.params.floornames[floornum]))
+					local ccdot = cmem.carcalls[floornum] and "*" or ""
+					if carfloor == floornum then
+						local cargraphics = {
+							open = "\\[   \\]",
+							opening = "\\[< >\\]",
+							closing = "\\[> <\\]",
+							closed = "\\[ | \\]",
+							testtiming = "\\[ | \\]",
+						}
+						ccdot = cargraphics[cmem.doorstate]
+						if cmem.direction == "up" then
+							ccdot = minetest.colorize("#55FF55",ccdot)
+						elseif cmem.direction == "down" then
+							ccdot = minetest.colorize("#FF5555",ccdot)
+						end
+					end
+					fs = fs..string.format("image_button[11.925,%f;0.75,0.75;celevator_fs_bg.png;carcall%d;%s]",ypos-0.25,floornum,ccdot)
+					if floornum < maxfloor then
+						local arrow = cmem.upcalls[floornum] and minetest.colorize("#55FF55","^") or ""
+						if cmem.params.groupmode == "group" then
+							arrow = cmem.groupupcalls[floornum] and minetest.colorize("#55FF55","^") or ""
+							arrow = (cmem.swingupcalls[floornum] and minetest.colorize("#FFFF55","^") or "")..arrow
+						end
+						fs = fs..string.format("image_button[11.025,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",ypos-0.25,floornum,arrow)
+					end
+					if floornum > 1 then
+						local arrow = cmem.dncalls[floornum] and minetest.colorize("#FF5555","v") or ""
+						if cmem.params.groupmode == "group" then
+							arrow = cmem.swingdncalls[floornum] and minetest.colorize("#FFFF55","v") or ""
+							arrow = (cmem.groupdncalls[floornum] and minetest.colorize("#FF5555","v") or "")..arrow
+						end
+						fs = fs..string.format("image_button[12.825,%f;0.75,0.75;celevator_fs_bg.png;downcall%d;%s]",ypos-0.25,floornum,arrow)
+					end
+				end
+			else
+				ram.screenstate = "notfound"
+			end
+			fs = fs..mtos.theme:get_button("1,8;3,1","major","disconnect","Disconnect")
+		end
+		return fs
+	end,
+	receive_fields_func = function(app,mtos,_,fields)
+		local ram = mtos.bdev:get_app_storage("ram","celevator")
+		local mem = mtos.bdev:get_app_storage("hdd","celevator")
+		if ram.screenstate == "welcome" then
+			if fields.connections then
+				ram.screenstate = "connections"
+			end
+		elseif ram.screenstate == "connections" then
+			local exp = fields.connection and minetest.explode_textlist_event(fields.connection) or {}
+			if fields.new then
+				ram.screenstate = "newconnection"
+				mem.newconnection.name = "Untitled"
+				mem.newconnection.carid = ""
+			elseif fields.edit then
+				ram.screenstate = "connections" --Editing not implemented
+			elseif fields.delete then
+				table.remove(mem.connections,mem.selectedconnection)
+				mem.selectedconnection = math.max(1,#mem.connections)
+			elseif fields.moveup then
+				local connection = mem.connections[mem.selectedconnection]
+				table.remove(mem.connections,mem.selectedconnection)
+				table.insert(mem.connections,mem.selectedconnection+1,connection)
+				mem.selectedconnection = mem.selectedconnection+1
+			elseif fields.movedown then
+				local connection = mem.connections[mem.selectedconnection]
+				table.remove(mem.connections,mem.selectedconnection)
+				table.insert(mem.connections,mem.selectedconnection-1,connection)
+				mem.selectedconnection = mem.selectedconnection-1
+			elseif fields.connection and exp.type == "CHG" then
+				mem.selectedconnection = #mem.connections-exp.index+1
+			elseif fields.connect or exp.type == "DCL" then
+				if exp.type == "DCL" then mem.selectedconnection = #mem.connections-exp.index+1 end
+				local connection = mem.connections[mem.selectedconnection]
+				if connection.itemtype == "controller" and celevator.controller.iscontroller(connection.pos) then
+					ram.screenstate = "controllerstatus"
+					app:get_timer():start(0.2)
+				elseif connection.itemtype == "dispatcher" and celevator.dispatcher.isdispatcher(connection.pos) then
+					ram.screenstate = "dispatcherstatus"
+					app:get_timer():start(0.2)
+				else
+					ram.screenstate = "notfound"
+				end
+			end
+		elseif ram.screenstate == "newconnection" then
+			if fields.save then
+				local carid = tonumber(fields.carid)
+				if not (carid and math.floor(carid) == carid) then return end
+				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				if not carinfo then return end
+				local pos = carinfo.controllerpos
+				local itemtype
+				if pos and celevator.controller.iscontroller(pos) then
+					itemtype = "controller"
+				elseif carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then
+					pos = carinfo.dispatcherpos
+					itemtype = "dispatcher"
+				else
+					ram.screenstate = "notfound"
+					return
+				end
+				local connection = {
+					name = fields.name,
+					carid = carid,
+					itemtype = itemtype,
+					pos = pos,
+				}
+				table.insert(mem.connections,connection)
+				mem.selectedconnection = #mem.connections
+				ram.screenstate = "connections"
+			elseif fields.cancel then
+				ram.screenstate = "connections"
+			end
+		elseif ram.screenstate == "notfound" then
+			if fields.ok then
+				ram.screenstate = "newconnection"
+			end
+		elseif ram.screenstate == "controllerstatus" then
+			if fields.disconnect then
+				ram.screenstate = "connections"
+				return
+			end
+			local pos = mem.connections[mem.selectedconnection].pos
+			if celevator.controller.iscontroller(pos) then
+				local meta = minetest.get_meta(pos)
+				local cmem = minetest.deserialize(meta:get_string("mem"))
+				if not cmem then return end
+				for i=1,#cmem.params.floornames,1 do
+					if fields[string.format("carcall%d",i)] and (cmem.carstate == "normal" or cmem.carstate == "test" or cmem.carstate == "capture" or cmem.carstate == "indep") then
+						celevator.controller.run(pos,{
+							type = "remotemsg",
+							source = 0,
+							channel = "carcall",
+							msg = i,
+						})
+					elseif fields[string.format("upcall%d",i)] and cmem.carstate == "normal" and not cmem.capturesw then
+						if cmem.params.groupmode == "group" then
+							celevator.controller.run(pos,{
+								type = "remotemsg",
+								channel = "swingupcall",
+								msg = i,
+							})
+						else
+							celevator.controller.run(pos,{
+								type = "remotemsg",
+								channel = "upcall",
+								msg = i,
+							})
+						end
+					elseif fields[string.format("downcall%d",i)] and cmem.carstate == "normal" and not cmem.capturesw then
+						if cmem.params.groupmode == "group" then
+							celevator.controller.run(pos,{
+								type = "remotemsg",
+								channel = "swingdncall",
+								msg = i,
+							})
+						else
+							celevator.controller.run(pos,{
+								type = "remotemsg",
+								channel = "dncall",
+								msg = i,
+							})
+						end
+					end
+				end
+			end
+		end
+	end,
+	on_timer = function(_,mtos)
+		local ram = mtos.bdev:get_app_storage("ram","celevator")
+		local loop = {
+			["controllerstatus"] = true,
+			["dispatcherstatus"] = true,
+		}
+		return loop[ram.screenstate]
+	end,
+})

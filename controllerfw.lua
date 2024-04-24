@@ -655,6 +655,26 @@ elseif event.type == "dispatchermsg" then
 		mem.fs1switch = event.msg
 		mem.fs1led = event.msg
 	end
+elseif event.type == "remotemsg" then
+	if event.channel == "groupupcall" and mem.carstate == "normal" then
+		mem.groupupcalls[event.msg] = true
+	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
+		mem.groupdncalls[event.msg] = true
+	elseif event.channel == "swingupcall" and mem.carstate == "normal" then
+		mem.swingupcalls[event.msg] = true
+	elseif event.channel == "swingdncall" and mem.carstate == "normal" then
+		mem.swingdncalls[event.msg] = true
+	elseif event.channel == "upcall" and mem.carstate == "normal" then
+		mem.upcalls[event.msg] = true
+	elseif event.channel == "dncall" and mem.carstate == "normal" then
+		mem.dncalls[event.msg] = true
+	elseif event.channel == "groupupcancel" then
+		mem.groupupcalls[event.msg] = nil
+	elseif event.channel == "groupdncancel" then
+		mem.groupdncalls[event.msg] = nil
+	elseif event.channel == "carcall" and mem.carstate == "normal" then
+		mem.carcalls[event.msg] = true
+	end
 end
 
 local oldstate = mem.carstate
@@ -1025,7 +1045,7 @@ elseif mem.screenstate == "status" then
 		local ypos = 11-(i*0.9)
 		local floornum = bottom+i
 		if floornum > maxfloor then break end
-		fs(string.format("label[11.25,%f;%s]",ypos,mem.params.floornames[floornum]))
+		fs(string.format("label[11.25,%f;%s]",ypos,minetest.formspec_escape(mem.params.floornames[floornum])))
 		local ccdot = mem.carcalls[floornum] and "*" or ""
 		if getpos() == floornum then
 			local cargraphics = {

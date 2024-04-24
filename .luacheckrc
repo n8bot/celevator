@@ -11,4 +11,5 @@ read_globals = {
 	"minetest",
 	"table.copy",
 	"VoxelManip",
+	"laptop",
 }
