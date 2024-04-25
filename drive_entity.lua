@@ -458,6 +458,7 @@ function celevator.drives.entity.step(dtime)
 					sound = vel ~= 0
 					meta:set_string("vel",tostring(vel))
 				elseif state == "fakerunning" then
+					celevator.drives.entity.carsoundstate[hash] = "stopped"
 					local apos = tonumber(meta:get_string("apos")) or 0
 					local sheaverefs = celevator.drives.entity.sheaverefs[carid]
 					if sheaverefs and sheaverefs[1] then
