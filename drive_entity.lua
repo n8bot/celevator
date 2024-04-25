@@ -5,6 +5,8 @@ celevator.drives.entity = {
 	buzzsoundhandles = {},
 	movementsoundhandles = {},
 	movementsoundstate = {},
+	carsoundhandles = {},
+	carsoundstate = {},
 	entityinfo = {},
 	sheaverefs = {},
 }
@@ -115,6 +117,47 @@ local function motorsound(pos,newstate)
 		},true)
 	end
 	celevator.drives.entity.movementsoundstate[hash] = newstate
+end
+
+local function carsound(pos,newstate,speed)
+	if speed < 0.5 then return end
+	local hash = minetest.hash_node_position(pos)
+	local oldstate = celevator.drives.entity.carsoundstate[hash]
+	oldstate = oldstate or "idle"
+	if oldstate == newstate then return end
+	if not celevator.drives.entity.entityinfo[hash] then return end
+	local eref = celevator.drives.entity.entityinfo[hash].handles[1]
+	if not eref:get_pos() then return end
+	local oldhandle = celevator.drives.entity.carsoundhandles[hash]
+	local gain = math.min(1,speed/6)
+	if newstate == "accel" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.carsoundhandles[hash] = minetest.sound_play("celevator_car_start",{
+			object = eref,
+			gain = gain,
+		})
+		minetest.after(3,function()
+			if celevator.drives.entity.carsoundstate[hash] == "accel" then
+				carsound(pos,"run",speed)
+			end
+		end)
+	elseif newstate == "run" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.carsoundhandles[hash] = minetest.sound_play("celevator_car_run",{
+			object = eref,
+			loop = true,
+			gain = gain,
+		})
+	elseif newstate == "decel" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+		celevator.drives.entity.carsoundhandles[hash] = minetest.sound_play("celevator_car_stop",{
+			object = eref,
+			gain = gain,
+		})
+	elseif newstate == "stopped" then
+		if oldhandle then minetest.sound_stop(oldhandle) end
+	end
+	celevator.drives.entity.carsoundstate[hash] = newstate
 end
 
 local function compareexchangesound(pos,compare,new)
@@ -356,6 +399,7 @@ function celevator.drives.entity.step(dtime)
 					celevator.drives.entity.entityinfo[hash] = {
 						handles = handles,
 					}
+					carsound(pos,"accel",maxvel)
 					meta:set_string("state","running")
 					celevator.drives.entity.sheavetoentity(carid)
 				elseif state == "running" then
@@ -398,6 +442,7 @@ function celevator.drives.entity.step(dtime)
 						vel = math.min(dremain,maxvel)
 						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
 							decelsound(pos)
+							carsound(pos,"decel",maxvel)
 						end
 					elseif dmoved+0.1 > maxvel then
 						vel = maxvel
