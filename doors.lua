@@ -430,6 +430,8 @@ function celevator.doors.carstep(dtime)
 					end
 					celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
 					cardoors_moving[hash] = nil
+					local cartimer = minetest.get_node_timer(data.positions[1])
+					cartimer:stop()
 				end
 			end
 		else
@@ -490,6 +492,8 @@ end
 function celevator.doors.caropen(pos)
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
+	local cartimer = minetest.get_node_timer(pos)
+	cartimer:start(0.25)
 	if not cardoors_moving[hash] then
 		local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 		local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))

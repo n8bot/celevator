@@ -675,6 +675,14 @@ elseif event.type == "remotemsg" then
 	elseif event.channel == "carcall" and mem.carstate == "normal" then
 		mem.carcalls[event.msg] = true
 	end
+elseif event.type == "lightcurtain" then
+	if mem.carstate == "normal" or mem.carstate == "indep" then
+		if mem.doorstate == "closing" then
+			open()
+		elseif mem.doorstate == "open" and mem.carstate == "normal" then
+			interrupt(mem.params.doortimer,"close")
+		end
+	end
 end
 
 local oldstate = mem.carstate

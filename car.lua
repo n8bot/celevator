@@ -73,6 +73,36 @@ local pieces = {
 			"celevator_car_wallpaper.png^celevator_car_wall_bottom.png^celevator_car_switch_panel.png",
 			"celevator_cabinet_sides.png",
 		},
+		on_timer = function(pos)
+			local carid = minetest.get_meta(pos):get_int("carid")
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not (carinfo and carinfo.controllerpos) then return end
+			local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(pos).param2))
+			local positions = {
+				vector.new(-0.25,-0.1,-0.5),
+				vector.new(0.25,-0.1,-0.5),
+				vector.new(0.75,-0.1,-0.5),
+				vector.new(1.25,-0.1,-0.5),
+			}
+			local playerseen = false
+			for _,searchpos in ipairs(positions) do
+				local rotatedpos = vector.rotate_around_axis(searchpos,vector.new(0,1,0),yaw)
+				local erefs = minetest.get_objects_inside_radius(vector.add(pos,rotatedpos),0.5)
+				for _,ref in pairs(erefs) do
+					if ref:is_player() then
+						playerseen = true
+						break
+					end
+				end
+				if playerseen then break end
+			end
+			if playerseen then
+				celevator.controller.run(carinfo.controllerpos,{
+					type = "lightcurtain",
+				})
+			end
+			return true
+		end,
 	},
 	{
 		_position = "001",
