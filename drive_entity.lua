@@ -270,7 +270,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		table.insert(refs,eref)
 		if node.name == "celevator:car_021" then
 			local toppos = vector.add(pos,vector.new(0,1,0))
-			local topattach = minetest.get_objects_inside_radius(toppos,0.9)
+			local topattach = minetest.get_objects_inside_radius(toppos,0.75)
 			for _,ref in pairs(topattach) do
 				table.insert(attach,ref)
 			end
@@ -303,7 +303,8 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 	for _,eref in ipairs(refs) do
 		local pos = eref:get_pos()
 		local top = false
-		if pos and eref:get_luaentity() and (eref:get_luaentity().name == "celevator:car_moving" or eref:get_luaentity().name == "celevator:hwdoor_moving") then
+		local ename = eref:get_luaentity() and eref:get_luaentity().name
+		if pos and (ename == "celevator:car_moving" or ename == "celevator:hwdoor_moving") then
 			pos = vector.round(pos)
 			local node = {
 				name = eref:get_properties().wield_item,
@@ -313,7 +314,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			minetest.set_node(pos,node)
 			eref:remove()
 			if carid then celevator.get_meta(pos):set_int("carid",carid) end
-		elseif pos and eref:get_luaentity() and eref:get_luaentity().name == "celevator:incar_pi_entity" then
+		elseif pos and ename == "celevator:incar_pi_entity" then
 			pos = vector.new(pos.x,math.floor(pos.y+0.5),pos.z)
 			eref:set_pos(pos)
 		elseif not ok then
@@ -321,8 +322,8 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 		else
 			if not pos then ok = false end
 		end
-		if pos then
-			for _,i in ipairs(minetest.get_objects_inside_radius(pos,1)) do
+		if pos and ename == "celevator:car_moving" then
+			for _,i in ipairs(minetest.get_objects_inside_radius(pos,0.9)) do
 				i:set_velocity(vector.new(0,0,0))
 				if i:is_player() then
 					local ppos = i:get_pos()
