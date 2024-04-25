@@ -116,6 +116,16 @@ local function controllerleds(pos,running)
 	end
 end
 
+local function candig(_,player)
+	local controls = player:get_player_control()
+	if controls.sneak then
+		return true
+	else
+		minetest.chat_send_player(player:get_player_name(),"Hold the sneak button while digging to remove.")
+		return false
+	end
+end
+
 minetest.register_node("celevator:controller",{
 	description = "Elevator Controller",
 	groups = {
@@ -148,6 +158,7 @@ minetest.register_node("celevator:controller",{
 	on_destruct = ondestruct,
 	on_rotate = onrotate,
 	on_receive_fields = handlefields,
+	can_dig = candig,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("mem",minetest.serialize({}))
@@ -226,6 +237,7 @@ minetest.register_node("celevator:controller_open",{
 	on_destruct = ondestruct,
 	on_rotate = onrotate,
 	on_receive_fields = handlefields,
+	can_dig = candig,
 	on_punch = function(pos,node,puncher)
 		if not puncher:is_player() then
 			return
