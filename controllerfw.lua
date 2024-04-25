@@ -788,7 +788,7 @@ elseif mem.indsw then
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
-	elseif oldstate == "normal" and mem.doorstate == "closed" and not (mem.carmotion or juststarted) then
+	elseif oldstate == "normal" and (mem.doorstate == "closed" or mem.doorstate == "closing") and not (mem.carmotion or juststarted) then
 		open()
 	elseif oldstate == "normal" and mem.doorstate == "open" then
 		interrupt(nil,"close")
