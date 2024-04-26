@@ -68,7 +68,7 @@ local pieces = {
 			},
 		},
 		tiles = {
-			"celevator_car_floor.png",
+			"celevator_car_floor.png^celevator_door_sill_single.png",
 			"celevator_cabinet_sides.png",
 			"celevator_car_wallpaper.png^celevator_car_wall_bottom.png^celevator_car_switch_panel.png",
 			"celevator_cabinet_sides.png",
@@ -150,7 +150,7 @@ local pieces = {
 			},
 		},
 		tiles = {
-			"celevator_car_floor.png",
+			"celevator_car_floor.png^celevator_door_sill_double.png",
 			"celevator_cabinet_sides.png",
 			"celevator_cabinet_sides.png",
 			"celevator_car_wallpaper.png^celevator_car_wall_bottom.png",

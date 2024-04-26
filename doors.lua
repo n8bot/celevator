@@ -2,6 +2,21 @@ celevator.doors = {}
 
 celevator.doors.erefs = {}
 
+local function placesill(pos,node)
+	local erefs = minetest.get_objects_inside_radius(pos,0.5)
+	for _,ref in pairs(erefs) do
+		if ref:get_luaentity() and ref:get_luaentity().name == "celevator:door_sill" then return end
+	end
+	local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+	local entity = minetest.add_entity(pos,"celevator:door_sill")
+	if node.name == "celevator:hwdoor_slow_glass_bottom" then
+		entity:set_properties({
+			wield_item = "celevator:door_sill_double",
+		})
+	end
+	entity:set_yaw(yaw)
+end
+
 minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 	description = "Glass Hoistway Door (fast, bottom - you hacker you!)",
 	tiles = {
@@ -29,6 +44,10 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 		},
 	},
 	after_dig_node = function(pos,node)
+		local erefs = minetest.get_objects_inside_radius(pos,1.5)
+		for _,ref in pairs(erefs) do
+			if ref:get_luaentity() and ref:get_luaentity().name == "celevator:door_sill" then ref:remove() end
+		end
 		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
 		local xnames = {
 			[0] = "fast",
@@ -652,7 +671,69 @@ minetest.register_node("celevator:hwdoor_glass",{
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
 				minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+				if y==0 then
+					placesill(placepos,{name=piecename,param2=newnode.param2})
+				end
 			end
 		end
 	end,
+})
+
+minetest.register_node("celevator:door_sill_single",{
+	description = "Hoistway Door Sill, Single Track (you hacker you!)",
+	drop = "",
+	groups = {
+		not_in_creative_inventory = 1,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5,-0.5,0.28,0.5,-0.495,0.5},
+		},
+	},
+	tiles = {
+		"celevator_door_sill_single.png^[transformR180",
+		"celevator_cabinet_sides.png",
+	},
+})
+
+minetest.register_node("celevator:door_sill_double",{
+	description = "Hoistway Door Sill, Double Track (you hacker you!)",
+	drop = "",
+	groups = {
+		not_in_creative_inventory = 1,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5,-0.5,0.28,0.5,-0.495,0.5},
+		},
+	},
+	tiles = {
+		"celevator_door_sill_double.png^[transformR180",
+		"celevator_cabinet_sides.png",
+	},
+})
+
+minetest.register_entity("celevator:door_sill",{
+	initial_properties = {
+		visual = "wielditem",
+		visual_size = vector.new(0.667,0.667,0.667),
+		wield_item = "celevator:door_sill_single",
+		static_save = false,
+		pointable = false,
+		glow = minetest.LIGHT_MAX,
+	},
+})
+
+minetest.register_lbm({
+	label = "Respawn hoistway door sills",
+	name = "celevator:spawn_sill",
+	nodenames = {"celevator:hwdoor_fast_glass_bottom","celevator:hwdoor_slow_glass_bottom"},
+	run_at_every_load = true,
+	action = placesill,
 })
