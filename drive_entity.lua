@@ -859,8 +859,8 @@ minetest.register_node("celevator:motor",{
 		"celevator_machine_top.png",
 		"celevator_motor_sides.png",
 		"celevator_motor_sides.png",
-		"celevator_machine_top.png",
-		"celevator_machine_top.png",
+		"celevator_motor_back.png",
+		"celevator_motor_front.png",
 	},
 	drawtype = "nodebox",
 	node_box = {
