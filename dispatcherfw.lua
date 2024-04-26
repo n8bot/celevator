@@ -8,6 +8,7 @@ local function interrupt(time,iid)
 end
 
 mem.messages = {}
+if not mem.powerstate then mem.powerstate = "awake" end
 
 local function getpos(carid)
 	local floormap = {}
@@ -547,8 +548,29 @@ elseif event.channel == "status" then
 			mem.dncalls[floor] = nil
 		end
 	end
-elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status" or mem.screenstate == "menu") then
-	interrupt(5,"run")
+	local busy = false
+	local check = {
+		"groupupcalls",
+		"groupdncalls",
+		"swingupcalls",
+		"swingdncalls",
+		"upcalls",
+		"dncalls",
+		"carcalls",
+	}
+	for _,list in ipairs(check) do
+		for _,i in ipairs(event.msg[list]) do
+			if i then busy = true end
+		end
+	end
+	if busy then
+		if mem.powerstate == "asleep" then
+			mem.powerstate = "awake"
+			interrupt(1,"run")
+		end
+	end
+elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep") and (mem.screenstate == "status" or mem.screenstate == "menu") then
+	local busy = false
 	if not mem.upcalls then mem.upcalls = {} end
 	if not mem.dncalls then mem.dncalls = {} end
 	if not mem.upeta then mem.upeta = {} end
@@ -566,6 +588,7 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 		end
 	end
 	for i in pairs(unassignedup) do
+		busy = true
 		local eligiblecars = {}
 		for _,carid in pairs(mem.params.carids) do
 			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
@@ -602,6 +625,7 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 	end
 	for i in pairs(mem.assignedup) do
 		if mem.upcalls[i] and mem.upeta[i] then
+			busy = true
 			local eligiblecars = {}
 			local permanent = false
 			for _,carid in pairs(mem.params.carids) do
@@ -640,6 +664,7 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 		mem.upeta[floor] = calculateeta(carid,floor,"up")
 	end
 	for i in pairs(unassigneddn) do
+		busy = true
 		local eligiblecars = {}
 		local permanent = false
 		for _,carid in pairs(mem.params.carids) do
@@ -680,6 +705,7 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 	end
 	for i in pairs(mem.assigneddn) do
 		if mem.dncalls[i] and mem.dneta[i] then
+			busy = true
 			local eligiblecars = {}
 			for _,carid in pairs(mem.params.carids) do
 				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
@@ -713,12 +739,34 @@ elseif event.type == "abm" or event.iid == "run" and (mem.screenstate == "status
 	for floor,carid in pairs(mem.assigneddn) do
 		mem.dneta[floor] = calculateeta(carid,floor,"down")
 	end
-	interrupt(0.5,"getstatus")
+	if busy then
+		mem.powerstate = "awake"
+		interrupt(nil,"sleep")
+		interrupt(1,"run")
+	else
+		if mem.powerstate == "awake" then
+			interrupt(1,"run")
+			mem.powerstate = "timing"
+			interrupt(10,"sleep")
+		elseif mem.powerstate == "timing" then
+			interrupt(1,"run")
+		end
+	end
+	if mem.powerstate ~= "asleep" or event.type == "abm" then
+		interrupt(0.5,"getstatus")
+	end
 elseif event.iid == "getstatus" then
 	for _,carid in ipairs(mem.params.carids) do
 		send(carid,"getstatus")
 	end
 elseif event.type == "callbutton" then
+	if mem.powerstate == "asleep" then
+		mem.powerstate = "awake"
+		interrupt(0,"getstatus")
+		interrupt(1,"run")
+	elseif mem.powerstate == "timing" then
+		mem.powerstate = "awake"
+	end
 	if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
 		mem.upcalls[event.landing] = true
 	elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
@@ -730,6 +778,9 @@ elseif event.type == "fs1switch" then
 	for _,carid in ipairs(mem.params.carids) do
 		send(carid,"fs1switch",event.state)
 	end
+elseif event.iid == "sleep" and mem.powerstate == "timing" then
+	interrupt(nil,"run")
+	mem.powerstate = "asleep"
 end
 
 if not (mem.screenstate == "status" or mem.screenstate == "menu") then
