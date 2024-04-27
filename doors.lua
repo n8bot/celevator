@@ -444,8 +444,8 @@ function celevator.doors.carstep(dtime)
 					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-0.66))
 				end
 				if data.time >= math.pi then
-					for i=1,6,1 do
-						celevator.doors.erefs[hash][i]:set_velocity(vector.new(0,0,0))
+					for _,ref in ipairs(celevator.doors.erefs[hash]) do
+						ref:set_velocity(vector.new(0,0,0))
 					end
 					celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
 					cardoors_moving[hash] = nil
