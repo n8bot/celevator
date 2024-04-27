@@ -169,7 +169,7 @@ minetest.register_node("celevator:pi",{
 		if tonumber(fields.carid) then
 			local carid = tonumber(fields.carid)
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-			if not carinfo and carinfo.pis then return end
+			if not (carinfo and carinfo.pis) then return end
 			table.insert(carinfo.pis,{pos=pos})
 			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 			local meta = minetest.get_meta(pos)
@@ -183,7 +183,7 @@ minetest.register_node("celevator:pi",{
 		local carid = meta:get_int("carid")
 		if carid == 0 then return end
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-		if not carinfo and carinfo.pis then return end
+		if not (carinfo and carinfo.pis) then return end
 		for i,pi in pairs(carinfo.pis) do
 			if vector.equals(pos,pi.pos) then
 				table.remove(carinfo.pis,i)
@@ -358,7 +358,7 @@ for _,state in ipairs(validstates) do
 				local carid = tonumber(fields.carid)
 				local landing = tonumber(fields.landing)
 				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not carinfo and carinfo.pis and carinfo.lanterns then return end
+				if not (carinfo and carinfo.pis and carinfo.lanterns) then return end
 				table.insert(carinfo.pis,{pos=pos})
 				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
 				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
@@ -373,7 +373,7 @@ for _,state in ipairs(validstates) do
 			local carid = meta:get_int("carid")
 			if carid == 0 then return end
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-			if not carinfo and carinfo.pis and carinfo.lanterns then return end
+			if not (carinfo and carinfo.pis and carinfo.lanterns) then return end
 			for i,pi in pairs(carinfo.pis) do
 				if vector.equals(pos,pi.pos) then
 					table.remove(carinfo.pis,i)
@@ -429,7 +429,7 @@ for _,state in ipairs(validstates) do
 				local carid = tonumber(fields.carid)
 				local landing = tonumber(fields.landing)
 				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not carinfo and carinfo.lanterns then return end
+				if not (carinfo and carinfo.lanterns) then return end
 				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
 				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 				local meta = minetest.get_meta(pos)
@@ -442,7 +442,7 @@ for _,state in ipairs(validstates) do
 			local carid = meta:get_int("carid")
 			if carid == 0 then return end
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-			if not carinfo and carinfo.lanterns then return end
+			if not (carinfo and carinfo.lanterns) then return end
 			for i,lantern in pairs(carinfo.lanterns) do
 				if vector.equals(pos,lantern.pos) then
 					table.remove(carinfo.lanterns,i)
