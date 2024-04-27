@@ -836,6 +836,13 @@ minetest.register_node("celevator:machine",{
 			local carid = tonumber(fields.carid)
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 			if not carinfo then return end
+			local oldmachinepos = carinfo.machinepos
+			if oldmachinepos then
+				local oldmachine = celevator.get_node(oldmachinepos)
+				if oldmachine.name == "celevator:machine" then
+					return
+				end
+			end
 			carinfo.machinepos = pos
 			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 			local meta = minetest.get_meta(pos)
