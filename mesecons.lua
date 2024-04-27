@@ -139,6 +139,22 @@ local outputoptions = {
 		needsfloor = false,
 	},
 	{
+		id = "collectorup",
+		desc = "Collecting Up Calls",
+		func = function(mem)
+			return (mem.carstate == "normal" and mem.direction == "up")
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "collectordown",
+		desc = "Collecting Down Calls",
+		func = function(mem)
+			return (mem.carstate == "normal" and mem.direction == "down")
+		end,
+		needsfloor = false,
+	},
+	{
 		id = "lightsw",
 		desc = "Car Light Switch",
 		func = function(mem)
