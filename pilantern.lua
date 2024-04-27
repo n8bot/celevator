@@ -175,6 +175,7 @@ minetest.register_node("celevator:pi",{
 			local meta = minetest.get_meta(pos)
 			meta:set_int("carid",carid)
 			meta:set_string("formspec","")
+			celevator.pi.settext(pos,carinfo.pitext)
 		end
 	end,
 	on_destruct = function(pos)
@@ -365,6 +366,7 @@ for _,state in ipairs(validstates) do
 				local meta = minetest.get_meta(pos)
 				meta:set_int("carid",carid)
 				meta:set_string("formspec","")
+				celevator.pi.settext(pos,carinfo.pitext)
 			end
 		end,
 		on_destruct = function(pos)
