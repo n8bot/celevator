@@ -10,6 +10,7 @@ laptop.register_app("celevator",{
 		if not mem.selectedconnection then mem.selectedconnection = 1 end
 		if not mem.screenpage then mem.screenpage = 1 end
 		if not mem.newconnection then mem.newconnection = {} end
+		if not mem.scrollfollowscar then mem.scrollfollowscar = false end
 		local fs = ""
 		if ram.screenstate == "welcome" then
 			fs = fs.."background9[5.5,1;4,2;celevator_fs_bg.png;false;3]"
@@ -45,6 +46,13 @@ laptop.register_app("celevator",{
 			fs = fs..mtos.theme:get_label("3.7,1.8","Name")
 			fs = fs..string.format("field[1,2.5;2,1;carid;;%s]",minetest.formspec_escape(mem.newconnection.carid))
 			fs = fs..string.format("field[4,2.5;4,1;name;;%s]",minetest.formspec_escape(mem.newconnection.name))
+			fs = fs..mtos.theme:get_button("3,4;3,1","major","save","Save")
+			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel","Cancel")
+		elseif ram.screenstate == "editconnection" then
+			fs = fs..mtos.theme:get_label("0.5,0.5","EDIT CONNECTION")
+			fs = fs..mtos.theme:get_label("0.7,1.8","ID: "..mem.connections[mem.selectedconnection].carid)
+			fs = fs..mtos.theme:get_label("3.7,1.8","Name")
+			fs = fs..string.format("field[4,2.5;4,1;name;;%s]",minetest.formspec_escape(mem.connections[mem.selectedconnection].name))
 			fs = fs..mtos.theme:get_button("3,4;3,1","major","save","Save")
 			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel","Cancel")
 		elseif ram.screenstate == "notfound" then
@@ -93,7 +101,7 @@ laptop.register_app("celevator",{
 						break
 					end
 				end
-				fs = fs..mtos.theme:get_label("1,1",string.format("Connected to %s (ID %d)",minetest.formspec_escape(connection.name),connection.carid))
+				fs = fs..mtos.theme:get_label("1,1",string.format("Connected to %s (ID %d)",connection.name,connection.carid))
 				fs = fs..mtos.theme:get_label("1,2",modenames[cmem.carstate])
 				fs = fs..mtos.theme:get_label("1,2.5",string.format("Doors %s",doorstates[cmem.doorstate]))
 				local pi = minetest.formspec_escape(cmem.params.floornames[carfloor])
@@ -103,7 +111,7 @@ laptop.register_app("celevator",{
 				else
 					fs = fs..mtos.theme:get_label("1,3.5","No Current Faults")
 				end
-				fs = fs.."background9[10,0.3;4.2,10;celevator_fs_bg.png;false;3]"
+				fs = fs.."background9[8,0.3;6.2,10;celevator_fs_bg.png;false;3]"
 				fs = fs.."style_type[image_button;font=mono;font_size=*0.75]"
 				fs = fs.."box[10.8,0.75;0.1,9;#AAAAAAFF]"
 				fs = fs.."box[11.808,0.75;0.05,9;#AAAAAAFF]"
@@ -112,8 +120,18 @@ laptop.register_app("celevator",{
 				fs = fs.."label[11.25,0.3;UP]"
 				fs = fs.."label[12.042,0.3;CAR]"
 				fs = fs.."label[12.825,0.3;DOWN]"
+				if mem.scrollfollowscar then mem.screenpage = math.floor((carfloor-1)/10)+1 end
 				local maxfloor = #cmem.params.floornames
-				local bottom = (cmem.screenpage-1)*10+1
+				local bottom = (mem.screenpage-1)*10+1
+				if maxfloor > 10 then
+					fs = fs..string.format("checkbox[8.4,1.5;scrollfollowscar;Follow Car;%s]",tostring(mem.scrollfollowscar))
+					if bottom+9 < maxfloor then
+						fs = fs.."image_button[8.5,1;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]"
+					end
+					if bottom > 1 then
+						fs = fs.."image_button[8.5,2.25;0.75,0.75;celevator_menu_arrow.png^\\[transformFY;scrolldown;;false;false;celevator_menu_arrow.png^\\[transformFY]"
+					end
+				end
 				for i=0,9,1 do
 					local ypos = (11-(i*0.9))*0.9-0.75
 					local floornum = bottom+i
@@ -174,7 +192,7 @@ laptop.register_app("celevator",{
 				mem.newconnection.name = "Untitled"
 				mem.newconnection.carid = ""
 			elseif fields.edit then
-				ram.screenstate = "connections" --Editing not implemented
+				ram.screenstate = "editconnection"
 			elseif fields.delete then
 				table.remove(mem.connections,mem.selectedconnection)
 				mem.selectedconnection = math.max(1,#mem.connections)
@@ -202,6 +220,13 @@ laptop.register_app("celevator",{
 				else
 					ram.screenstate = "notfound"
 				end
+			end
+		elseif ram.screenstate == "editconnection" then
+			if fields.save then
+				mem.connections[mem.selectedconnection].name = fields.name
+				ram.screenstate = "connections"
+			elseif fields.cancel then
+				ram.screenstate = "connections"
 			end
 		elseif ram.screenstate == "newconnection" then
 			if fields.save then
@@ -283,6 +308,15 @@ laptop.register_app("celevator",{
 							})
 						end
 					end
+				end
+				if fields.scrolldown then
+					mem.screenpage = math.max(1,mem.screenpage-1)
+					mem.scrollfollowscar = false
+				elseif fields.scrollup then
+					mem.screenpage = math.min(mem.screenpage+1,math.floor((#cmem.params.floornames-1)/10)+1)
+					mem.scrollfollowscar = false
+				elseif fields.scrollfollowscar then
+					mem.scrollfollowscar = (fields.scrollfollowscar == "true")
 				end
 			end
 		end
