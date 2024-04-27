@@ -9,6 +9,7 @@ local components = {
 	"pilantern",
 	"fs1switch",
 	"dispatcher",
+	"decorations",
 }
 
 if minetest.get_modpath("laptop") then
