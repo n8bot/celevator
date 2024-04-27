@@ -698,6 +698,8 @@ if mem.fatalfault then
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	mem.direction = nil
+	interrupt(nil,"opentimeout")
+	interrupt(nil,"closetimeout")
 elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstate == "floortable_edit" then
 	mem.carstate = "stop"
 	drivecmd({command="estop"})
@@ -709,6 +711,8 @@ elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstat
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	mem.direction = nil
+	interrupt(nil,"opentimeout")
+	interrupt(nil,"closetimeout")
 elseif mem.controllerinspectsw and mem.cartopinspectsw then
 	mem.carstate = "inspconflict"
 	mem.carcalls = {}
@@ -720,6 +724,8 @@ elseif mem.controllerinspectsw and mem.cartopinspectsw then
 	mem.groupdncalls = {}
 	mem.direction = nil
 	drivecmd({command="estop"})
+	interrupt(nil,"opentimeout")
+	interrupt(nil,"closetimeout")
 elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.carstate = "mrinspect"
 	mem.carcalls = {}
@@ -730,6 +736,8 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	mem.direction = nil
+	interrupt(nil,"opentimeout")
+	interrupt(nil,"closetimeout")
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
 elseif mem.cartopinspectsw and not mem.controllerinspectsw then
 	mem.carstate = "carinspect"
@@ -741,6 +749,8 @@ elseif mem.cartopinspectsw and not mem.controllerinspectsw then
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	mem.direction = nil
+	interrupt(nil,"opentimeout")
+	interrupt(nil,"closetimeout")
 	if oldstate ~= "carinspect" then drivecmd({command="estop"}) end
 elseif mem.fs2sw == "on" then
 	mem.carstate = "fs2"
