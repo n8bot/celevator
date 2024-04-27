@@ -12,8 +12,13 @@ local components = {
 	"decorations",
 }
 
-if minetest.get_modpath("laptop") then
-	table.insert(components,"laptop")
+local integrations = {
+	"laptop",
+	"mesecons",
+}
+
+for _,i in ipairs(integrations) do
+	if minetest.get_modpath(i) then table.insert(components,i) end
 end
 
 for _,v in ipairs(components) do

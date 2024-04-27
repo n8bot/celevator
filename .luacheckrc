@@ -12,4 +12,5 @@ read_globals = {
 	"table.copy",
 	"VoxelManip",
 	"laptop",
+	"mesecon",
 }
