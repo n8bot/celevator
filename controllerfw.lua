@@ -784,7 +784,21 @@ elseif mem.fs1switch then
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	interrupt(nil,"close")
-	if getpos() ~= (mem.params.mainlanding or 1) then
+	if mem.drive.status.vel > 0 and mem.drive.status.apos > gettarget(mem.params.mainlanding or 1) then
+		for i=getpos(),#mem.params.floornames,1 do
+			if mem.drive.status.neareststop < gettarget(i) and mem.drive.status.dpos > gettarget(i) then
+				gotofloor(i)
+				break
+			end
+		end
+	elseif mem.drive.status.vel < 0 and mem.drive.status.apos < gettarget(mem.params.mainlanding or 1) then
+		for i=1,getpos(),1 do
+			if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
+				gotofloor(i)
+				break
+			end
+		end
+	elseif getpos() ~= (mem.params.mainlanding or 1) then
 		if not (mem.carmotion or juststarted) then
 			if mem.doorstate == "closed" then
 				gotofloor(mem.params.mainlanding or 1)
