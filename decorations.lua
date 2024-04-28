@@ -115,3 +115,56 @@ minetest.register_node("celevator:buffer_oil_top",{
 		},
 	},
 })
+
+minetest.register_node("celevator:guide_rail",{
+	description = "Elevator Guide Rail",
+	groups = {
+		choppy = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail_edge.png^[transformFX",
+		"celevator_guide_rail_edge.png",
+		"celevator_guide_rail.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.015,-0.5,-0.48,0.015,0.5,-0.39},
+			{-0.09,-0.5,-0.39,0.09,0.5,-0.38},
+		},
+	},
+})
+
+minetest.register_node("celevator:guide_rail_bracket",{
+	description = "Elevator Guide Rail with Bracket",
+	groups = {
+		choppy = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail_edge.png^[transformFX",
+		"celevator_guide_rail_edge.png",
+		"celevator_guide_rail.png",
+	},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.015,-0.5,-0.48,0.015,0.5,-0.39},
+			{-0.09,-0.5,-0.39,0.09,0.5,-0.38},
+			{-0.25,-0.1,-0.38,0.25,0.1,-0.35},
+			{-0.28,-0.1,-0.38,-0.25,0.1,0.5},
+			{0.25,-0.1,-0.38,0.28,0.1,0.5},
+			{-0.5,-0.1,0.47,-0.28,0.1,0.5},
+			{0.28,-0.1,0.47,0.5,0.1,0.5},
+		},
+	},
+})
