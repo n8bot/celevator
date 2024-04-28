@@ -209,6 +209,7 @@ function celevator.lantern.setlight(pos,dir,newstate)
 		if lit == newstate then return end
 		local newname = "celevator:lantern_"
 		if minetest.get_item_group(node.name,"_celevator_pi") == 1 then newname = "celevator:pilantern_" end
+		if minetest.get_item_group(node.name,"_celevator_lantern_vertical") == 1 then newname = "celevator:lantern_vertical_" end
 		if minetest.get_item_group(node.name,"_celevator_lantern_has_down") == 1 then
 			newname = newname.."both"
 		else
@@ -229,6 +230,7 @@ function celevator.lantern.setlight(pos,dir,newstate)
 		if lit == newstate then return end
 		local newname = "celevator:lantern_"
 		if minetest.get_item_group(node.name,"_celevator_pi") == 1 then newname = "celevator:pilantern_" end
+		if minetest.get_item_group(node.name,"_celevator_lantern_vertical") == 1 then newname = "celevator:lantern_vertical_" end
 		if minetest.get_item_group(node.name,"_celevator_lantern_has_up") == 1 then
 			newname = newname.."both"
 		else
@@ -289,6 +291,30 @@ local function makelanterntex(dir,upon,downon)
 		end
 		if downon then
 			tex = tex..":33,36=celevator_lantern_down.png"
+		end
+	end
+	return(tex)
+end
+
+local function makeverticallanterntex(dir,upon,downon)
+	local tex = boringside
+	if dir == "up" then
+		tex = tex..":22,12=celevator_lantern_vertical_background_up.png"
+		if upon then
+			tex = tex..":27,25=celevator_lantern_up.png"
+		end
+	elseif dir == "down" then
+		tex = tex..":22,12=celevator_lantern_vertical_background_down.png"
+		if downon then
+			tex = tex..":27,26=celevator_lantern_down.png"
+		end
+	elseif dir == "both" then
+		tex = tex..":22,12=celevator_lantern_vertical_background_updown.png"
+		if upon then
+			tex = tex..":27,18=celevator_lantern_up.png"
+		end
+		if downon then
+			tex = tex..":27,34=celevator_lantern_down.png"
 		end
 	end
 	return(tex)
@@ -461,6 +487,74 @@ for _,state in ipairs(validstates) do
 			type = "fixed",
 			fixed = {
 				{-0.25,-0.328,0.475,0.25,0,0.5},
+			},
+		},
+	})
+	nname = "celevator:lantern_vertical_"..state[1]
+	dropname = nname
+	if state[2] then nname = nname.."_upon" end
+	if state[3] then nname = nname.."_downon" end
+	description = string.format("Elevator %s Lantern (vertical)%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	minetest.register_node(nname,{
+		description = description,
+		inventory_image = string.format("[combine:40x40:10,0=celevator_lantern_vertical_background_%s.png",(state[1] == "both" and "updown" or state[1])),
+		groups = {
+			dig_immediate = 2,
+			not_in_creative_inventory = (idle and 0 or 1),
+			_celevator_lantern = 1,
+			_celevator_lantern_has_up = (state[1] == "down" and 0 or 1),
+			_celevator_lantern_has_down = (state[1] == "up" and 0 or 1),
+			_celevator_lantern_up_lit = (state[2] and 1 or 0),
+			_celevator_lantern_down_lit = (state[3] and 1 or 0),
+			_celevator_lantern_vertical = 1,
+		},
+		drop = dropname,
+		tiles = {
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			boringside,
+			makeverticallanterntex(state[1],state[2],state[3])
+		},
+		after_place_node = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+		end,
+		on_receive_fields = function(pos,_,fields)
+			if tonumber(fields.carid) and tonumber(fields.landing) then
+				local carid = tonumber(fields.carid)
+				local landing = tonumber(fields.landing)
+				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				if not (carinfo and carinfo.lanterns) then return end
+				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
+				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				local meta = minetest.get_meta(pos)
+				meta:set_int("carid",carid)
+				meta:set_string("formspec","")
+			end
+		end,
+		on_destruct = function(pos)
+			local meta = minetest.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid == 0 then return end
+			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			if not (carinfo and carinfo.lanterns) then return end
+			for i,lantern in pairs(carinfo.lanterns) do
+				if vector.equals(pos,lantern.pos) then
+					table.remove(carinfo.lanterns,i)
+					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+				end
+			end
+		end,
+		paramtype = "light",
+		paramtype2 = "facedir",
+		light_source = light,
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = {
+				{-0.14,-0.313,0.475,0.156,0.313,0.5},
 			},
 		},
 	})
