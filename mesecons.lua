@@ -216,6 +216,91 @@ local outputoptions = {
 	},
 }
 
+local inputoptions = {
+	{
+		id = "carcall",
+		desc = "Car Call at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "carcall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "upcall",
+		desc = "Up Call (simplex car) at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "upcall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "downcall",
+		desc = "Down Call (simplex car) at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "dncall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "swingupcall",
+		desc = "Up Call (swing) at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swingupcall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "swingdowncall",
+		desc = "Down Call (swing) at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swingdncall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "fs1off",
+		desc = "Deactivate Fire Service Phase 1",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "fs1switch",
+				state = false,
+			})
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "fs1on",
+		desc = "Activate Fire Service Phase 1",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "fs1switch",
+				state = true,
+			})
+		end,
+		needsfloor = false,
+	},
+}
+
 local function updateoutputform(pos)
 	local meta = minetest.get_meta(pos)
 	local fs = "formspec_version[7]size[8,6.5]"
@@ -375,4 +460,160 @@ minetest.register_abm({
 			end
 		end
 	end,
+})
+
+local function updateinputform(pos)
+	local meta = minetest.get_meta(pos)
+	local fs = "formspec_version[7]size[8,6.5]"
+	fs = fs.."dropdown[1,0.5;6,1;signal;"
+	local selected = 1
+	local currentid = meta:get_string("signal")
+	for k,v in ipairs(inputoptions) do
+		fs = fs..minetest.formspec_escape(v.desc)..","
+		if v.id == currentid then selected = k end
+	end
+	fs = string.sub(fs,1,-2)
+	fs = fs..";"..selected..";false]"
+	fs = fs.."field[0.5,2.5;3,1;carid;Car ID;${carid}]"
+	fs = fs.."field[4.5,2.5;3,1;floor;Landing Number;${floor}]"
+	fs = fs.."label[1.5,4;Not all signal options require a landing number.]"
+	fs = fs.."button_exit[2.5,5;3,1;save;Save]"
+	meta:set_string("formspec",fs)
+end
+
+local function handleinputfields(pos,_,fields,player)
+	local meta = minetest.get_meta(pos)
+	if not fields.save then return end
+	local name = player:get_player_name()
+	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+		if player:is_player() then
+			minetest.record_protection_violation(pos,name)
+		end
+		return
+	end
+	if not tonumber(fields.carid) then return end
+	meta:set_int("carid",fields.carid)
+	local carid = tonumber(fields.carid)
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+	if not carinfo.controllerpos then return end
+	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+		if player:is_player() then
+			minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+			minetest.record_protection_violation(carinfo.controllerpos,name)
+		end
+		return
+	end
+	local floor = tonumber(fields.floor)
+	if floor then meta:set_int("floor",floor) end
+	local def
+	for _,v in ipairs(inputoptions) do
+		if v.desc == fields.signal then
+			def = v
+		end
+	end
+	if not def then return end
+	if def.needsfloor and not floor then return end
+	meta:set_string("signal",def.id)
+	updateinputform(pos)
+	local infotext = "Car: "..carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
+	meta:set_string("infotext",infotext)
+end
+
+local function handleinput(pos,on)
+	local meta = minetest.get_meta(pos)
+	local carid = meta:get_int("carid")
+	if carid == 0 then return end
+	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+	if not carinfo.controllerpos then return end
+	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	local floor = meta:get_int("floor")
+	local signal = meta:get_string("signal")
+	local def
+	for _,v in ipairs(inputoptions) do
+		if v.id == signal then
+			def = v
+			break
+		end
+	end
+	if not def then return end
+	if on then
+		if def.func_on then def.func_on(carinfo.controllerpos,floor) end
+	else
+		if def.func_off then def.func_off(carinfo.controllerpos,floor) end
+	end
+end
+
+minetest.register_node("celevator:mesecons_input_off",{
+	description = "Elevator Mesecons Input",
+	tiles = {
+		"celevator_meseconsinput_top_off.png",
+		"celevator_cabinet_sides.png",
+	},
+	groups = {
+		dig_immediate = 2,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5,-0.5,-0.5,0.5,-0.47,0.5},
+			{-0.438,-0.47,-0.438,0.438,-0.42,0.438},
+		},
+	},
+	mesecons = {
+		effector = {
+			rules = iorules,
+			action_on = function(pos,node)
+				node.name = "celevator:mesecons_input_on"
+				minetest.swap_node(pos,node)
+				handleinput(pos,true)
+			end,
+		},
+	},
+	after_place_node = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_int("floor",1)
+		updateinputform(pos)
+	end,
+	on_receive_fields = handleinputfields,
+})
+
+minetest.register_node("celevator:mesecons_input_on",{
+	description = "Elevator Mesecons Input (on state - you hacker you!)",
+	tiles = {
+		"celevator_meseconsinput_top_on.png",
+		"celevator_cabinet_sides.png",
+	},
+	drop = "celevator:mesecons_input_off",
+	groups = {
+		dig_immediate = 2,
+		not_in_creative_inventory = 1,
+	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5,-0.5,-0.5,0.5,-0.47,0.5},
+			{-0.438,-0.47,-0.438,0.438,-0.42,0.438},
+		},
+	},
+	mesecons = {
+		effector = {
+			rules = iorules,
+			action_off = function(pos,node)
+				node.name = "celevator:mesecons_input_off"
+				minetest.swap_node(pos,node)
+				handleinput(pos,false)
+			end,
+		},
+	},
+	after_place_node = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_int("floor",1)
+		updateinputform(pos)
+	end,
+	on_receive_fields = handleinputfields,
 })
