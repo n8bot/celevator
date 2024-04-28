@@ -629,7 +629,7 @@ elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep"
 			local eligiblecars = {}
 			local permanent = false
 			for _,carid in pairs(mem.params.carids) do
-				if getdpos(carid) == i and mem.carstatus[carid].direction == "up" then permanent = true end
+				if getdpos(carid) == i and mem.carstatus[carid].direction == "up" and mem.carstatus[carid].state == "normal" then permanent = true end
 				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 					local serveshigher = false
 					for floor,served in pairs(mem.params.floorsserved[carid]) do
@@ -668,7 +668,7 @@ elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep"
 		local eligiblecars = {}
 		local permanent = false
 		for _,carid in pairs(mem.params.carids) do
-			if getdpos(carid) == i and mem.carstatus[carid].direction == "down" then permanent = true end
+			if getdpos(carid) == i and mem.carstatus[carid].direction == "down" and mem.carstatus[carid].state == "normal" then permanent = true end
 			if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][i] then
 				local serveslower = false
 				for floor,served in pairs(mem.params.floorsserved[carid]) do
