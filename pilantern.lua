@@ -116,6 +116,7 @@ function celevator.pi.flash(pos,what)
 end
 
 function celevator.pi.settext(pos,text)
+	if not text then text = " --" end
 	if minetest.get_item_group(celevator.get_node(pos).name,"_celevator_pi") ~= 1 then return end
 	local meta = minetest.get_meta(pos)
 	if string.len(text) < 3 then
