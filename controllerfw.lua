@@ -121,8 +121,9 @@ local function gotofloor(floor)
 	juststarted = true
 end
 
-local function getnextcallabove(dir)
-	for i=getpos(),#mem.params.floorheights,1 do
+local function getnextcallabove(dir,excludecurrent)
+	local start = (excludecurrent and getpos()+1 or getpos())
+	for i=start,#mem.params.floorheights,1 do
 		if not dir then
 			if mem.carcalls[i] then
 				return i,"car"
@@ -147,8 +148,9 @@ local function getnextcallabove(dir)
 	end
 end
 
-local function getnextcallbelow(dir)
-	for i=getpos(),1,-1 do
+local function getnextcallbelow(dir,excludecurrent)
+	local start = (excludecurrent and getpos()-1 or getpos())
+	for i=start,1,-1 do
 		if not dir then
 			if mem.carcalls[i] then
 				return i,"car"
@@ -856,21 +858,44 @@ if mem.carmotion then
 	if mem.carmotion then
 		interrupt(0.1,"checkdrive")
 	else
+		local hallcall = mem.upcalls[getpos()] or mem.dncalls[getpos()]
 		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
 				mem.swingupcalls[getpos()] = nil
 				mem.groupupcalls[getpos()] = nil
+				if (not hallcall) and (not getnextcallabove()) and getnextcallbelow() then
+					mem.direction = "down"
+				elseif mem.dncalls[getpos()] and (not mem.upcalls[getpos()]) and (not getnextcallabove(nil,true)) then
+					mem.direction = "down"
+					mem.dncalls[getpos()] = nil
+					mem.swingdncalls[getpos()] = nil
+					mem.groupdncalls[getpos()] = nil
+				end
 			elseif mem.direction == "down" then
 				mem.dncalls[getpos()] = nil
 				mem.swingdncalls[getpos()] = nil
 				mem.groupdncalls[getpos()] = nil
+				if (not hallcall) and (not getnextcallbelow()) and getnextcallabove() then
+					mem.direction = "up"
+				elseif mem.upcalls[getpos()] and (not mem.dncalls[getpos()]) and (not getnextcallbelow(nil,true)) then
+					mem.direction = "up"
+					mem.upcalls[getpos()] = nil
+					mem.swingupcalls[getpos()] = nil
+					mem.groupupcalls[getpos()] = nil
+				end
 			end
 			if getpos() >= #mem.params.floornames then
 				mem.direction = "down"
+				mem.dncalls[#mem.params.floornames] = nil
+				mem.swingdncalls[#mem.params.floornames] = nil
+				mem.groupdncalls[#mem.params.floornames] = nil
 			elseif getpos() <= 1 then
 				mem.direction = "up"
+				mem.upcalls[1] = nil
+				mem.swingupcalls[1] = nil
+				mem.groupupcalls[1] = nil
 			end
 			if (mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1)) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then open() end
 			if mem.carstate == "fs1" and getpos() ~= (mem.params.mainlanding or 1) then
