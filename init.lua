@@ -15,6 +15,7 @@ local components = {
 local integrations = {
 	"laptop",
 	"mesecons",
+	"digilines",
 }
 
 for _,i in ipairs(integrations) do

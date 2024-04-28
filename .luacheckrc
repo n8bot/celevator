@@ -13,4 +13,5 @@ read_globals = {
 	"VoxelManip",
 	"laptop",
 	"mesecon",
+	"digilines",
 }
