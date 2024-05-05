@@ -168,3 +168,80 @@ minetest.register_node("celevator:guide_rail_bracket",{
 		},
 	},
 })
+
+minetest.register_node("celevator:tape",{
+	description = "Elevator Positioning System Tape",
+	groups = {
+		choppy = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_positioning_tape.png",
+		"celevator_positioning_tape.png",
+	},
+	drawtype = "nodebox",
+	use_texture_alpha = "clip",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.09,-0.5,-0.3,0.09,0.5,-0.299},
+		},
+	},
+})
+
+minetest.register_node("celevator:tape_magnets",{
+	description = "Elevator Positioning System Tape with Magnets",
+	groups = {
+		choppy = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_positioning_tape.png",
+		"celevator_positioning_tape_magnets.png",
+	},
+	drawtype = "nodebox",
+	use_texture_alpha = "clip",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.09,-0.5,-0.3,0.09,0.5,-0.299},
+		},
+	},
+})
+
+minetest.register_node("celevator:tape_bracket",{
+	description = "Elevator Positioning System Tape with Bracket",
+	groups = {
+		choppy = 1,
+	},
+	paramtype = "light",
+	paramtype2 = "4dir",
+	tiles = {
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_guide_rail.png",
+		"celevator_positioning_tape_bracket_back.png",
+		"celevator_positioning_tape_bracket.png",
+	},
+	drawtype = "nodebox",
+	use_texture_alpha = "clip",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.09,-0.5,-0.3,0.09,0.5,-0.299},
+			{-0.5,-0.05,-0.3,0.12,0.08,-0.25},
+			{-0.5,-0.05,-0.25,-0.45,0.08,0},
+		},
+	},
+})
