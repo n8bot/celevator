@@ -480,10 +480,13 @@ for _,def in ipairs(pieces) do
 		if not carinfo then return end
 		local nname = minetest.get_node(pos).name
 		if nname == "celevator:car_010" then
+			local name = player:get_player_name()
+			local protected = minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true})
 			local event = {
 				type = "cop",
 				fields = fields,
 				player = player:get_player_name(),
+				protected = protected,
 			}
 			celevator.controller.run(carinfo.controllerpos,event)
 		elseif nname == "celevator:car_000" then

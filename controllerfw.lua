@@ -213,6 +213,7 @@ if type(mem.groupupcalls) ~= "table" then mem.groupupcalls = {} end
 if type(mem.groupdncalls) ~= "table" then mem.groupdncalls = {} end
 if type(mem.swingupcalls) ~= "table" then mem.swingupcalls = {} end
 if type(mem.swingdncalls) ~= "table" then mem.swingdncalls = {} end
+if mem.params and not mem.params.carcallsecurity then mem.params.carcallsecurity = {} end
 
 if event.type == "program" then
 	mem.carstate = "uninit"
@@ -252,6 +253,7 @@ if event.type == "program" then
 			doortimer = 5,
 			groupmode = "simplex",
 			mainlanding = 1,
+			carcallsecurity = {},
 		}
 	end
 elseif event.type == "ui" then
@@ -360,6 +362,7 @@ elseif event.type == "ui" then
 			local mainlanding = tonumber(event.fields.mainlanding)
 			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
 				mem.params.mainlanding = math.floor(mainlanding)
+				mem.params.carcallsecurity[math.floor(mainlanding)] = nil
 			end
 		elseif event.fields.floortable then
 			mem.screenstate = "floortable"
@@ -383,6 +386,8 @@ elseif event.type == "ui" then
 			else
 				close()
 			end
+		elseif event.fields.carcallsecurity then
+			mem.screenstate = "carcallsecurity"
 		end
 	elseif mem.screenstate == "status" then
 		for i=1,#mem.params.floornames,1 do
@@ -453,6 +458,33 @@ elseif event.type == "ui" then
 			mem.activefaults = {}
 			mem.fatalfault = false
 			drivecmd({command = "resetfault"})
+		end
+	elseif mem.screenstate == "carcallsecurity" then
+		if event.fields.save then
+			mem.screenstate = "parameters"
+		elseif event.fields.floor then
+			local exp = minetest.explode_textlist_event(event.fields.floor) or {}
+			if exp.type == "CHG" then
+				mem.editingfloor = #mem.params.floornames-exp.index+1
+			elseif exp.type == "DCL" then
+				mem.editingfloor = #mem.params.floornames-exp.index+1
+				local oldmode = mem.params.carcallsecurity[mem.editingfloor]
+				if oldmode == "deny" or mem.editingfloor == (mem.params.mainlanding or 1) then
+					mem.params.carcallsecurity[mem.editingfloor] = nil
+				elseif oldmode == "auth" then
+					mem.params.carcallsecurity[mem.editingfloor] = "deny"
+				elseif not oldmode then
+					mem.params.carcallsecurity[mem.editingfloor] = "auth"
+				end
+			end
+		elseif event.fields.secmode then
+			if event.fields.secmode == "1" or mem.editingfloor == (mem.params.mainlanding or 1) then
+				mem.params.carcallsecurity[mem.editingfloor] = nil
+			elseif event.fields.secmode == "2" then
+				mem.params.carcallsecurity[mem.editingfloor] = "auth"
+			elseif event.fields.secmode == "3" then
+				mem.params.carcallsecurity[mem.editingfloor] = "deny"
+			end
 		end
 	end
 elseif event.iid == "opened" and mem.doorstate == "opening" then
@@ -525,7 +557,16 @@ elseif event.type == "cop" then
 		for k,v in pairs(fields) do
 			if string.sub(k,1,7) == "carcall" then
 				local landing = tonumber(string.sub(k,8,-1))
-				if v and landing and landing >= 1 and landing <= #mem.params.floorheights then
+				local secmode = mem.params.carcallsecurity[landing]
+				local secok = true
+				if mem.carstate ~= "fs2" then
+					if secmode == "deny" then
+						secok = false
+					elseif secmode == "auth" and event.protected then
+						secok = false
+					end
+				end
+				if v and landing and landing >= 1 and landing <= #mem.params.floorheights and secok then
 					if getpos() == landing then
 						if mem.carstate == "normal" or mem.carstate == "indep" then
 							if mem.doorstate == "closing" then
@@ -1211,6 +1252,7 @@ elseif mem.screenstate == "parameters" then
 	fs("style[resetdoors,resetcontroller;bgcolor=#DD3333]")
 	fs("button[12,1;3,1;resetdoors;Reset Doors]")
 	fs("button[12,2.5;3,1;resetcontroller;Reset Controller]")
+	fs("button[1,8.5;3,1;carcallsecurity;Car Call Security]")
 elseif mem.screenstate == "faults" then
 	fs("label[1,1;FAULT HISTORY]")
 	if #mem.faultlog > 0 then
@@ -1226,6 +1268,34 @@ elseif mem.screenstate == "faults" then
 	end
 	fs("button[1,10;3,1;back;Back]")
 	fs("button[4.5,10;3,1;clear;Clear]")
+elseif mem.screenstate == "carcallsecurity" then
+	fs("label[1,1;CAR CALL SECURITY]")
+	fs("button[1,10;3,1;save;Done]")
+	fs("textlist[1,2;6,7;floor;")
+	for i=#mem.params.floornames,1,-1 do
+		local secmode = mem.params.carcallsecurity[i]
+		if secmode == "auth" then
+			secmode = "Authorized Users Only"
+		elseif secmode == "deny" then
+			secmode = "Locked"
+		else
+			secmode = "Security Disabled"
+		end
+		fs(minetest.formspec_escape(string.format("%s - %s",mem.params.floornames[i],secmode))..(i==1 and "" or ","))
+	end
+	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
+	if mem.editingfloor ~= (mem.params.mainlanding or 1) then
+		fs("dropdown[8,2;4,1;secmode;Security Disabled,Authorized Users Only,Locked;")
+		if mem.params.carcallsecurity[mem.editingfloor] == "auth" then
+			fs("2;true]")
+		elseif mem.params.carcallsecurity[mem.editingfloor] == "deny" then
+			fs("3;true]")
+		else
+			fs("1;true]")
+		end
+	else
+		fs("label[8,2;Main landing cannot be locked]")
+	end
 end
 
 local arrow = " "
