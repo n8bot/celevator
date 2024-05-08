@@ -268,7 +268,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
 		table.insert(refs,eref)
-		if node.name == "celevator:car_021" then
+		if node.name == "celevator:car_021" or node.name == "celevator:car_122" then
 			local toppos = vector.add(pos,vector.new(0,1,0))
 			local topattach = minetest.get_objects_inside_radius(toppos,0.75)
 			for _,ref in pairs(topattach) do
@@ -281,6 +281,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 					["celevator:incar_pi_entity"] = true,
 					["celevator:car_top_box"] = true,
 					["celevator:car_door"] = true,
+					["celevator:tapehead"] = true,
 				}
 				if attachref:get_luaentity() and included[attachref:get_luaentity().name] then
 					table.insert(refs,attachref)
@@ -323,6 +324,11 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 			if not pos then ok = false end
 		end
 		if pos and ename == "celevator:car_moving" then
+			local rounded = {
+				["celevator:car_top_box"] = true,
+				["celevator:car_door"] = true,
+				["celevator:tapehead"] = true,
+			}
 			for _,i in ipairs(minetest.get_objects_inside_radius(pos,0.9)) do
 				i:set_velocity(vector.new(0,0,0))
 				if i:is_player() then
@@ -331,7 +337,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 					if top then ppos.y = ppos.y+1.1 end
 					i:set_pos(ppos)
 					minetest.after(0.5,i.set_pos,i,ppos)
-				elseif i:get_luaentity() and (i:get_luaentity().name == "celevator:car_top_box" or i:get_luaentity().name == "celevator:car_door") then
+				elseif i:get_luaentity() and rounded[i:get_luaentity().name] then
 					local epos = i:get_pos()
 					epos.y = math.floor(epos.y+0.5)
 					if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
