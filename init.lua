@@ -10,6 +10,7 @@ local components = {
 	"fs1switch",
 	"dispatcher",
 	"decorations",
+	"crafts",
 }
 
 local integrations = {
