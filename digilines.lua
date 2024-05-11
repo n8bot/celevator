@@ -27,71 +27,123 @@ minetest.register_node("celevator:digilines_io",{
 				if setchannel ~= channel then return end
 				local carid = meta:get_int("carid")
 				if carid == 0 then return end
+				local dmode = meta:get_int("dispatcher") == 1
 				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-				if not carinfo.controllerpos then return end
-				if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 				msg.command = string.lower(msg.command)
-				if msg.command == "get" then
-					local mem = minetest.deserialize(minetest.get_meta(carinfo.controllerpos):get_string("mem"))
-					if not mem then return end
-					local ret = {
-						carstate = mem.carstate,
-						doorstate = mem.doorstate,
-						carcalls = mem.carcalls,
-						upcalls = mem.upcalls,
-						swingupcalls = mem.swingupcalls,
-						groupupcalls = mem.groupupcalls,
-						downcalls = mem.dncalls,
-						swingdowncalls = mem.swingdncalls,
-						groupdowncalls = mem.groupdncalls,
-						fireserviceled = mem.fs1led,
-						switches = {
-							stop = mem.controllerstopsw,
-							machineroominspection = mem.controllerinspectsw,
-							cartopinspection = mem.cartopinspectsw,
-							capture = mem.capturesw,
-							test = mem.testsw,
-							fireservice1 = mem.fs1switch,
-							fireservice2 = mem.fs2sw,
-							indpedendent = mem.indsw,
-							light = mem.lightsw,
-							fan = mem.fansw,
-						},
-						parameters = mem.params,
-						drivestatus = mem.drive.status,
-						direction = mem.direction,
-					}
-					digilines.receptor_send(pos,digilines.rules.default,channel,ret)
-				elseif msg.command == "carcall" and type(msg.floor) == "number" then
-					celevator.controller.run(carinfo.controllerpos,{
-						type = "remotemsg",
-						channel = "carcall",
-						msg = msg.floor,
-					})
-				elseif msg.command == "upcall" and type(msg.floor) == "number" then
-					celevator.controller.run(carinfo.controllerpos,{
-						type = "remotemsg",
-						channel = "upcall",
-						msg = msg.floor,
-					})
-				elseif msg.command == "downcall" and type(msg.floor) == "number" then
-					celevator.controller.run(carinfo.controllerpos,{
-						type = "remotemsg",
-						channel = "dncall",
-						msg = msg.floor,
-					})
-				elseif msg.command == "swingupcall" and type(msg.floor) == "number" then
-					celevator.controller.run(carinfo.controllerpos,{
-						type = "remotemsg",
-						channel = "swingupcall",
-						msg = msg.floor,
-					})
-				elseif msg.command == "swingdowncall" and type(msg.floor) == "number" then
-					celevator.controller.run(carinfo.controllerpos,{
-						type = "remotemsg",
-						channel = "swingdncall",
-						msg = msg.floor,
-					})
+				if dmode then
+					if not carinfo.dispatcherpos then return end
+					if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+					if msg.command == "get" then
+						local mem = minetest.deserialize(minetest.get_meta(carinfo.dispatcherpos):get_string("mem"))
+						if not mem then return end
+						local ret = {
+							upcalls = {},
+							downcalls = {},
+							fireserviceled = mem.fs1led,
+						}
+						for floor in pairs(mem.upcalls) do
+							ret.upcalls[floor] = {
+								eta = mem.upeta[floor]
+							}
+							if mem.assignedup[floor] then
+								for k,v in ipairs(mem.params.carids) do
+									if v == mem.assignedup[floor] then
+										ret.upcalls[floor].assignedcar = k
+									end
+								end
+							end
+						end
+						for floor in pairs(mem.dncalls) do
+							ret.downcalls[floor] = {
+								eta = mem.dneta[floor]
+							}
+							if mem.assigneddn[floor] then
+								for k,v in ipairs(mem.params.carids) do
+									if v == mem.assigneddn[floor] then
+										ret.downcalls[floor].assignedcar = k
+									end
+								end
+							end
+						end
+						digilines.receptor_send(pos,digilines.rules.default,channel,ret)
+					elseif msg.command == "upcall" and type(msg.floor) == "number" then
+						celevator.dispatcher.run(carinfo.dispatcherpos,{
+							type = "remotemsg",
+							channel = "upcall",
+							msg = msg.floor,
+						})
+					elseif msg.command == "downcall" and type(msg.floor) == "number" then
+						celevator.dispatcher.run(carinfo.dispatcherpos,{
+							type = "remotemsg",
+							channel = "dncall",
+							msg = msg.floor,
+						})
+					end
+				else
+					if not carinfo.controllerpos then return end
+					if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+					if msg.command == "get" then
+						local mem = minetest.deserialize(minetest.get_meta(carinfo.controllerpos):get_string("mem"))
+						if not mem then return end
+						local ret = {
+							carstate = mem.carstate,
+							doorstate = mem.doorstate,
+							carcalls = mem.carcalls,
+							upcalls = mem.upcalls,
+							swingupcalls = mem.swingupcalls,
+							groupupcalls = mem.groupupcalls,
+							downcalls = mem.dncalls,
+							swingdowncalls = mem.swingdncalls,
+							groupdowncalls = mem.groupdncalls,
+							fireserviceled = mem.fs1led,
+							switches = {
+								stop = mem.controllerstopsw,
+								machineroominspection = mem.controllerinspectsw,
+								cartopinspection = mem.cartopinspectsw,
+								capture = mem.capturesw,
+								test = mem.testsw,
+								fireservice1 = mem.fs1switch,
+								fireservice2 = mem.fs2sw,
+								indpedendent = mem.indsw,
+								light = mem.lightsw,
+								fan = mem.fansw,
+							},
+							parameters = mem.params,
+							drivestatus = mem.drive.status,
+							direction = mem.direction,
+						}
+						digilines.receptor_send(pos,digilines.rules.default,channel,ret)
+					elseif msg.command == "carcall" and type(msg.floor) == "number" then
+						celevator.controller.run(carinfo.controllerpos,{
+							type = "remotemsg",
+							channel = "carcall",
+							msg = msg.floor,
+						})
+					elseif msg.command == "upcall" and type(msg.floor) == "number" then
+						celevator.controller.run(carinfo.controllerpos,{
+							type = "remotemsg",
+							channel = "upcall",
+							msg = msg.floor,
+						})
+					elseif msg.command == "downcall" and type(msg.floor) == "number" then
+						celevator.controller.run(carinfo.controllerpos,{
+							type = "remotemsg",
+							channel = "dncall",
+							msg = msg.floor,
+						})
+					elseif msg.command == "swingupcall" and type(msg.floor) == "number" then
+						celevator.controller.run(carinfo.controllerpos,{
+							type = "remotemsg",
+							channel = "swingupcall",
+							msg = msg.floor,
+						})
+					elseif msg.command == "swingdowncall" and type(msg.floor) == "number" then
+						celevator.controller.run(carinfo.controllerpos,{
+							type = "remotemsg",
+							channel = "swingdncall",
+							msg = msg.floor,
+						})
+					end
 				end
 			end,
 		},
@@ -118,15 +170,32 @@ minetest.register_node("celevator:digilines_io",{
 		meta:set_int("carid",fields.carid)
 		local carid = tonumber(fields.carid)
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-		if not carinfo.controllerpos then return end
-		if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-		if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			if player:is_player() then
-				minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-				minetest.record_protection_violation(carinfo.controllerpos,name)
-			end
-			return
+		if not (carinfo.controllerpos or carinfo.dispatcherpos) then return end
+		local dmode = false
+		if carinfo.dispatcherpos then
+			dmode = true
+			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+		else
+			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 		end
+		if dmode then
+			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+				end
+				return
+			end
+		else
+			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					minetest.record_protection_violation(carinfo.controllerpos,name)
+				end
+				return
+			end
+		end
+		meta:set_int("dispatcher",dmode and 1 or 0)
 		meta:set_string("channel",fields.channel)
 		local infotext = "Car: "..carid
 		meta:set_string("infotext",infotext)
