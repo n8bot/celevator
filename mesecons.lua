@@ -317,11 +317,23 @@ local inputoptions = {
 	},
 	{
 		id = "fs1on",
-		desc = "Activate Fire Service Phase 1",
+		desc = "Activate Fire Service (main landing) Phase 1",
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
 				state = true,
+			})
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "fs1onalt",
+		desc = "Activate Fire Service (alternate landing) Phase 1",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "fs1switch",
+				state = true,
+				mode = "alternate",
 			})
 		end,
 		needsfloor = false,

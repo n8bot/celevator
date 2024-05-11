@@ -222,6 +222,8 @@ if type(mem.swingupcalls) ~= "table" then mem.swingupcalls = {} end
 if type(mem.swingdncalls) ~= "table" then mem.swingdncalls = {} end
 if mem.params and not mem.params.carcallsecurity then mem.params.carcallsecurity = {} end
 if mem.params and not mem.params.nudgetimer then mem.params.nudgetimer = 30 end
+if mem.params and not mem.params.altrecalllanding then mem.params.altrecalllanding = 2 end
+if mem.params and not mem.recallto then mem.recallto = mem.params.mainlanding or 1 end
 
 if event.type == "program" then
 	mem.carstate = "uninit"
@@ -261,6 +263,7 @@ if event.type == "program" then
 			doortimer = 5,
 			groupmode = "simplex",
 			mainlanding = 1,
+			altrecalllanding = 2,
 			carcallsecurity = {},
 			nudgetimer = 30,
 		}
@@ -376,6 +379,10 @@ elseif event.type == "ui" then
 			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
 				mem.params.mainlanding = math.floor(mainlanding)
 				mem.params.carcallsecurity[math.floor(mainlanding)] = nil
+			end
+			local altrecalllanding = tonumber(event.fields.altrecalllanding)
+			if altrecalllanding and altrecalllanding >= 1 and altrecalllanding <= #mem.params.floorheights then
+				mem.params.altrecalllanding = math.floor(altrecalllanding)
 			end
 		elseif event.fields.floortable then
 			mem.screenstate = "floortable"
@@ -631,6 +638,13 @@ elseif event.type == "copswitches" then
 		mem.fs2sw = "off"
 	end
 elseif event.type == "fs1switch" then
+	if event.state and not mem.fs1led then
+		if event.mode == "alternate" then
+			mem.recallto = mem.params.altrecalllanding
+		else
+			mem.recallto = mem.params.mainlanding or 1
+		end
+	end
 	mem.fs1switch = event.state
 	mem.fs1led = event.state
 elseif event.type == "cartopbox" then
@@ -850,38 +864,38 @@ elseif mem.fs1switch then
 	mem.groupupcalls = {}
 	mem.groupdncalls = {}
 	interrupt(nil,"close")
-	if mem.drive.status.vel > 0 and mem.drive.status.apos > gettarget(mem.params.mainlanding or 1) then
+	if mem.drive.status.vel > 0 and mem.drive.status.apos > gettarget(mem.recallto) then
 		for i=getpos(),#mem.params.floornames,1 do
 			if mem.drive.status.neareststop < gettarget(i) and mem.drive.status.dpos > gettarget(i) then
 				gotofloor(i)
 				break
 			end
 		end
-	elseif mem.drive.status.vel < 0 and mem.drive.status.apos < gettarget(mem.params.mainlanding or 1) then
+	elseif mem.drive.status.vel < 0 and mem.drive.status.apos < gettarget(mem.recallto) then
 		for i=getpos(),1,-1 do
 			if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
 				gotofloor(i)
 				break
 			end
 		end
-	elseif mem.drive.status.vel < 0 and mem.drive.status.dpos < gettarget(mem.params.mainlanding or 1) and mem.drive.status.apos > gettarget(mem.params.mainlanding or 1) then
-		for i=(mem.params.mainlanding or 1),1,-1 do
+	elseif mem.drive.status.vel < 0 and mem.drive.status.dpos < gettarget(mem.recallto) and mem.drive.status.apos > gettarget(mem.recallto) then
+		for i=mem.recallto,1,-1 do
 			if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
 				gotofloor(i)
 				break
 			end
 		end
-	elseif mem.drive.status.vel > 0 and mem.drive.status.dpos > gettarget(mem.params.mainlanding or 1) and mem.drive.status.apos < gettarget(mem.params.mainlanding or 1) then
-		for i=(mem.params.mainlanding or 1),#mem.params.floornames,1 do
+	elseif mem.drive.status.vel > 0 and mem.drive.status.dpos > gettarget(mem.recallto) and mem.drive.status.apos < gettarget(mem.recallto) then
+		for i=mem.recallto,#mem.params.floornames,1 do
 			if mem.drive.status.neareststop < gettarget(i) and mem.drive.status.dpos > gettarget(i) then
 				gotofloor(i)
 				break
 			end
 		end
-	elseif getpos() ~= (mem.params.mainlanding or 1) then
+	elseif getpos() ~= mem.recallto then
 		if not (mem.carmotion or juststarted) then
 			if mem.doorstate == "closed" then
-				gotofloor(mem.params.mainlanding or 1)
+				gotofloor(mem.recallto)
 			elseif mem.doorstate == "open" then
 				close()
 			end
@@ -997,12 +1011,12 @@ if mem.carmotion then
 				mem.swingupcalls[1] = nil
 				mem.groupupcalls[1] = nil
 			end
-			if (mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1)) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then
+			if (mem.carstate ~= "fs1" or getpos() == mem.recallto) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then
 				open()
 				mem.nudging = false
 			end
-			if mem.carstate == "fs1" and getpos() ~= (mem.params.mainlanding or 1) then
-				gotofloor(mem.params.mainlanding or 1)
+			if mem.carstate == "fs1" and getpos() ~= mem.recallto then
+				gotofloor(mem.recallto)
 			end
 		elseif mem.carstate == "test" then
 			mem.carcalls[getpos()] = nil
@@ -1296,8 +1310,9 @@ elseif mem.screenstate == "parameters" then
 	if mem.params.groupmode == "simplex" then fs("button[8,10;3,1;floortable;Edit Floor Table]") end
 	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
 	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
-	fs(string.format("field[1,7;3,1;mainlanding;Main Landing;%d]",mem.params.mainlanding or 1))
+	fs(string.format("field[1,7;3,1;mainlanding;Main Egress Landing;%d]",mem.params.mainlanding or 1))
 	fs(string.format("field[4.5,3;3,1;nudgetimer;Nudging Timer (0 = None);%0.1f]",mem.params.nudgetimer))
+	fs(string.format("field[4.5,7;3,1;altrecalllanding;Alternate Recall Landing;%d]",mem.params.altrecalllanding))
 	fs("style[resetdoors,resetcontroller;bgcolor=#DD3333]")
 	fs("button[12,1;3,1;resetdoors;Reset Doors]")
 	fs("button[12,2.5;3,1;resetcontroller;Reset Controller]")
