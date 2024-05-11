@@ -578,7 +578,7 @@ elseif event.channel == "status" then
 			interrupt(1,"run")
 		end
 	end
-elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep") and (mem.screenstate == "status" or mem.screenstate == "menu") then
+elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" and mem.powerstate ~= "asleep") and (mem.screenstate == "status" or mem.screenstate == "menu") then
 	local busy = false
 	if not mem.upcalls then mem.upcalls = {} end
 	if not mem.dncalls then mem.dncalls = {} end
@@ -748,7 +748,7 @@ elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep"
 	for floor,carid in pairs(mem.assigneddn) do
 		mem.dneta[floor] = calculateeta(carid,floor,"down")
 	end
-	if busy then
+	if busy or event.type == "remotewake" then
 		mem.powerstate = "awake"
 		interrupt(nil,"sleep")
 		interrupt(1,"run")
@@ -761,7 +761,7 @@ elseif event.type == "abm" or (event.iid == "run" and mem.powerstate ~= "asleep"
 			interrupt(1,"run")
 		end
 	end
-	if mem.powerstate ~= "asleep" or event.type == "abm" then
+	if mem.powerstate ~= "asleep" or event.type == "abm" or event.type == "remotewake" then
 		interrupt(0.5,"getstatus")
 	end
 elseif event.iid == "getstatus" then
@@ -795,6 +795,10 @@ elseif event.type == "remotemsg" then
 		mem.upcalls[event.msg] = true
 	elseif event.channel == "dncall" then
 		mem.dncalls[event.msg] = true
+	elseif event.channel == "carcall" then
+		if mem.params.carids[event.car] then
+			send(mem.params.carids[event.car],"carcall",event.floor)
+		end
 	end
 end
 

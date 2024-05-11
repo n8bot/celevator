@@ -60,6 +60,123 @@ laptop.register_app("celevator",{
 			fs = fs..mtos.theme:get_label("0.5,1","Could not find a controller or dispatcher with the given ID.")
 			fs = fs..mtos.theme:get_label("0.5,1.3","Please check the ID number and try again.")
 			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
+		elseif ram.screenstate == "dispatcherstatus" then
+			local connection = mem.connections[mem.selectedconnection]
+			local pos = connection.pos
+			if celevator.dispatcher.isdispatcher(pos) then
+				local meta = minetest.get_meta(pos)
+				local dmem = minetest.deserialize(meta:get_string("mem"))
+				if not dmem then return end
+				fs = fs.."background9[-0.1,0.4;15.2,10.05;celevator_fs_bg.png;false;3]"
+				fs = fs.."label[0.5,0.5;"..string.format("Connected to %s (ID %d)",connection.name,connection.carid).."]"
+				fs = fs.."button[1,1;2,1;disconnect;Disconnect]"
+				fs = fs.."box[0.5,1;0.1,9;#AAAAAAFF]"
+				fs = fs.."box[14.25,1;0.1,9;#AAAAAAFF]"
+				fs = fs.."style_type[label;font_size=*0.75]"
+				fs = fs.."label[0.05,10;UP]"
+				fs = fs.."label[14.35,10;DOWN]"
+				fs = fs.."style_type[image_button;font=mono;font_size=*0.66]"
+				for car=1,#dmem.params.carids,1 do
+					local xp = (car-1)*0.75+1
+					local carid = dmem.params.carids[car]
+					local carstate = dmem.carstatus[carid].state
+					fs = fs..string.format("label[%f,9.8;CAR %d]",xp,car)
+					fs = fs..string.format("label[%f,10;%s]",xp+0.1,minetest.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT")))
+				end
+				local lowestfloor = (mem.screenpage-1)*10+1
+				local maxfloor = #dmem.params.floornames
+				if maxfloor > 10 then
+					if lowestfloor+9 < maxfloor then
+						fs = fs.."image_button[4,1;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]"
+					end
+					if lowestfloor > 1 then
+						fs = fs.."image_button[5,1;0.75,0.75;celevator_menu_arrow.png^\\[transformFY;scrolldown;;false;false;celevator_menu_arrow.png^\\[transformFY]"
+					end
+				end
+				local function getpos(carid)
+					local floormap = {}
+					local floorheights = {}
+					for i=1,#dmem.params.floornames,1 do
+						if dmem.params.floorsserved[carid][i] then
+							table.insert(floormap,i)
+							table.insert(floorheights,dmem.params.floorheights[i])
+						elseif #floorheights > 0 then
+							floorheights[#floorheights] = floorheights[#floorheights]+dmem.params.floorheights[i]
+						end
+					end
+					local ret = 0
+					local searchpos = dmem.carstatus[carid].position
+					for k,v in ipairs(floorheights) do
+						ret = ret+v
+						if ret > searchpos then return floormap[k] end
+					end
+					return 1
+				end
+				local function realtocarfloor(carid,floor)
+					if type(floor) == "table" then
+						local ret = {}
+						for i in pairs(floor) do
+							ret[realtocarfloor(carid,i)] = true
+						end
+						return ret
+					end
+					local map = {}
+					for i=1,#dmem.params.floornames,1 do
+						if dmem.params.floorsserved[carid][i] then
+							table.insert(map,i)
+						end
+					end
+					local pmap = {}
+					for k,v in pairs(map) do
+						pmap[v] = k
+					end
+					return pmap[floor]
+				end
+				for i=1,math.min(10,#dmem.params.floornames-lowestfloor+1),1 do
+					local yp = 8.75-0.72*(i-1)
+					local floor = i+lowestfloor-1
+					fs = fs..string.format("label[0.62,%f;%s]",yp+0.05,dmem.params.floornames[floor])
+					local uplabel = ""
+					if dmem.upcalls[floor] then uplabel = minetest.colorize("#55FF55",math.floor(dmem.upeta[floor] or 0)) end
+					if floor < #dmem.params.floornames then fs = fs..string.format("image_button[0,%f;0.66,0.66;celevator_fs_bg.png;upcall%d;%s]",yp,floor,uplabel) end
+					fs = fs..string.format("label[14,%f;%s]",yp+0.05,dmem.params.floornames[floor])
+					local dnlabel = ""
+					if dmem.dncalls[floor] then dnlabel = minetest.colorize("#FF5555",math.floor(dmem.dneta[floor] or 0)) end
+					if floor > 1 then fs = fs..string.format("image_button[14.4,%f;0.66,0.66;celevator_fs_bg.png;dncall%d;%s]",yp,floor,dnlabel) end
+					for car=1,#dmem.params.carids,1 do
+						local xp = (car-1)*0.75+1
+						local carid = dmem.params.carids[car]
+						local carfloor = realtocarfloor(carid,floor)
+						if carfloor then
+							local ccdot = dmem.carstatus[carid].carcalls[carfloor] and "*" or ""
+							local groupup = dmem.carstatus[carid].groupupcalls[carfloor] and minetest.colorize("#55FF55","^") or ""
+							local swingup = dmem.carstatus[carid].swingupcalls[carfloor] and minetest.colorize("#FFFF55","^") or ""
+							local swingdn = dmem.carstatus[carid].swingdncalls[carfloor] and minetest.colorize("#FFFF55","v") or ""
+							local groupdn = dmem.carstatus[carid].groupdncalls[carfloor] and minetest.colorize("#FF5555","v") or ""
+							ccdot = groupup..swingup..ccdot..swingdn..groupdn
+							if getpos(carid) == floor then
+								local cargraphics = {
+									open = "\\[   \\]",
+									opening = "\\[< >\\]",
+									closing = "\\[> <\\]",
+									closed = "\\[ | \\]",
+									testtiming = "\\[ | \\]",
+								}
+								ccdot = cargraphics[dmem.carstatus[carid].doorstate]
+								if dmem.carstatus[carid].direction == "up" then
+									ccdot = minetest.colorize("#55FF55",ccdot)
+								elseif dmem.carstatus[carid].direction == "down" then
+									ccdot = minetest.colorize("#FF5555",ccdot)
+								end
+							end
+							fs = fs..string.format("image_button[%f,%f;0.66,0.66;celevator_fs_bg.png;carcall%02d%d;%s]",xp,yp,car,floor,ccdot)
+						end
+					end
+				end
+				if dmem.powerstate == "asleep" then
+					celevator.dispatcher.run(pos,{type = "remotewake"})
+				end
+			end
 		elseif ram.screenstate == "controllerstatus" then
 			local connection = mem.connections[mem.selectedconnection]
 			local pos = connection.pos
@@ -209,6 +326,7 @@ laptop.register_app("celevator",{
 			elseif fields.connection and exp.type == "CHG" then
 				mem.selectedconnection = #mem.connections-exp.index+1
 			elseif fields.connect or exp.type == "DCL" then
+				mem.screenpage = 1
 				if exp.type == "DCL" then mem.selectedconnection = #mem.connections-exp.index+1 end
 				local connection = mem.connections[mem.selectedconnection]
 				if connection.itemtype == "controller" and celevator.controller.iscontroller(connection.pos) then
@@ -260,6 +378,54 @@ laptop.register_app("celevator",{
 		elseif ram.screenstate == "notfound" then
 			if fields.ok then
 				ram.screenstate = "newconnection"
+			end
+		elseif ram.screenstate == "dispatcherstatus" then
+			if fields.disconnect then
+				ram.screenstate = "connections"
+				return
+			end
+			local pos = mem.connections[mem.selectedconnection].pos
+			if celevator.dispatcher.isdispatcher(pos) then
+				local meta = minetest.get_meta(pos)
+				local dmem = minetest.deserialize(meta:get_string("mem"))
+				if not dmem then return end
+				for k in pairs(fields) do
+					if string.sub(k,1,7) == "carcall" then
+						local car = tonumber(string.sub(k,8,9))
+						local floor = tonumber(string.sub(k,10,-1))
+						if car and floor then
+							celevator.dispatcher.run(pos,{
+								type = "remotemsg",
+								channel = "carcall",
+								car = car,
+								floor = floor,
+							})
+						end
+					elseif string.sub(k,1,6) == "upcall" then
+						local floor = tonumber(string.sub(k,7,-1))
+						if floor then
+							celevator.dispatcher.run(pos,{
+								type = "remotemsg",
+								channel = "upcall",
+								msg = floor,
+							})
+						end
+					elseif string.sub(k,1,6) == "dncall" then
+						local floor = tonumber(string.sub(k,7,-1))
+						if floor then
+							celevator.dispatcher.run(pos,{
+								type = "remotemsg",
+								channel = "dncall",
+								msg = floor,
+							})
+						end
+					end
+				end
+				if fields.scrolldown then
+					mem.screenpage = math.max(1,mem.screenpage-1)
+				elseif fields.scrollup then
+					mem.screenpage = math.min(mem.screenpage+1,math.floor((#dmem.params.floornames-1)/10)+1)
+				end
 			end
 		elseif ram.screenstate == "controllerstatus" then
 			if fields.disconnect then
