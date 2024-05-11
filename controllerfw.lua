@@ -1397,6 +1397,24 @@ mem.flash_blank = mem.nudging
 mem.lanterns = {}
 if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then
 	mem.lanterns[getpos()] = mem.direction
+elseif mem.carstate == "normal" and mem.doorstate == "closed" and mem.drive.status then
+	local ring = false
+	if mem.drive.status.vel > 0 and mem.drive.status.neareststop > mem.drive.status.dpos then
+		ring = true
+	elseif mem.drive.status.vel < 0 and mem.drive.status.neareststop < mem.drive.status.dpos then
+		ring = true
+	end
+	if ring then
+		for i=1,#mem.params.floornames,1 do
+			if gettarget(i) == mem.drive.status.dpos then
+				if mem.direction == "up" and mem.upcalls[i] then
+					mem.lanterns[i] = "up"
+				elseif mem.direction == "down" and mem.dncalls[i] then
+					mem.lanterns[i] = "down"
+				end
+			end
+		end
+	end
 end
 
 mem.copformspec = "formspec_version[7]"
