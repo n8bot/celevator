@@ -833,8 +833,22 @@ elseif mem.fs1switch then
 			end
 		end
 	elseif mem.drive.status.vel < 0 and mem.drive.status.apos < gettarget(mem.params.mainlanding or 1) then
-		for i=1,getpos(),1 do
+		for i=getpos(),1,-1 do
 			if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
+				gotofloor(i)
+				break
+			end
+		end
+	elseif mem.drive.status.vel < 0 and mem.drive.status.dpos < gettarget(mem.params.mainlanding or 1) and mem.drive.status.apos > gettarget(mem.params.mainlanding or 1) then
+		for i=(mem.params.mainlanding or 1),1,-1 do
+			if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
+				gotofloor(i)
+				break
+			end
+		end
+	elseif mem.drive.status.vel > 0 and mem.drive.status.dpos > gettarget(mem.params.mainlanding or 1) and mem.drive.status.apos < gettarget(mem.params.mainlanding or 1) then
+		for i=(mem.params.mainlanding or 1),#mem.params.floornames,1 do
+			if mem.drive.status.neareststop < gettarget(i) and mem.drive.status.dpos > gettarget(i) then
 				gotofloor(i)
 				break
 			end
@@ -847,7 +861,7 @@ elseif mem.fs1switch then
 				close()
 			end
 		end
-	elseif mem.doorstate == "closed" then
+	elseif mem.doorstate == "closed" or mem.doorstate == "closing" then
 		if not (mem.carmotion or juststarted) then
 			open()
 		end

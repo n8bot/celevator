@@ -169,7 +169,15 @@ local function gettarget(floor)
 	return target
 end
 
-local function predictnextstop(carid,startpos,direction,carcalls,upcalls,dncalls)
+local function predictnextstop(carid,startpos,direction,carcalls,upcalls,dncalls,leaving)
+	if leaving then
+		local vel = mem.carstatus[carid].vel
+		if vel > 0 then
+			startpos = startpos+1
+		elseif vel < 0 then
+			startpos = startpos-1
+		end
+	end
 	if direction == "up" then
 		if getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls) then
 			return getnextcallabove(carid,"up",startpos,carcalls,upcalls,dncalls),"up"
@@ -216,7 +224,7 @@ local function estimatetraveltime(carid,src,dest)
 	return estimate
 end
 
-local function buildstopsequence(carid,startfloor,direction,target,targetdir)
+local function buildstopsequence(carid,startfloor,direction,target,targetdir,leaving)
 	local carcalls = cartorealfloor(carid,mem.carstatus[carid].carcalls)
 	local upcalls = cartorealfloor(carid,mem.carstatus[carid].upcalls)
 	local dncalls = cartorealfloor(carid,mem.carstatus[carid].dncalls)
@@ -235,7 +243,7 @@ local function buildstopsequence(carid,startfloor,direction,target,targetdir)
 	end
 	repeat
 		local src = carpos
-		carpos,direction = predictnextstop(carid,carpos,direction,carcalls,upcalls,dncalls)
+		carpos,direction = predictnextstop(carid,carpos,direction,carcalls,upcalls,dncalls,leaving)
 		carcalls[carpos] = nil
 		if direction == "up" then
 			upcalls[carpos] = nil
@@ -251,7 +259,8 @@ local function buildstopsequence(carid,startfloor,direction,target,targetdir)
 end
 
 local function calculateeta(carid,floor,direction)
-	local sequence = buildstopsequence(carid,getpos(carid),mem.carstatus[carid].direction,floor,direction)
+	local leaving = (getpos(carid) ~= getdpos(carid)) and (getpos(carid) == floor)
+	local sequence = buildstopsequence(carid,getpos(carid),mem.carstatus[carid].direction,floor,direction,leaving)
 	local doorstate = mem.carstatus[carid].doorstate
 	local doortimes = {
 		closed = 0,
