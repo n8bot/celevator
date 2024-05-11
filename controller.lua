@@ -437,7 +437,7 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				elseif command.command == "open" then
 					minetest.after(0.25,celevator.drives[drivetype].movedoors,drivepos,"open")
 				elseif command.command == "close" then
-					celevator.drives[drivetype].movedoors(drivepos,"close")
+					celevator.drives[drivetype].movedoors(drivepos,"close",command.nudge)
 				elseif command.command == "resetfault" then
 					celevator.drives[drivetype].resetfault(drivepos)
 				elseif command.command == "pibeep" then
@@ -505,6 +505,8 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 				celevator.pi.flash(pi.pos,what)
 			end
 		end
+		carinfo.flash_blank = mem.flash_blank
+		if mem.flash_blank ~= oldmem.flash_blank then carinfodirty = true end
 		local oldlanterns = oldmem.lanterns or {}
 		local newlanterns = mem.lanterns or {}
 		local lanterns = carinfo.lanterns

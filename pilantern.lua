@@ -37,6 +37,8 @@ minetest.register_entity("celevator:incar_pi_entity",{
 				text = " IS"
 			elseif carinfo.flash_fs and os.time()%2 == 0 then
 				text = " FS"
+			elseif carinfo.flash_blank and os.time()%2 == 0 then
+				text = "   "
 			end
 			local etex = celevator.pi.generatetexture(text,carinfo.piuparrow,carinfo.pidownarrow,false,true)
 			self.object:set_properties({textures = {etex}})

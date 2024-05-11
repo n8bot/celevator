@@ -193,13 +193,20 @@ local function open()
 	interrupt(0.2,"checkopen")
 	interrupt(10,"opentimeout")
 	interrupt(nil,"closetimeout")
+	if mem.nudging then
+		if mem.carstate == "normal" then
+			interrupt(0,"nudge")
+		else
+			mem.nudging = false
+		end
+	end
 end
 
-local function close()
+local function close(nudge)
 	mem.doorstate = "closing"
-	drivecmd({command = "close"})
+	drivecmd({command = "close",nudge = nudge})
 	interrupt(0.2,"checkclosed")
-	interrupt(10,"closetimeout")
+	interrupt((nudge and 30 or 10),"closetimeout")
 	interrupt(nil,"opentimeout")
 end
 
@@ -214,6 +221,7 @@ if type(mem.groupdncalls) ~= "table" then mem.groupdncalls = {} end
 if type(mem.swingupcalls) ~= "table" then mem.swingupcalls = {} end
 if type(mem.swingdncalls) ~= "table" then mem.swingdncalls = {} end
 if mem.params and not mem.params.carcallsecurity then mem.params.carcallsecurity = {} end
+if mem.params and not mem.params.nudgetimer then mem.params.nudgetimer = 30 end
 
 if event.type == "program" then
 	mem.carstate = "uninit"
@@ -254,6 +262,7 @@ if event.type == "program" then
 			groupmode = "simplex",
 			mainlanding = 1,
 			carcallsecurity = {},
+			nudgetimer = 30,
 		}
 	end
 elseif event.type == "ui" then
@@ -358,6 +367,10 @@ elseif event.type == "ui" then
 			local contractspeed = tonumber(event.fields.contractspeed)
 			if contractspeed and contractspeed >= 0.1 and contractspeed <= 20 then
 				mem.params.contractspeed = contractspeed
+			end
+			local nudgetimer = tonumber(event.fields.nudgetimer)
+			if nudgetimer and nudgetimer >= 0 and nudgetimer <= 3600 then
+				mem.params.nudgetimer = nudgetimer
 			end
 			local mainlanding = tonumber(event.fields.mainlanding)
 			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
@@ -528,7 +541,7 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 		end
 	elseif mem.direction == event.dir and mem.doorstate == "open" then
 		interrupt(mem.params.doortimer,"close")
-	elseif mem.direction == event.dir and mem.doorstate == "closing" then
+	elseif mem.direction == event.dir and mem.doorstate == "closing" and not mem.nudging then
 		open()
 	end
 elseif event.iid == "checkopen" then
@@ -537,6 +550,9 @@ elseif event.iid == "checkopen" then
 		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold" then
 			interrupt(nil,"opentimeout")
 		end
+		if mem.carstate == "normal" and not mem.interrupts.nudge and mem.params.nudgetimer > 0 then
+			interrupt(mem.params.nudgetimer,"nudge")
+		end
 	else
 		interrupt(0.2,"checkopen")
 	end
@@ -544,6 +560,8 @@ elseif event.iid == "checkclosed" then
 	if mem.drive.status.doorstate == "closed" then
 		interrupt(0,"closed")
 		interrupt(nil,"closetimeout")
+		interrupt(nil,"nudge")
+		mem.nudging = false
 	else
 		interrupt(0.2,"checkclosed")
 	end
@@ -569,7 +587,7 @@ elseif event.type == "cop" then
 				if v and landing and landing >= 1 and landing <= #mem.params.floorheights and secok then
 					if getpos() == landing then
 						if mem.carstate == "normal" or mem.carstate == "indep" then
-							if mem.doorstate == "closing" then
+							if mem.doorstate == "closing" and not mem.nudging then
 								open()
 							elseif mem.doorstate == "open" then
 								interrupt(mem.params.doortimer,"close")
@@ -718,13 +736,20 @@ elseif event.type == "remotemsg" then
 	elseif event.channel == "carcall" and mem.carstate == "normal" then
 		mem.carcalls[event.msg] = true
 	end
-elseif event.type == "lightcurtain" then
+elseif event.type == "lightcurtain" and not mem.nudging then
 	if mem.carstate == "normal" or mem.carstate == "indep" then
 		if mem.doorstate == "closing" then
 			open()
 		elseif mem.doorstate == "open" and mem.carstate == "normal" then
 			interrupt(mem.params.doortimer,"close")
 		end
+	end
+elseif event.iid == "nudge" and mem.carstate == "normal" then
+	mem.nudging = true
+	if mem.doorstate == "open" then
+		close(true)
+	elseif mem.doorstate == "opening" then
+		interrupt(1,"nudge")
 	end
 end
 
@@ -922,6 +947,12 @@ else
 	end
 end
 
+if mem.carstate == "normal" and oldstate ~= "normal" and mem.doorstate ~= "closed" and mem.params.nudgetimer > 0 and not mem.interrupts.nudge then
+	interrupt(mem.params.nudgetimer,"nudge")
+elseif mem.carstate ~= "normal" and oldstate == "normal" then
+	interrupt(nil,"nudge")
+end
+
 if mem.carmotion then
 	mem.carmotion = (mem.drive.status.vel ~= 0) or juststarted
 	if mem.carmotion then
@@ -966,7 +997,10 @@ if mem.carmotion then
 				mem.swingupcalls[1] = nil
 				mem.groupupcalls[1] = nil
 			end
-			if (mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1)) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then open() end
+			if (mem.carstate ~= "fs1" or getpos() == (mem.params.mainlanding or 1)) and mem.carstate ~= "fs2" and mem.carstate ~= "fs2hold" then
+				open()
+				mem.nudging = false
+			end
 			if mem.carstate == "fs1" and getpos() ~= (mem.params.mainlanding or 1) then
 				gotofloor(mem.params.mainlanding or 1)
 			end
@@ -1263,6 +1297,7 @@ elseif mem.screenstate == "parameters" then
 	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
 	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
 	fs(string.format("field[1,7;3,1;mainlanding;Main Landing;%d]",mem.params.mainlanding or 1))
+	fs(string.format("field[4.5,3;3,1;nudgetimer;Nudging Timer (0 = None);%0.1f]",mem.params.nudgetimer))
 	fs("style[resetdoors,resetcontroller;bgcolor=#DD3333]")
 	fs("button[12,1;3,1;resetdoors;Reset Doors]")
 	fs("button[12,2.5;3,1;resetcontroller;Reset Controller]")
@@ -1357,6 +1392,7 @@ mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
 
 mem.flash_fs = (mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold")
 mem.flash_is = mem.carstate == "indep"
+mem.flash_blank = mem.nudging
 
 mem.lanterns = {}
 if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then

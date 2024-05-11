@@ -290,7 +290,7 @@ function celevator.doors.hwopen(pos,drivepos)
 	end
 end
 
-function celevator.doors.hwclose(pos,drivepos)
+function celevator.doors.hwclose(pos,drivepos,nudge)
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if hwdoors_moving[hash] then
@@ -302,7 +302,7 @@ function celevator.doors.hwclose(pos,drivepos)
 	local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 	local carpos = vector.add(pos,fdir)
 	if celevator.get_node(carpos).name == "celevator:car_000" then
-		celevator.doors.carclose(carpos)
+		celevator.doors.carclose(carpos,nudge)
 	end
 	local data = minetest.deserialize(pmeta:get_string("data"))
 	if not data then return end
@@ -312,6 +312,7 @@ function celevator.doors.hwclose(pos,drivepos)
 	data.direction = "close"
 	data.time = 0
 	data.drivepos = drivepos
+	data.nudging = nudge
 	local erefs = celevator.drives.entity.nodestoentities(data.positions,"celevator:hwdoor_moving")
 	local foffset = vector.multiply(data.opendir,2)
 	local soffset = data.opendir
@@ -359,13 +360,15 @@ function celevator.doors.hwstep(dtime)
 					hwdoors_moving[hash] = nil
 				end
 			elseif data.direction == "close" then
-				data.time = data.time+(0.66*dtime)
+				local speed = 0.66
+				if data.nudging then speed = 0.2 end
+				data.time = data.time+(speed*dtime)
 				local vel = math.sin(data.time)
 				for i=1,3,1 do
-					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel*-0.66))
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel*-speed))
 				end
 				for i=4,6,1 do
-					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-0.66))
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-speed))
 				end
 				if data.time >= math.pi then
 					for i=1,6,1 do
@@ -435,13 +438,15 @@ function celevator.doors.carstep(dtime)
 					cardoors_moving[hash] = nil
 				end
 			elseif data.direction == "close" then
-				data.time = data.time+(0.66*dtime)
+				local speed = 0.66
+				if data.nudging then speed = 0.2 end
+				data.time = data.time+(speed*dtime)
 				local vel = math.sin(data.time)
 				for i=1,3,1 do
-					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel*-0.66))
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel*-speed))
 				end
 				for i=4,6,1 do
-					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-0.66))
+					celevator.doors.erefs[hash][i]:set_velocity(vector.multiply(data.opendir,vel/2*-speed))
 				end
 				if data.time >= math.pi then
 					for _,ref in ipairs(celevator.doors.erefs[hash]) do
@@ -570,7 +575,7 @@ function celevator.doors.caropen(pos)
 	end
 end
 
-function celevator.doors.carclose(pos)
+function celevator.doors.carclose(pos,nudge)
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if cardoors_moving[hash] then
@@ -594,11 +599,20 @@ function celevator.doors.carclose(pos)
 		erefs[i]:set_pos(vector.add(erefs[i]:get_pos(),soffset))
 	end
 	celevator.doors.erefs[hash] = erefs
-	data.soundhandle = minetest.sound_play("celevator_door_close",{
-		pos = pos,
-		gain = 0.3,
-		max_hear_distance = 10
-	})
+	if nudge then
+		data.soundhandle = minetest.sound_play("celevator_nudge",{
+			pos = pos,
+			gain = 0.75,
+			max_hear_distance = 10
+		})
+	else
+		data.soundhandle = minetest.sound_play("celevator_door_close",{
+			pos = pos,
+			gain = 0.3,
+			max_hear_distance = 10
+		})
+	end
+	data.nudging = nudge
 	cardoors_moving[hash] = data
 	celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
 end

@@ -632,7 +632,7 @@ function celevator.drives.entity.getstatus(pos,call2)
 	end
 end
 
-function celevator.drives.entity.movedoors(drivepos,direction)
+function celevator.drives.entity.movedoors(drivepos,direction,nudge)
 	local drivehash = minetest.hash_node_position(drivepos)
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
 	local drivemeta = celevator.get_meta(drivepos)
@@ -657,7 +657,7 @@ function celevator.drives.entity.movedoors(drivepos,direction)
 		celevator.doors.hwopen(hwdoorpos,drivepos)
 		drivemeta:set_string("doorstate","opening")
 	elseif direction == "close" and celevator.get_node(hwdoorpos).name == "celevator:hwdoor_placeholder" then
-		celevator.doors.hwclose(hwdoorpos,drivepos)
+		celevator.doors.hwclose(hwdoorpos,drivepos,nudge)
 		drivemeta:set_string("doorstate","closing")
 	end
 end
