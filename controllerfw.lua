@@ -647,6 +647,7 @@ elseif event.type == "fs1switch" then
 	end
 	mem.fs1switch = event.state
 	mem.fs1led = event.state
+	if not event.state then mem.flashfirehat = false end
 elseif event.type == "cartopbox" then
 	if event.control == "inspectswitch" then
 		mem.cartopinspectsw = not mem.cartopinspectsw
@@ -729,6 +730,7 @@ elseif event.type == "dispatchermsg" then
 	elseif event.channel == "fs1switch" then
 		mem.fs1switch = event.msg
 		mem.fs1led = event.msg
+		if not event.msg then mem.flashfirehat = false end
 	end
 elseif event.type == "remotemsg" then
 	if event.channel == "groupupcall" and mem.carstate == "normal" then
@@ -764,6 +766,29 @@ elseif event.iid == "nudge" and mem.carstate == "normal" then
 		close(true)
 	elseif mem.doorstate == "opening" then
 		interrupt(1,"nudge")
+	end
+elseif event.type == "mrsmoke" then
+	mem.flashfirehat = true
+	if not mem.fs1led then
+		mem.fs1switch = true
+		mem.fs1led = true
+		mem.recallto = nil
+		if mem.drive.status.vel > 0 then
+			for i=getpos(),#mem.params.floornames,1 do
+				if mem.drive.status.neareststop < gettarget(i) then
+					mem.recallto = i
+					break
+				end
+			end
+		elseif mem.drive.status.vel < 0 then
+			for i=#mem.params.floornames,1,-1 do
+				if mem.drive.status.neareststop < gettarget(i) then
+					mem.recallto = i
+					break
+				end
+			end
+		end
+		if not mem.recallto then mem.recallto = getpos() end
 	end
 end
 
@@ -1462,8 +1487,12 @@ mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;
 
 mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;Call\nCancel;false;false;%s]",unlitimg,litimg)
 
-local firehat = mem.flash_fs and "celevator_fire_hat_lit.png" or "celevator_fire_hat_unlit.png"
-mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
+if mem.flashfirehat then
+	mem.copformspec = mem.copformspec.."animated_image[2.2,0.5;1.4,1.4;firehat;celevator_fire_hat_flashing.png;2;750]"
+else
+	local firehat = mem.flash_fs and "celevator_fire_hat_lit.png" or "celevator_fire_hat_unlit.png"
+	mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
+end
 
 mem.switchformspec = "formspec_version[7]size[8,10]"
 local fs2ontex = (mem.fs2sw == "on") and "celevator_button_rect_active.png" or "celevator_button_rect.png"

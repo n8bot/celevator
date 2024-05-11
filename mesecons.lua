@@ -338,6 +338,16 @@ local inputoptions = {
 		end,
 		needsfloor = false,
 	},
+	{
+		id = "mrsmoke",
+		desc = "Machine Room or Hoistway Smoke Detector",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "mrsmoke",
+			})
+		end,
+		needsfloor = false,
+	},
 }
 
 local dinputoptions = {
