@@ -216,6 +216,33 @@ local outputoptions = {
 	},
 }
 
+local doutputoptions = {
+	{
+		id = "fire",
+		desc = "Fire Service",
+		func = function(mem)
+			return mem.fs1led
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "upcall",
+		desc = "Up Call Exists at Landing:",
+		func = function(mem,floor)
+			return mem.upcalls[floor]
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "downcall",
+		desc = "Down Call Exists at Landing:",
+		func = function(mem,floor)
+			return mem.dncalls[floor]
+		end,
+		needsfloor = true,
+	},
+}
+
 local inputoptions = {
 	{
 		id = "carcall",
@@ -301,19 +328,70 @@ local inputoptions = {
 	},
 }
 
+local dinputoptions = {
+	{
+		id = "upcall",
+		desc = "Up Call at Landing:",
+		func_on = function(dispatcherpos,floor)
+			celevator.dispatcher.run(dispatcherpos,{
+				type = "remotemsg",
+				channel = "upcall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "downcall",
+		desc = "Down Call at Landing:",
+		func_on = function(dispatcherpos,floor)
+			celevator.dispatcher.run(dispatcherpos,{
+				type = "remotemsg",
+				channel = "dncall",
+				msg = floor,
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "fs1off",
+		desc = "Deactivate Fire Service Phase 1",
+		func_on = function(dispatcherpos)
+			celevator.dispatcher.run(dispatcherpos,{
+				type = "fs1switch",
+				state = false,
+			})
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "fs1on",
+		desc = "Activate Fire Service Phase 1",
+		func_on = function(dispatcherpos)
+			celevator.dispatcher.run(dispatcherpos,{
+				type = "fs1switch",
+				state = true,
+			})
+		end,
+		needsfloor = false,
+	},
+}
+
 local function updateoutputform(pos)
 	local meta = minetest.get_meta(pos)
+	local dmode = meta:get_int("dispatcher") == 1
 	local fs = "formspec_version[7]size[8,6.5]"
+	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
 	fs = fs.."dropdown[1,0.5;6,1;signal;"
 	local selected = 1
 	local currentid = meta:get_string("signal")
-	for k,v in ipairs(outputoptions) do
+	for k,v in ipairs(dmode and doutputoptions or outputoptions) do
 		fs = fs..minetest.formspec_escape(v.desc)..","
 		if v.id == currentid then selected = k end
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected..";false]"
-	fs = fs.."field[0.5,2.5;3,1;carid;Car ID;${carid}]"
+	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and "Dispatcher ID" or "Car ID")..";${carid}]"
 	fs = fs.."field[4.5,2.5;3,1;floor;Landing Number;${floor}]"
 	fs = fs.."label[1.5,4;Not all signal options require a landing number.]"
 	fs = fs.."button_exit[2.5,5;3,1;save;Save]"
@@ -322,7 +400,7 @@ end
 
 local function handleoutputfields(pos,_,fields,player)
 	local meta = minetest.get_meta(pos)
-	if not fields.save then return end
+	if fields.quit and not fields.save then return end
 	local name = player:get_player_name()
 	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
 		if player:is_player() then
@@ -330,33 +408,56 @@ local function handleoutputfields(pos,_,fields,player)
 		end
 		return
 	end
-	if not tonumber(fields.carid) then return end
-	meta:set_int("carid",fields.carid)
-	local carid = tonumber(fields.carid)
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-	if not carinfo.controllerpos then return end
-	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-	if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-		if player:is_player() then
-			minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-			minetest.record_protection_violation(carinfo.controllerpos,name)
+	if fields.save then
+		local dmode = meta:get_int("dispatcher") == 1
+		if not tonumber(fields.carid) then return end
+		meta:set_int("carid",fields.carid)
+		local carid = tonumber(fields.carid)
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		if dmode then
+			if not carinfo.dispatcherpos then return end
+			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+				end
+				return
+			end
+		else
+			if not carinfo.controllerpos then return end
+			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					minetest.record_protection_violation(carinfo.controllerpos,name)
+				end
+				return
+			end
 		end
-		return
-	end
-	local floor = tonumber(fields.floor)
-	if floor then meta:set_int("floor",floor) end
-	local def
-	for _,v in ipairs(outputoptions) do
-		if v.desc == fields.signal then
-			def = v
+		local floor = tonumber(fields.floor)
+		if floor then meta:set_int("floor",floor) end
+		local def
+		for _,v in ipairs(dmode and doutputoptions or outputoptions) do
+			if v.desc == fields.signal then
+				def = v
+			end
 		end
+		if not def then return end
+		if def.needsfloor and not floor then return end
+		meta:set_string("signal",def.id)
+		updateoutputform(pos)
+		local infotext = carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
+		if dmode then
+			infotext = "Dispatcher: "..infotext
+		else
+			infotext = "Car: "..infotext
+		end
+		meta:set_string("infotext",infotext)
+	elseif fields.tab then
+		meta:set_int("dispatcher",tonumber(fields.tab)-1)
+		updateoutputform(pos)
 	end
-	if not def then return end
-	if def.needsfloor and not floor then return end
-	meta:set_string("signal",def.id)
-	updateoutputform(pos)
-	local infotext = "Car: "..carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
-	meta:set_string("infotext",infotext)
 end
 
 minetest.register_node("celevator:mesecons_output_off",{
@@ -432,17 +533,23 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos,node)
 		local meta = minetest.get_meta(pos)
+		local dmode = meta:get_int("dispatcher") == 1
 		local oldstate = (node.name == "celevator:mesecons_output_on")
 		local carid = meta:get_int("carid")
 		if carid == 0 then return end
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-		if not carinfo.controllerpos then return end
-		if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+		if dmode then
+			if not carinfo.dispatcherpos then return end
+			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+		else
+			if not carinfo.controllerpos then return end
+			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+		end
 		local floor = meta:get_int("floor")
-		local mem = minetest.deserialize(minetest.get_meta(carinfo.controllerpos):get_string("mem")) or {}
+		local mem = minetest.deserialize(minetest.get_meta(dmode and carinfo.dispatcherpos or carinfo.controllerpos):get_string("mem")) or {}
 		local signal = meta:get_string("signal")
 		local def
-		for _,v in ipairs(outputoptions) do
+		for _,v in ipairs(dmode and doutputoptions or outputoptions) do
 			if v.id == signal then
 				def = v
 				break
@@ -464,17 +571,19 @@ minetest.register_abm({
 
 local function updateinputform(pos)
 	local meta = minetest.get_meta(pos)
+	local dmode = meta:get_int("dispatcher") == 1
 	local fs = "formspec_version[7]size[8,6.5]"
+	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
 	fs = fs.."dropdown[1,0.5;6,1;signal;"
 	local selected = 1
 	local currentid = meta:get_string("signal")
-	for k,v in ipairs(inputoptions) do
+	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
 		fs = fs..minetest.formspec_escape(v.desc)..","
 		if v.id == currentid then selected = k end
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected..";false]"
-	fs = fs.."field[0.5,2.5;3,1;carid;Car ID;${carid}]"
+	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and "Dispatcher ID" or "Car ID")..";${carid}]"
 	fs = fs.."field[4.5,2.5;3,1;floor;Landing Number;${floor}]"
 	fs = fs.."label[1.5,4;Not all signal options require a landing number.]"
 	fs = fs.."button_exit[2.5,5;3,1;save;Save]"
@@ -482,8 +591,8 @@ local function updateinputform(pos)
 end
 
 local function handleinputfields(pos,_,fields,player)
+	if fields.quit and not fields.save then return end
 	local meta = minetest.get_meta(pos)
-	if not fields.save then return end
 	local name = player:get_player_name()
 	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
 		if player:is_player() then
@@ -491,33 +600,56 @@ local function handleinputfields(pos,_,fields,player)
 		end
 		return
 	end
-	if not tonumber(fields.carid) then return end
-	meta:set_int("carid",fields.carid)
-	local carid = tonumber(fields.carid)
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-	if not carinfo.controllerpos then return end
-	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-	if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-		if player:is_player() then
-			minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-			minetest.record_protection_violation(carinfo.controllerpos,name)
+	if fields.save then
+		local dmode = meta:get_int("dispatcher") == 1
+		if not tonumber(fields.carid) then return end
+		meta:set_int("carid",fields.carid)
+		local carid = tonumber(fields.carid)
+		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		if dmode then
+			if not carinfo.dispatcherpos then return end
+			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+				end
+				return
+			end
+		else
+			if not carinfo.controllerpos then return end
+			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					minetest.record_protection_violation(carinfo.controllerpos,name)
+				end
+				return
+			end
 		end
-		return
-	end
-	local floor = tonumber(fields.floor)
-	if floor then meta:set_int("floor",floor) end
-	local def
-	for _,v in ipairs(inputoptions) do
-		if v.desc == fields.signal then
-			def = v
+		local floor = tonumber(fields.floor)
+		if floor then meta:set_int("floor",floor) end
+		local def
+		for _,v in ipairs(dmode and dinputoptions or inputoptions) do
+			if v.desc == fields.signal then
+				def = v
+			end
 		end
+		if not def then return end
+		if def.needsfloor and not floor then return end
+		meta:set_string("signal",def.id)
+		updateinputform(pos)
+		local infotext = carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
+		if dmode then
+			infotext = "Dispatcher: "..infotext
+		else
+			infotext = "Car: "..infotext
+		end
+		meta:set_string("infotext",infotext)
+	elseif fields.tab then
+		meta:set_int("dispatcher",tonumber(fields.tab)-1)
+		updateinputform(pos)
 	end
-	if not def then return end
-	if def.needsfloor and not floor then return end
-	meta:set_string("signal",def.id)
-	updateinputform(pos)
-	local infotext = "Car: "..carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
-	meta:set_string("infotext",infotext)
 end
 
 local function handleinput(pos,on)
@@ -525,22 +657,36 @@ local function handleinput(pos,on)
 	local carid = meta:get_int("carid")
 	if carid == 0 then return end
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
-	if not carinfo.controllerpos then return end
-	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	local dmode = meta:get_int("dispatcher") == 1
+	if dmode then
+		if not carinfo.dispatcherpos then return end
+		if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
+	else
+		if not carinfo.controllerpos then return end
+		if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	end
 	local floor = meta:get_int("floor")
 	local signal = meta:get_string("signal")
 	local def
-	for _,v in ipairs(inputoptions) do
+	for _,v in ipairs(dmode and dinputoptions or inputoptions) do
 		if v.id == signal then
 			def = v
 			break
 		end
 	end
 	if not def then return end
-	if on then
-		if def.func_on then def.func_on(carinfo.controllerpos,floor) end
+	if dmode then
+		if on then
+			if def.func_on then def.func_on(carinfo.dispatcherpos,floor) end
+		else
+			if def.func_off then def.func_off(carinfo.dispatcherpos,floor) end
+		end
 	else
-		if def.func_off then def.func_off(carinfo.controllerpos,floor) end
+		if on then
+			if def.func_on then def.func_on(carinfo.controllerpos,floor) end
+		else
+			if def.func_off then def.func_off(carinfo.controllerpos,floor) end
+		end
 	end
 end
 

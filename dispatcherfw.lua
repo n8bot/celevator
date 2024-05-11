@@ -790,6 +790,12 @@ elseif event.type == "fs1switch" then
 elseif event.iid == "sleep" and mem.powerstate == "timing" then
 	interrupt(nil,"run")
 	mem.powerstate = "asleep"
+elseif event.type == "remotemsg" then
+	if event.channel == "upcall" then
+		mem.upcalls[event.msg] = true
+	elseif event.channel == "dncall" then
+		mem.dncalls[event.msg] = true
+	end
 end
 
 if not (mem.screenstate == "status" or mem.screenstate == "menu") then
