@@ -761,6 +761,10 @@ elseif event.type == "remotemsg" then
 		mem.groupdncalls[event.msg] = nil
 	elseif event.channel == "carcall" and mem.carstate == "normal" then
 		mem.carcalls[event.msg] = true
+	elseif event.channel == "security" and type(event.msg.floor) == "number" then
+		if mem.params.floornames[event.msg.floor] and event.msg.floor ~= (mem.params.mainlanding or 1) then
+			mem.params.carcallsecurity[event.msg.floor] = event.msg.mode
+		end
 	end
 elseif event.type == "lightcurtain" and not mem.nudging then
 	if mem.carstate == "normal" or mem.carstate == "indep" then

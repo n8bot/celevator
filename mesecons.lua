@@ -348,6 +348,51 @@ local inputoptions = {
 		end,
 		needsfloor = false,
 	},
+	{
+		id = "secdeny",
+		desc = "Lock Car Calls at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "security",
+				msg = {
+					floor = floor,
+					mode = "deny",
+				},
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "secauth",
+		desc = "Require Auth for Car Calls at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "security",
+				msg = {
+					floor = floor,
+					mode = "auth",
+				},
+			})
+		end,
+		needsfloor = true,
+	},
+	{
+		id = "secallow",
+		desc = "Unlock Car Calls at Landing:",
+		func_on = function(controllerpos,floor)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "security",
+				msg = {
+					floor = floor,
+					mode = nil,
+				},
+			})
+		end,
+		needsfloor = true,
+	},
 }
 
 local dinputoptions = {
