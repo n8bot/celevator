@@ -224,6 +224,7 @@ if mem.params and not mem.params.carcallsecurity then mem.params.carcallsecurity
 if mem.params and not mem.params.nudgetimer then mem.params.nudgetimer = 30 end
 if mem.params and not mem.params.altrecalllanding then mem.params.altrecalllanding = 2 end
 if mem.params and not mem.recallto then mem.recallto = mem.params.mainlanding or 1 end
+if mem.params and not mem.params.inspectionspeed then mem.params.inspectionspeed = 0.2 end
 
 if event.type == "program" then
 	mem.carstate = "uninit"
@@ -266,6 +267,7 @@ if event.type == "program" then
 			altrecalllanding = 2,
 			carcallsecurity = {},
 			nudgetimer = 30,
+			inspectionspeed = 0.2,
 		}
 	end
 elseif event.type == "ui" then
@@ -384,6 +386,10 @@ elseif event.type == "ui" then
 			if altrecalllanding and altrecalllanding >= 1 and altrecalllanding <= #mem.params.floorheights then
 				mem.params.altrecalllanding = math.floor(altrecalllanding)
 			end
+			local inspectionspeed = tonumber(event.fields.inspectionspeed)
+			if inspectionspeed and inspectionspeed >= 0.1 and inspectionspeed < 0.75 and inspectionspeed <= mem.params.contractspeed then
+				mem.params.inspectionspeed = inspectionspeed
+			end
 		elseif event.fields.floortable then
 			mem.screenstate = "floortable"
 		elseif event.fields.cancel then
@@ -448,22 +454,24 @@ elseif event.type == "ui" then
 			juststarted = true
 			drivecmd({
 				command = "setmaxvel",
-				maxvel = 0.2,
+				maxvel = mem.params.inspectionspeed,
 			})
 			drivecmd({
 				command = "moveto",
-				pos = math.floor(mem.drive.status.apos)+1
+				pos = math.floor(mem.drive.status.apos)+1,
+				inspection = true,
 			})
 		elseif event.fields.inspectdown and mem.carstate == "mrinspect" and mem.doorstate == "closed" and mem.drive.status.apos-1 >= 0 then
 			mem.carmotion = true
 			juststarted = true
 			drivecmd({
 				command = "setmaxvel",
-				maxvel = 0.2,
+				maxvel = mem.params.inspectionspeed,
 			})
 			drivecmd({
 				command = "moveto",
-				pos = math.floor(mem.drive.status.apos)-1
+				pos = math.floor(mem.drive.status.apos)-1,
+				inspection = true,
 			})
 		elseif event.fields.parameters then
 			mem.screenstate = "parameters"
@@ -656,22 +664,24 @@ elseif event.type == "cartopbox" then
 		juststarted = true
 		drivecmd({
 			command = "setmaxvel",
-			maxvel = 0.2,
+			maxvel = mem.params.inspectionspeed,
 		})
 		drivecmd({
 			command = "moveto",
-			pos = math.floor(mem.drive.status.apos)+1
+			pos = math.floor(mem.drive.status.apos)+1,
+			inspection = true,
 		})
 	elseif event.control == "down" and mem.carstate == "carinspect" and mem.doorstate == "closed" and mem.drive.status.apos-1 >= 0 then
 		mem.carmotion = true
 		juststarted = true
 		drivecmd({
 			command = "setmaxvel",
-			maxvel = 0.2,
+			maxvel = mem.params.inspectionspeed,
 		})
 		drivecmd({
 			command = "moveto",
-			pos = math.floor(mem.drive.status.apos)-1
+			pos = math.floor(mem.drive.status.apos)-1,
+			inspection = true,
 		})
 	end
 elseif event.type == "dispatchermsg" then
@@ -1335,6 +1345,7 @@ elseif mem.screenstate == "parameters" then
 	if mem.params.groupmode == "simplex" then fs("button[8,10;3,1;floortable;Edit Floor Table]") end
 	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
 	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
+	fs(string.format("field[4.5,5;3,1;inspectionspeed;Inspection Speed (m/s);%0.1f]",mem.params.inspectionspeed))
 	fs(string.format("field[1,7;3,1;mainlanding;Main Egress Landing;%d]",mem.params.mainlanding or 1))
 	fs(string.format("field[4.5,3;3,1;nudgetimer;Nudging Timer (0 = None);%0.1f]",mem.params.nudgetimer))
 	fs(string.format("field[4.5,7;3,1;altrecalllanding;Alternate Recall Landing;%d]",mem.params.altrecalllanding))

@@ -427,7 +427,7 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		if drivetype then
 			for _,command in ipairs(mem.drive.commands) do
 				if command.command == "moveto" then
-					celevator.drives[drivetype].moveto(drivepos,command.pos)
+					celevator.drives[drivetype].moveto(drivepos,command.pos,command.inspection)
 				elseif command.command == "setmaxvel" then
 					celevator.drives[drivetype].setmaxvel(drivepos,command.maxvel)
 				elseif command.command == "resetpos" then

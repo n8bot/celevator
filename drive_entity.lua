@@ -373,6 +373,7 @@ function celevator.drives.entity.step(dtime)
 				local dpos = tonumber(meta:get_string("dpos")) or 0
 				local maxvel = tonumber(meta:get_string("maxvel")) or 0.2
 				local startpos = tonumber(meta:get_string("startpos")) or 0
+				local inspection = meta:get_int("inspection") == 1
 				local origin = minetest.string_to_pos(meta:get_string("origin"))
 				if not origin then
 					minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(pos))
@@ -383,7 +384,7 @@ function celevator.drives.entity.step(dtime)
 				if state == "start" then
 					if math.abs(dpos-startpos) > 0.1 then
 						sound = true
-						if maxvel > 0.2 then
+						if not inspection then
 							accelsound(pos)
 						else
 							motorsound(pos,"slow")
@@ -443,15 +444,15 @@ function celevator.drives.entity.step(dtime)
 						end
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
-					elseif dremain < 0.2 then
+					elseif dremain < 0.2 and not inspection then
 						vel = 0.2
-					elseif dremain < 2*maxvel and dremain < dmoved then
+					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
 						vel = math.min(dremain,maxvel)
 						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
 							decelsound(pos)
 							carsound(pos,"decel",maxvel)
 						end
-					elseif dmoved+0.1 > maxvel then
+					elseif dmoved+0.1 > maxvel or inspection then
 						vel = maxvel
 					else
 						vel = dmoved+0.1
@@ -486,14 +487,14 @@ function celevator.drives.entity.step(dtime)
 						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
-					elseif dremain < 0.2 then
+					elseif dremain < 0.2 and not inspection then
 						vel = 0.2
-					elseif dremain < 2*maxvel and dremain < dmoved then
+					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
 						vel = math.min(dremain,maxvel)
 						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
 							decelsound(pos)
 						end
-					elseif dmoved+0.1 > maxvel then
+					elseif dmoved+0.1 > maxvel or inspection then
 						vel = maxvel
 					else
 						vel = dmoved+0.1
@@ -520,7 +521,7 @@ end
 
 minetest.register_globalstep(celevator.drives.entity.step)
 
-function celevator.drives.entity.moveto(pos,target)
+function celevator.drives.entity.moveto(pos,target,inspection)
 	local meta = celevator.get_meta(pos)
 	meta:mark_as_private({"apos","dpos","vel","maxvel","state","startpos","doorstate"})
 	local carid = celevator.get_meta(pos):get_int("carid")
@@ -550,6 +551,7 @@ function celevator.drives.entity.moveto(pos,target)
 	meta:set_string("dpos",tostring(target))
 	if meta:get_string("state") == "stopped" then
 		meta:set_string("state","start")
+		meta:set_int("inspection",inspection and 1 or 0)
 		meta:set_string("startpos",meta:get_string("apos"))
 		local hash = minetest.hash_node_position(pos)
 		local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
