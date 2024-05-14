@@ -143,6 +143,17 @@ minetest.register_node("celevator:digilines_io",{
 							channel = "swingdncall",
 							msg = msg.floor,
 						})
+					elseif msg.command == "security" and type(msg.floor) == "number" then
+						if msg.mode == "deny" or msg.mode == "auth" or not msg.mode then
+							celevator.controller.run(carinfo.controllerpos,{
+								type = "remotemsg",
+								channel = "security",
+								msg = {
+									floor = msg.floor,
+									mode = msg.mode,
+								},
+							})
+						end
 					end
 				end
 			end,
