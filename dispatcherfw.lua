@@ -791,6 +791,13 @@ elseif event.iid == "sleep" and mem.powerstate == "timing" then
 	interrupt(nil,"run")
 	mem.powerstate = "asleep"
 elseif event.type == "remotemsg" then
+	if mem.powerstate == "asleep" then
+		mem.powerstate = "awake"
+		interrupt(0,"getstatus")
+		interrupt(1,"run")
+	elseif mem.powerstate == "timing" then
+		mem.powerstate = "awake"
+	end
 	if event.channel == "upcall" then
 		mem.upcalls[event.msg] = true
 	elseif event.channel == "dncall" then
