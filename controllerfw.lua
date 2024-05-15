@@ -1020,7 +1020,7 @@ if mem.carmotion then
 				mem.groupupcalls[getpos()] = nil
 				if (not hallcall) and (not getnextcallabove()) and getnextcallbelow() then
 					mem.direction = "down"
-				elseif mem.dncalls[getpos()] and (not mem.upcalls[getpos()]) and (not getnextcallabove(nil,true)) then
+				elseif (not hallcall) and mem.dncalls[getpos()] and (not mem.upcalls[getpos()]) and (not getnextcallabove(nil,true)) then
 					mem.direction = "down"
 					mem.dncalls[getpos()] = nil
 					mem.swingdncalls[getpos()] = nil
@@ -1032,7 +1032,7 @@ if mem.carmotion then
 				mem.groupdncalls[getpos()] = nil
 				if (not hallcall) and (not getnextcallbelow()) and getnextcallabove() then
 					mem.direction = "up"
-				elseif mem.upcalls[getpos()] and (not mem.dncalls[getpos()]) and (not getnextcallbelow(nil,true)) then
+				elseif (not hallcall) and mem.upcalls[getpos()] and (not mem.dncalls[getpos()]) and (not getnextcallbelow(nil,true)) then
 					mem.direction = "up"
 					mem.upcalls[getpos()] = nil
 					mem.swingupcalls[getpos()] = nil
