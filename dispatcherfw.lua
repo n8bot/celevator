@@ -54,7 +54,9 @@ local function cartorealfloor(carid,floor)
 	if type(floor) == "table" then
 		local ret = {}
 		for i in pairs(floor) do
-			ret[cartorealfloor(carid,i)] = true
+			if cartorealfloor(carid,i) then
+				ret[cartorealfloor(carid,i)] = true
+			end
 		end
 		return ret
 	end
