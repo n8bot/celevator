@@ -738,6 +738,9 @@ elseif event.type == "dispatchermsg" then
 		mem.carcalls[event.msg] = true
 		send(event.source,"status",mem)
 	elseif event.channel == "fs1switch" then
+		if event.msg and not mem.fs1led then
+			mem.recallto = mem.params.mainlanding or 1
+		end
 		mem.fs1switch = event.msg
 		mem.fs1led = event.msg
 		if not event.msg then mem.flashfirehat = false end
