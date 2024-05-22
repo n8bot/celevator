@@ -394,11 +394,21 @@ laptop.register_app("celevator",{
 						local car = tonumber(string.sub(k,8,9))
 						local floor = tonumber(string.sub(k,10,-1))
 						if car and floor then
+						local map = {}
+						for i=1,#dmem.params.floornames,1 do
+							if dmem.params.floorsserved[dmem.params.carids[car]][i] then
+								table.insert(map,i)
+							end
+						end
+						local pmap = {}
+						for k2,v in pairs(map) do
+							pmap[v] = k2
+						end
 							celevator.dispatcher.run(pos,{
 								type = "remotemsg",
 								channel = "carcall",
 								car = car,
-								floor = floor,
+								floor = pmap[floor],
 							})
 						end
 					elseif string.sub(k,1,6) == "upcall" then
