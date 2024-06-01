@@ -345,6 +345,9 @@ function celevator.dispatcher.finish(pos,mem,changedinterrupts)
 				})
 			end
 		end
+		for _,message in ipairs(mem.kioskmessages) do
+			celevator.dbdkiosk.showassignment(minetest.get_position_from_hash(message.pos),message.car)
+		end
 		meta:set_string("mem",minetest.serialize(mem))
 		if node.name == "celevator:dispatcher_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")

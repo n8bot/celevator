@@ -8,7 +8,9 @@ local function interrupt(time,iid)
 end
 
 mem.messages = {}
+mem.kioskmessages = {}
 if not mem.powerstate then mem.powerstate = "awake" end
+if not mem.dbdcalls then mem.dbdcalls = {} end
 
 local function getpos(carid)
 	local floormap = {}
@@ -95,6 +97,14 @@ local function send(carid,channel,message)
 		carid = carid,
 		channel = channel,
 		message = message,
+	})
+end
+
+local function kiosksend(kioskpos,carnum)
+	table.insert(mem.kioskmessages,{
+		pos = kioskpos,
+		type = "assigned",
+		car = carnum,
 	})
 end
 
@@ -299,6 +309,7 @@ if event.type == "program" then
 	mem.assigneddn = {}
 	mem.upeta = {}
 	mem.dneta = {}
+	mem.dbdcalls = {}
 	if not mem.params then
 		mem.params = {
 			carids = {},
@@ -750,7 +761,48 @@ elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" 
 	for floor,carid in pairs(mem.assigneddn) do
 		mem.dneta[floor] = calculateeta(carid,floor,"down")
 	end
-	if busy or event.type == "remotewake" then
+	for k,call in ipairs(mem.dbdcalls) do
+		if call.assigned then
+			local carstate = mem.carstatus[call.assigned].state
+			local doorstate = mem.carstatus[call.assigned].doorstate
+			local direction = mem.carstatus[call.assigned].direction
+			local desireddir = (call.srcfloor < call.destfloor and "up" or "down")
+			if direction == desireddir and doorstate ~= "closed" then
+				if carstate == "normal" then send(call.assigned,"carcall",realtocarfloor(call.assigned,call.destfloor)) end
+				table.remove(mem.dbdcalls,k)
+			end
+		else
+			local direction = (call.srcfloor < call.destfloor and "up" or "down")
+			local eligiblecars = {}
+			local revcarids = {}
+			for carnum,carid in pairs(mem.params.carids) do
+				if mem.carstatus[carid].state == "normal" and mem.params.floorsserved[carid][call.srcfloor] and mem.params.floorsserved[carid][call.destfloor] then
+					table.insert(eligiblecars,carid)
+				end
+				revcarids[carid] = carnum
+			end
+			local besteta = 999
+			local bestcar
+			if #eligiblecars > 0 then
+				for _,carid in pairs(eligiblecars) do
+					local eta = calculateeta(carid,call.srcfloor,direction)
+					if eta < besteta then
+						besteta = eta
+						bestcar = carid
+					end
+				end
+			end
+			if bestcar then
+				call.assigned = bestcar
+				send(bestcar,(direction == "up" and "swingupcall" or "swingdncall"),realtocarfloor(bestcar,call.srcfloor))
+				kiosksend(call.kioskpos,revcarids[bestcar])
+			else
+				table.remove(mem.dbdcalls,k)
+				kiosksend(call.kioskpos,-1)
+			end
+		end
+	end
+	if busy or event.type == "remotewake" or #mem.dbdcalls > 0 then
 		mem.powerstate = "awake"
 		interrupt(nil,"sleep")
 		interrupt(1,"run")
@@ -809,6 +861,19 @@ elseif event.type == "remotemsg" then
 			send(mem.params.carids[event.car],"carcall",event.floor)
 		end
 	end
+elseif event.type == "dbdkiosk" then
+	if mem.powerstate == "asleep" then
+		mem.powerstate = "awake"
+		interrupt(0,"getstatus")
+		interrupt(1,"run")
+	elseif mem.powerstate == "timing" then
+		mem.powerstate = "awake"
+	end
+	table.insert(mem.dbdcalls,{
+		srcfloor = event.srcfloor,
+		destfloor = event.destfloor,
+		kioskpos = event.source,
+	})
 end
 
 if not (mem.screenstate == "status" or mem.screenstate == "menu") then

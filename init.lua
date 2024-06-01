@@ -9,6 +9,7 @@ local components = {
 	"pilantern",
 	"fs1switch",
 	"dispatcher",
+	"dbdkiosk",
 	"decorations",
 	"crafts",
 }

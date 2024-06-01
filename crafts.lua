@@ -287,3 +287,12 @@ minetest.register_craft({
 		"basic_materials:steel_strip",
 	},
 })
+
+minetest.register_craft({
+	output = "celevator:dbdkiosk",
+	recipe = {
+		{"basic_materials:steel_strip","basic_materials:ic","default:glass"},
+		{"basic_materials:steel_strip","mesecons_lightstone:lightstone_white_off","default:glass"},
+		{"basic_materials:steel_strip","","default:glass"},
+	},
+})
