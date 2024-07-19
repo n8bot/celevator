@@ -13,6 +13,7 @@ if not mem.powerstate then mem.powerstate = "awake" end
 if not mem.dbdcalls then mem.dbdcalls = {} end
 
 local function getpos(carid)
+	if not mem.params.floorsserved[carid] then return 0 end
 	local floormap = {}
 	local floorheights = {}
 	for i=1,#mem.params.floornames,1 do
