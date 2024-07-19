@@ -711,7 +711,7 @@ local function updatecarpos(pos)
 		meta:set_string("infotext",string.format("Using car with origin %s",minetest.pos_to_string(carpos)))
 		local carid = meta:get_int("carid")
 		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-		if not carinfo then return end
+		if not (carinfo and carinfo.controllerpos) then return end
 		carinfo.origin = carpos
 		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
 		local drivepos = celevator.controller.finddrive(carinfo.controllerpos)
