@@ -14,6 +14,7 @@ if not mem.dbdcalls then mem.dbdcalls = {} end
 
 local function getpos(carid)
 	if not mem.params.floorsserved[carid] then return 0 end
+	if not mem.carstatus[carid] then return 0 end
 	local floormap = {}
 	local floorheights = {}
 	for i=1,#mem.params.floornames,1 do
@@ -34,6 +35,7 @@ local function getpos(carid)
 end
 
 local function getdpos(carid)
+	if not mem.carstatus[carid] then return 0 end
 	local floormap = {}
 	local floorheights = {}
 	for i=1,#mem.params.floornames,1 do
@@ -272,6 +274,7 @@ local function buildstopsequence(carid,startfloor,direction,target,targetdir,lea
 end
 
 local function calculateeta(carid,floor,direction)
+	if not mem.carstatus[carid] then return 999 end
 	local leaving = (getpos(carid) ~= getdpos(carid)) and (getpos(carid) == floor)
 	local sequence = buildstopsequence(carid,getpos(carid),mem.carstatus[carid].direction,floor,direction,leaving)
 	local doorstate = mem.carstatus[carid].doorstate
@@ -764,13 +767,17 @@ elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" 
 	end
 	for k,call in ipairs(mem.dbdcalls) do
 		if call.assigned then
-			local carstate = mem.carstatus[call.assigned].state
-			local doorstate = mem.carstatus[call.assigned].doorstate
-			local direction = mem.carstatus[call.assigned].direction
-			local desireddir = (call.srcfloor < call.destfloor and "up" or "down")
-			if direction == desireddir and doorstate ~= "closed" then
-				if carstate == "normal" then send(call.assigned,"carcall",realtocarfloor(call.assigned,call.destfloor)) end
+			if not mem.carstatus[call.assigned] then
 				table.remove(mem.dbdcalls,k)
+			else
+				local carstate = mem.carstatus[call.assigned].state
+				local doorstate = mem.carstatus[call.assigned].doorstate
+				local direction = mem.carstatus[call.assigned].direction
+				local desireddir = (call.srcfloor < call.destfloor and "up" or "down")
+				if direction == desireddir and doorstate ~= "closed" then
+					if carstate == "normal" then send(call.assigned,"carcall",realtocarfloor(call.assigned,call.destfloor)) end
+					table.remove(mem.dbdcalls,k)
+				end
 			end
 		else
 			local direction = (call.srcfloor < call.destfloor and "up" or "down")
