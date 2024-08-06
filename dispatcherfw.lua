@@ -394,7 +394,7 @@ elseif event.type == "ui" then
 			local height = tonumber(event.fields.height)
 			if height then
 				height = math.floor(height+0.5)
-				mem.params.floorheights[mem.editingfloor] = math.max(0,height)
+				mem.params.floorheights[mem.editingfloor] = math.max(1,height)
 			end
 			mem.params.floornames[mem.editingfloor] = string.sub(event.fields.name,1,256)
 		end
