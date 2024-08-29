@@ -138,6 +138,26 @@ local function handledigilines(pos,node,channel,msg)
 					},
 				})
 			end
+		elseif msg.command == "fs1off" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "fs1switch",
+				state = false,
+			})
+		elseif msg.command == "fs1on" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "fs1switch",
+				state = true,
+			})
+		elseif msg.command == "fs1alt" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "fs1switch",
+				state = true,
+				mode = "alternate",
+			})
+		elseif msg.command == "mrsmoke" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "mrsmoke",
+			})
 		end
 	end
 end
