@@ -225,10 +225,14 @@ if mem.params and not mem.params.nudgetimer then mem.params.nudgetimer = 30 end
 if mem.params and not mem.params.altrecalllanding then mem.params.altrecalllanding = 2 end
 if mem.params and not mem.recallto then mem.recallto = mem.params.mainlanding or 1 end
 if mem.params and not mem.params.inspectionspeed then mem.params.inspectionspeed = 0.2 end
+if mem.params and not mem.params.indepunlock then mem.params.indepunlock = {} end
+if mem.params and not mem.params.secoverrideusers then mem.params.secoverrideusers = {} end
+if not mem.editinguser then mem.editinguser = 1 end
 
 if event.type == "program" then
 	mem.carstate = "uninit"
 	mem.editingfloor = 1
+	mem.editinguser = 1
 	mem.doorstate = "closed"
 	mem.carmotion = false
 	mem.carcalls = {}
@@ -268,6 +272,8 @@ if event.type == "program" then
 			carcallsecurity = {},
 			nudgetimer = 30,
 			inspectionspeed = 0.2,
+			indepunlock = {},
+			secoverrideusers = {},
 		}
 	end
 elseif event.type == "ui" then
@@ -488,6 +494,9 @@ elseif event.type == "ui" then
 			drivecmd({command = "resetfault"})
 		end
 	elseif mem.screenstate == "carcallsecurity" then
+		if event.fields.indepunlock then
+			mem.params.indepunlock[mem.editingfloor] = (event.fields.indepunlock == "true")
+		end
 		if event.fields.save then
 			mem.screenstate = "parameters"
 		elseif event.fields.floor then
@@ -512,6 +521,30 @@ elseif event.type == "ui" then
 				mem.params.carcallsecurity[mem.editingfloor] = "auth"
 			elseif event.fields.secmode == "3" then
 				mem.params.carcallsecurity[mem.editingfloor] = "deny"
+			end
+		end
+		if event.fields.user then
+			if not mem.params.secoverrideusers[mem.editingfloor] then
+				mem.params.secoverrideusers[mem.editingfloor] = {}
+			end
+			local exp = minetest.explode_textlist_event(event.fields.user) or {}
+			if exp.type == "CHG" then
+				mem.editinguser = exp.index
+			elseif exp.type == "DCL" then
+				mem.editinguser = exp.index
+				if mem.params.secoverrideusers[mem.editingfloor][mem.editinguser] then
+					table.remove(mem.params.secoverrideusers[mem.editingfloor],mem.editinguser)
+					mem.editinguser = math.min(mem.editinguser,#mem.params.secoverrideusers[mem.editingfloor])
+				end
+			end
+		end
+		if event.fields.adduser then
+			table.insert(mem.params.secoverrideusers[mem.editingfloor],event.fields.username)
+			mem.editinguser = #mem.params.secoverrideusers[mem.editingfloor]
+		elseif event.fields.deluser then
+			if mem.params.secoverrideusers[mem.editingfloor][mem.editinguser] then
+				table.remove(mem.params.secoverrideusers[mem.editingfloor],mem.editinguser)
+				mem.editinguser = math.min(mem.editinguser,#mem.params.secoverrideusers[mem.editingfloor])
 			end
 		end
 	end
@@ -597,6 +630,15 @@ elseif event.type == "cop" then
 						secok = false
 					elseif secmode == "auth" and event.protected then
 						secok = false
+					end
+				end
+				if mem.carstate == "indep" and mem.params.indepunlock[landing] then
+					secok = true
+				elseif mem.params.secoverrideusers[landing] then
+					for _,name in ipairs(mem.params.secoverrideusers[landing]) do
+						if name == event.player then
+							secok = true
+						end
 					end
 				end
 				if v and landing and landing >= 1 and landing <= #mem.params.floorheights and secok then
@@ -1415,6 +1457,23 @@ elseif mem.screenstate == "carcallsecurity" then
 			fs("3;true]")
 		else
 			fs("1;true]")
+		end
+		if mem.params.carcallsecurity[mem.editingfloor] then
+			fs(string.format("checkbox[8,3.5;indepunlock;Unlock in Independent;%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
+			fs("label[8,4.7;Extra Allowed Users]")
+			if not mem.params.secoverrideusers[mem.editingfloor] then mem.params.secoverrideusers[mem.editingfloor] = {} end
+			if #mem.params.secoverrideusers[mem.editingfloor] > 0 then
+				fs("textlist[8,6;4,2;user;")
+				for i=1,#mem.params.secoverrideusers[mem.editingfloor],1 do
+					fs(minetest.formspec_escape(mem.params.secoverrideusers[mem.editingfloor][i])..(i==#mem.params.secoverrideusers[mem.editingfloor] and "" or ","))
+				end
+				fs(";"..tostring(mem.editinguser)..";false]")
+			else
+				fs("label[8,6.25;(none)]")
+			end
+			fs("field[8,5;3,1;username;;]")
+			fs("button[11.25,5;0.5,1;adduser;+]")
+			fs("button[12,5;0.5,1;deluser;-]")
 		end
 	else
 		fs("label[8,2;Main landing cannot be locked]")
