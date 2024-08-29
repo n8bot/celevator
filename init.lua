@@ -10,6 +10,7 @@ local components = {
 	"fs1switch",
 	"dispatcher",
 	"dbdkiosk",
+	"genericswitch",
 	"decorations",
 	"crafts",
 }
