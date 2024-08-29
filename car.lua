@@ -56,6 +56,18 @@ local function updatecartopbox(pos)
 	entity:set_pos(toppos)
 end
 
+local held = {}
+
+minetest.register_globalstep(function()
+	for k,v in ipairs(held) do
+		local player = minetest.get_player_by_name(v.name)
+		if not (player and player:get_player_control()[v.button]) then
+			table.remove(held,k)
+			celevator.controller.handlecartopbox(v.pos,v.control.."_release")
+		end
+	end
+end)
+
 local pieces = {
 	{
 		_position = "000",
@@ -330,8 +342,13 @@ local pieces = {
 			"celevator_cabinet_sides.png",
 		},
 		on_rightclick = function(pos,node,clicker)
+			local name = clicker:get_player_name()
+			for _,v in ipairs(held) do
+				if name == v.name then return end
+			end
 			local fdir = minetest.fourdir_to_dir(node.param2)
 			local control = disambiguatebutton(pos,fdir,clicker)
+			if not control then return end
 			local meta = minetest.get_meta(pos)
 			local carid = meta:get_int("carid")
 			if carid == 0 then return end
@@ -353,6 +370,12 @@ local pieces = {
 				end
 			end
 			celevator.controller.handlecartopbox(carinfo.controllerpos,control)
+			table.insert(held,{
+				pos = carinfo.controllerpos,
+				name = name,
+				button = "place",
+				control = control,
+			})
 		end,
 		after_dig_node = function(pos)
 			local toppos = vector.add(pos,vector.new(0,1.1,0))

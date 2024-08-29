@@ -541,9 +541,9 @@ function celevator.drives.entity.moveto(pos,target,inspection)
 		local apos = tonumber(meta:get_string("apos"))
 		local vel = tonumber(meta:get_string("vel"))
 		if vel > 0 then
-			if target < apos+(vel*2) then return end
+			if target < apos+(vel*2) and not inspection then return end
 		elseif vel < 0 then
-			if target > apos-(vel*-2) then return end
+			if target > apos-(vel*-2) and not inspection then return end
 		else
 			return
 		end

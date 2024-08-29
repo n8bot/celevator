@@ -668,7 +668,7 @@ elseif event.type == "cartopbox" then
 		})
 		drivecmd({
 			command = "moveto",
-			pos = math.floor(mem.drive.status.apos)+1,
+			pos = gettarget(#mem.params.floornames),
 			inspection = true,
 		})
 	elseif event.control == "down" and mem.carstate == "carinspect" and mem.doorstate == "closed" and mem.drive.status.apos-1 >= 0 then
@@ -680,7 +680,19 @@ elseif event.type == "cartopbox" then
 		})
 		drivecmd({
 			command = "moveto",
-			pos = math.floor(mem.drive.status.apos)-1,
+			pos = 0,
+			inspection = true,
+		})
+	elseif event.control == "up_release" and mem.carstate == "carinspect" and mem.drive.status.vel > 0 then
+		drivecmd({
+			command = "moveto",
+			pos = math.ceil(mem.drive.status.apos),
+			inspection = true,
+		})
+	elseif event.control == "down_release" and mem.carstate == "carinspect" and mem.drive.status.vel < 0 then
+		drivecmd({
+			command = "moveto",
+			pos = math.floor(mem.drive.status.apos),
 			inspection = true,
 		})
 	end
