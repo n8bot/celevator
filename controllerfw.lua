@@ -100,6 +100,7 @@ local function gettarget(floor)
 	local target = 0
 	if floor == 1 then return 0 end
 	for i=1,floor-1,1 do
+		if not mem.params.floorheights[i] then return 0 end
 		target = target+mem.params.floorheights[i]
 	end
 	return target
