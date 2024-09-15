@@ -447,8 +447,14 @@ laptop.register_app("celevator",{
 				local meta = minetest.get_meta(pos)
 				local cmem = minetest.deserialize(meta:get_string("mem"))
 				if not cmem then return end
+				local carcallacceptstates = {
+					normal = true,
+					test = true,
+					capture = true,
+					indep = true,
+				}
 				for i=1,#cmem.params.floornames,1 do
-					if fields[string.format("carcall%d",i)] and (cmem.carstate == "normal" or cmem.carstate == "test" or cmem.carstate == "capture" or cmem.carstate == "indep") then
+					if fields[string.format("carcall%d",i)] and carcallacceptstates[cmem.carstate] then
 						celevator.controller.run(pos,{
 							type = "remotemsg",
 							source = 0,

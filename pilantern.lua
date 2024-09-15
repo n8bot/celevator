@@ -1,7 +1,11 @@
 celevator.pi = {}
 celevator.lantern = {}
 
-local boringside = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png"
+local boringside = "[combine:64x64"..
+                   ":0,0=celevator_cabinet_sides.png"..
+                   ":32,0=celevator_cabinet_sides.png"..
+                   ":0,32=celevator_cabinet_sides.png"..
+                   ":32,32=celevator_cabinet_sides.png"
 local displaytex = boringside..":16,40=celevator_pi_background.png"
 
 minetest.register_entity("celevator:pi_entity",{

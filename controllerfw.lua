@@ -424,7 +424,12 @@ elseif event.type == "ui" then
 		end
 	elseif mem.screenstate == "status" then
 		for i=1,#mem.params.floornames,1 do
-			if event.fields[string.format("carcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "test" or mem.carstate == "capture" or mem.carstate == "indep") then
+			if event.fields[string.format("carcall%d",i)]
+			   and (mem.carstate == "normal"
+			   or mem.carstate == "test"
+			   or mem.carstate == "capture"
+			   or mem.carstate == "indep")
+			then
 				mem.carcalls[i] = true
 			elseif event.fields[string.format("upcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
 				if mem.params.groupmode == "group" then
@@ -1153,7 +1158,15 @@ if mem.params.groupmode == "group" then
 	end
 end
 
-if (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "indep" or mem.carstate == "fs2") and mem.doorstate == "closed" then
+local canprocesscalls = {
+	normal = true,
+	capture = true,
+	test = true,
+	indep = true,
+	fs2 = true,
+}
+
+if canprocesscalls[mem.carstate] and mem.doorstate == "closed" then
 	if not mem.carmotion then
 		if mem.direction == "up" then
 			if getnextcallabove("up") then
@@ -1353,7 +1366,8 @@ elseif mem.screenstate == "status" then
 	fs("label[1,1;CAR STATUS]")
 	fs(string.format("label[1,2;%s]",modenames[mem.carstate]))
 	fs(string.format("label[1,2.5;Doors %s]",doorstates[mem.doorstate]))
-	fs(string.format("label[1,3;Position: %0.02fm Speed: %+0.02fm/s PI: %s]",mem.drive.status.apos,mem.drive.status.vel,minetest.formspec_escape(mem.params.floornames[getpos()])))
+	local currentfloor = minetest.formspec_escape(mem.params.floornames[getpos()])
+	fs(string.format("label[1,3;Position: %0.02fm Speed: %+0.02fm/s PI: %s]",mem.drive.status.apos,mem.drive.status.vel,currentfloor))
 	if #mem.faultlog > 0 then
 		fs("label[1,3.5;Fault(s) Active]")
 	else
@@ -1369,7 +1383,12 @@ elseif mem.screenstate == "status" then
 	local greenoff = "celevator_led_green_off.png"
 	fs(string.format("image[7,1;0.7,0.7;%s]",mem.carstate == "fault" and redon or redoff))
 	fs("label[8,1.35;FAULT]")
-	fs(string.format("image[7,1.9;0.7,0.7;%s]",(mem.carstate == "mrinspect" or mem.carstate == "carinspect" or mem.carstate == "inspconflict") and yellowon or yellowoff))
+	local inspectionstates = {
+		mrinspect = true,
+		carinspect = true,
+		inspconflict = true,
+	}
+	fs(string.format("image[7,1.9;0.7,0.7;%s]",inspectionstates[mem.carstate] and yellowon or yellowoff))
 	fs("label[8,2.25;INSP/ACCESS]")
 	fs(string.format("image[7,2.8;0.7,0.7;%s]",mem.carstate == "normal" and greenon or greenoff))
 	fs("label[8,3.15;NORMAL OPERATION]")
@@ -1426,7 +1445,8 @@ elseif mem.screenstate == "faults" then
 			if #mem.faultlog-i >= 1 then
 				local currfault = mem.faultlog[#mem.faultlog-i]
 				local date = os.date("*t",currfault.timestamp)
-				fs(string.format("label[1,%0.1f;%04d-%02d-%02d %02d:%02d:%02d - %s]",2+i,date.year,date.month,date.day,date.hour,date.min,date.sec,faultnames[currfault.ftype]))
+				local timestamp = string.format("%04d-%02d-%02d %02d:%02d:%02d",date.year,date.month,date.day,date.hour,date.min,date.sec)
+				fs(string.format("label[1,%0.1f;%s - %s]",2+i,timestamp,faultnames[currfault.ftype]))
 			end
 		end
 	else
@@ -1487,7 +1507,10 @@ if mem.drive.status.dpos > mem.drive.status.apos then
 elseif mem.drive.status.dpos < mem.drive.status.apos then
 	arrow = "v"
 end
-mem.infotext = string.format("ID %d: Floor %s %s - %s - Doors %s",mem.carid,mem.params.floornames[getpos()],arrow,modenames[mem.carstate],doorstates[mem.doorstate])
+local floorname = mem.params.floornames[getpos()]
+local modename = modenames[mem.carstate]
+local doorstate = doorstates[mem.doorstate]
+mem.infotext = string.format("ID %d: Floor %s %s - %s - Doors %s",mem.carid,floorname,arrow,modename,doorstate)
 
 if mem.drive.type then
 	mem.showrunning = mem.drive.status.vel ~= 0
@@ -1565,11 +1588,13 @@ for i=1,floorcount,1 do
 	local xp = col*1.25
 	local tex = mem.carcalls[i] and litimg or unlitimg
 	local star = (i == (mem.params.mainlanding or 1) and "*" or "")
-	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,minetest.formspec_escape(star..mem.params.floornames[i]),litimg)
+	local label = minetest.formspec_escape(star..mem.params.floornames[i])
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,label,litimg)
 end
 
 local doxp = (copcols == 1) and 0.5 or 1.25
-mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;open;%s;false;false;%s]",doxp,coprows*1.25+2.5,unlitimg,minetest.formspec_escape("<|>"),litimg)
+local openlabel = minetest.formspec_escape("<|>")
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;open;%s;false;false;%s]",doxp,coprows*1.25+2.5,unlitimg,openlabel,litimg)
 
 local dcxp = 3.75
 if copcols == 1 then
@@ -1577,7 +1602,8 @@ if copcols == 1 then
 elseif copcols == 2 then
 	dcxp = 2.5
 end
-mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,minetest.formspec_escape(">|<"),litimg)
+local closelabel = minetest.formspec_escape(">|<")
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,closelabel,litimg)
 
 mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;Call\nCancel;false;false;%s]",unlitimg,litimg)
 

@@ -595,7 +595,11 @@ elseif event.channel == "status" then
 			interrupt(1,"run")
 		end
 	end
-elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" and mem.powerstate ~= "asleep") and (mem.screenstate == "status" or mem.screenstate == "menu") then
+elseif event.type == "abm"
+       or event.type == "remotewake"
+       or (event.iid == "run" and mem.powerstate ~= "asleep")
+       and (mem.screenstate == "status" or mem.screenstate == "menu")
+then
 	local busy = false
 	if not mem.upcalls then mem.upcalls = {} end
 	if not mem.dncalls then mem.dncalls = {} end
@@ -637,7 +641,10 @@ elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" 
 				besteta = eta
 				bestcar = carid
 			end
-			if getpos(carid) == i and mem.carstatus[carid].direction == "up" and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open") then
+			if getpos(carid) == i
+			   and mem.carstatus[carid].direction == "up"
+			   and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open")
+			then
 				alreadyserved = true
 			end
 		end
@@ -716,7 +723,10 @@ elseif event.type == "abm" or event.type == "remotewake" or (event.iid == "run" 
 					besteta = eta
 					bestcar = carid
 				end
-				if getpos(carid) == i and mem.carstatus[carid].direction == "down" and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open") then
+				if getpos(carid) == i
+				   and mem.carstatus[carid].direction == "down"
+				   and (mem.carstatus[carid].doorstate == "opening" or mem.carstatus[carid].doorstate == "open")
+				then
 					alreadyserved = true
 				end
 			end

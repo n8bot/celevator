@@ -655,7 +655,8 @@ function celevator.drives.entity.movedoors(drivepos,direction,nudge)
 	local carpos = vector.add(origin,vector.new(0,apos,0))
 	local carnode = celevator.get_node(carpos)
 	local hwdoorpos = vector.add(carpos,vector.rotate_around_axis(minetest.fourdir_to_dir(carnode.param2),vector.new(0,1,0),math.pi))
-	if direction == "open" and (minetest.get_item_group(celevator.get_node(hwdoorpos).name,"_celevator_hwdoor_root") == 1 or drivemeta:get_string("doorstate") == "closing") then
+	local isroot = minetest.get_item_group(celevator.get_node(hwdoorpos).name,"_celevator_hwdoor_root") == 1
+	if direction == "open" and (isroot or drivemeta:get_string("doorstate") == "closing") then
 		celevator.doors.hwopen(hwdoorpos,drivepos)
 		drivemeta:set_string("doorstate","opening")
 	elseif direction == "close" and celevator.get_node(hwdoorpos).name == "celevator:hwdoor_placeholder" then

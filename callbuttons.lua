@@ -1,7 +1,12 @@
 celevator.callbutton = {}
 
 local function makebuttontex(dir,upon,downon,inventory)
-	local tex = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png:22,24=celevator_callbutton_panel.png"
+	local tex = "[combine:64x64"..
+	            ":0,0=celevator_cabinet_sides.png"..
+	            ":32,0=celevator_cabinet_sides.png"..
+	            ":0,32=celevator_cabinet_sides.png"..
+	            ":32,32=celevator_cabinet_sides.png"..
+	            ":22,24=celevator_callbutton_panel.png"
 	if inventory then tex = "[combine:32x32:5,0=celevator_callbutton_panel.png" end
 	if dir == "up" then
 		if inventory then
@@ -112,7 +117,11 @@ local function disambiguatedir(pos,player)
 end
 
 for _,state in ipairs(validstates) do
-	local boringside = "[combine:64x64:0,0=celevator_cabinet_sides.png:32,0=celevator_cabinet_sides.png:0,32=celevator_cabinet_sides.png:32,32=celevator_cabinet_sides.png"
+	local boringside = "[combine:64x64"..
+	                   ":0,0=celevator_cabinet_sides.png"..
+	                   ":32,0=celevator_cabinet_sides.png"..
+	                   ":0,32=celevator_cabinet_sides.png"..
+	                   ":32,32=celevator_cabinet_sides.png"
 	local nname = "celevator:callbutton_"..state[1]
 	local dropname = nname
 	local light = 0

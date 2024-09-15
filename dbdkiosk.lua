@@ -14,7 +14,12 @@ function celevator.dbdkiosk.updatefields(pos)
 	local meta = minetest.get_meta(pos)
 	local screenstate = meta:get_string("screenstate")
 	if screenstate == "connect" then
-		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Dispatcher ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+		meta:set_string("formspec","formspec_version[7]"..
+		                           "size[8,5]"..
+		                           "field[0.5,0.5;7,1;carid;Dispatcher ID;]"..
+		                           "field[0.5,2;7,1;landing;Landing Number;]"..
+		                           "button[3,3.5;2,1;save;Save]"
+		               )
 	elseif screenstate == "main" then
 		local landing = meta:get_int("landing")
 		local fs = "formspec_version[7]"
