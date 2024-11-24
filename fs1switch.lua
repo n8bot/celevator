@@ -139,11 +139,21 @@ for _,switchpos in ipairs(switchstates) do
 			local meta = minetest.get_meta(pos)
 			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
 		end,
-		on_receive_fields = function(pos,_,fields)
+		on_receive_fields = function(pos,_,fields,player)
 			local carid = tonumber(fields.carid or 0)
 			if not (carid and carid >= 1 and carid == math.floor(carid)) then return end
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 			if not carinfo then return end
+			local controllerpos = carinfo.controllerpos or carinfo.dispatcherpos
+			if not controllerpos then return end
+			local name = player:get_player_name()
+			if minetest.is_protected(controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+				if player:is_player() then
+					minetest.chat_send_player(name,"Can't connect to a controller/dispatcher you don't have access to.")
+					minetest.record_protection_violation(controllerpos,name)
+				end
+				return
+			end
 			if not carinfo.fs1switches then carinfo.fs1switches = {} end
 			table.insert(carinfo.fs1switches,{pos=pos})
 			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
