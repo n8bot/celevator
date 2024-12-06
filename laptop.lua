@@ -5,6 +5,7 @@ laptop.register_app("celevator",{
 	formspec_func = function(_,mtos)
 		local ram = mtos.bdev:get_app_storage("ram","celevator")
 		local mem = mtos.bdev:get_app_storage("hdd","celevator")
+		if not mem then return mtos.theme:get_label("0.5,0.5","This application requires a hard disk drive.") end
 		if not mem.connections then mem.connections = {} end
 		if not ram.screenstate then ram.screenstate = (#mem.connections > 0 and "connections" or "welcome") end
 		if not mem.selectedconnection then mem.selectedconnection = 1 end
@@ -298,6 +299,7 @@ laptop.register_app("celevator",{
 	receive_fields_func = function(app,mtos,_,fields)
 		local ram = mtos.bdev:get_app_storage("ram","celevator")
 		local mem = mtos.bdev:get_app_storage("hdd","celevator")
+		if not mem then return end
 		if ram.screenstate == "welcome" then
 			if fields.connections then
 				ram.screenstate = "connections"
