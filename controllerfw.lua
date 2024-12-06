@@ -1248,6 +1248,7 @@ end
 
 fs("formspec_version[6]")
 fs("size[16,12]")
+fs("no_prepend[]")
 fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
 if mem.screenstate == "oobe_welcome" then
 	fs("image[6,1;4,2;celevator_logo.png]")
@@ -1581,6 +1582,8 @@ local coprows = math.floor((floorcount-1)/copcols)+1
 local litimg = "celevator_copbutton_lit.png"
 local unlitimg = "celevator_copbutton_unlit.png"
 mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+5)
+mem.copformspec = mem.copformspec.."no_prepend[]"
+mem.copformspec = mem.copformspec.."background9[0,0;16,12;celevator_fs_bg.png;true;3]"
 for i=1,floorcount,1 do
 	local row = math.floor((i-1)/copcols)+1
 	local col = ((i-1)%copcols)+1
@@ -1614,7 +1617,7 @@ else
 	mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
 end
 
-mem.switchformspec = "formspec_version[7]size[8,10]"
+mem.switchformspec = "formspec_version[7]size[8,10]no_prepend[]background9[0,0;16,12;celevator_fs_bg.png;true;3]"
 local fs2ontex = (mem.fs2sw == "on") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local fs2holdtex = (mem.fs2sw == "hold") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local fs2offtex = (mem.fs2sw == "off" or not mem.fs2sw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"

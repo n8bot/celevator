@@ -901,6 +901,7 @@ end
 
 fs("formspec_version[6]")
 fs("size[20,12]")
+fs("no_prepend[]")
 fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
 
 if mem.screenstate == "oobe_welcome" then
