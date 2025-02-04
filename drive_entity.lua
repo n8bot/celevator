@@ -444,6 +444,7 @@ function celevator.drives.entity.step(dtime)
 						end
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
+						table.remove(entitydrives_running,i)
 					elseif dremain < 0.2 and not inspection then
 						vel = 0.2
 					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
@@ -487,6 +488,7 @@ function celevator.drives.entity.step(dtime)
 						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
+						table.remove(entitydrives_running,i)
 					elseif dremain < 0.2 and not inspection then
 						vel = 0.2
 					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
