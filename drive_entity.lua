@@ -374,6 +374,7 @@ function celevator.drives.entity.step(dtime)
 				local dpos = tonumber(meta:get_string("dpos")) or 0
 				local maxvel = tonumber(meta:get_string("maxvel")) or 0.2
 				local startpos = tonumber(meta:get_string("startpos")) or 0
+				local oldvel = tonumber(meta:get_string("vel")) or 0
 				local inspection = meta:get_int("inspection") == 1
 				local origin = minetest.string_to_pos(meta:get_string("origin"))
 				if not origin then
@@ -436,7 +437,8 @@ function celevator.drives.entity.step(dtime)
 					local dremain = math.abs(dpos-apos)
 					local dmoved = math.abs(apos-startpos)
 					local vel
-					if dremain < 0.01 then
+					local relevel = (dpos < apos and oldvel > 0) or (dpos > apos and oldvel < 0)
+					if dremain < 0.01 or (inspection and relevel) then
 						vel = 0
 						meta:set_string("state","stopped")
 						motorsound(pos,"idle")
@@ -484,7 +486,8 @@ function celevator.drives.entity.step(dtime)
 					local dremain = math.abs(dpos-apos)
 					local dmoved = math.abs(apos-startpos)
 					local vel
-					if dremain < 0.01 then
+					local relevel = (dpos < apos and oldvel > 0) or (dpos > apos and oldvel < 0)
+					if dremain < 0.01 or (relevel and inspection) then
 						vel = 0
 						meta:set_string("state","stopped")
 						motorsound(pos,"idle")
