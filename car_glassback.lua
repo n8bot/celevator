@@ -336,8 +336,8 @@ minetest.register_node("celevator:car_glassback",{
 	description = "Glass-Back Elevator Car",
 	paramtype2 = "4dir",
 	buildable_to = true,
-	inventory_image = "celevator_car_inventory.png",
-	wield_image = "celevator_car_wield.png",
+	inventory_image = "celevator_car_glassback_inventory.png",
+	wield_image = "celevator_car_glassback_wield.png",
 	wield_scale = vector.new(1,1,10),
 	tiles = {"celevator_transparent.png"},
 	after_place_node = function(pos,player)
