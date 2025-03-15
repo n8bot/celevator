@@ -304,7 +304,7 @@ end
 
 minetest.register_abm({
 	label = "Spawn tapeheads",
-	nodenames = {"celevator:car_122"},
+	nodenames = {"group:_celevator_car_spawnstapehead"},
 	neighbors = {"celevator:tape","celevator:tape_magnets","celevator:tape_bracket"},
 	interval = 1,
 	chance = 1,

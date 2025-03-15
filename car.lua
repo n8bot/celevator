@@ -198,6 +198,9 @@ function celevator.car.register(name,defs,size)
 		if def._pi then
 			def.groups._celevator_car_spawnspi = 1
 		end
+		if def._tapehead then
+			def.groups._celevator_car_spawnstapehead = 1
+		end
 		if def._position == "000" then
 			def.groups._celevator_car_root = 1
 			def._root = true
