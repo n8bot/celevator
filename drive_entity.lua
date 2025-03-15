@@ -450,8 +450,8 @@ function celevator.drives.entity.step(dtime)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 						table.remove(entitydrives_running,i)
-					elseif dremain < 0.2 and not inspection then
-						vel = 0.2
+					elseif dremain < 0.1 and not inspection then
+						vel = 0.1
 					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
 						vel = math.min(dremain,maxvel)
 						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
@@ -495,8 +495,8 @@ function celevator.drives.entity.step(dtime)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 						table.remove(entitydrives_running,i)
-					elseif dremain < 0.2 and not inspection then
-						vel = 0.2
+					elseif dremain < 0.1 and not inspection then
+						vel = 0.1
 					elseif dremain < 2*maxvel and dremain < dmoved and not inspection then
 						vel = math.min(dremain,maxvel)
 						if celevator.drives.entity.movementsoundstate[hash] == "fast" or celevator.drives.entity.movementsoundstate[hash] == "accel" then
