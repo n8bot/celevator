@@ -268,7 +268,8 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		})
 		eref:set_yaw(minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2)))
 		table.insert(refs,eref)
-		if node.name == "celevator:car_021" or node.name == "celevator:car_122" then
+		local ndef = minetest.registered_nodes[node.name] or {}
+		if ndef._cartopbox or ndef._tapehead then
 			local toppos = vector.add(pos,vector.new(0,1,0))
 			local topattach = minetest.get_objects_inside_radius(toppos,0.75)
 			for _,ref in pairs(topattach) do
@@ -402,7 +403,10 @@ function celevator.drives.entity.step(dtime)
 						end
 					end
 					local carparam2 = celevator.get_node(nodes[1]).param2
+					local cardef = minetest.registered_nodes[celevator.get_node(nodes[1]).name] or {}
+					local cartype = cardef._celevator_car_type or "standard"
 					meta:set_int("carparam2",carparam2)
+					meta:set_string("cartype",cartype)
 					local handles = celevator.drives.entity.nodestoentities(nodes)
 					celevator.drives.entity.entityinfo[hash] = {
 						handles = handles,
@@ -440,7 +444,8 @@ function celevator.drives.entity.step(dtime)
 						local ok = celevator.drives.entity.entitiestonodes(handles,carid)
 						if not ok then
 							local carparam2 = meta:get_int("carparam2")
-							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
+							local cartype = meta:get_string("cartype")
+							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype)
 						end
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
@@ -485,7 +490,8 @@ function celevator.drives.entity.step(dtime)
 						motorsound(pos,"idle")
 						celevator.drives.entity.sheavetonode(carid)
 						local carparam2 = meta:get_int("carparam2")
-						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid)
+						local cartype = meta:get_string("cartype")
+						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 						table.remove(entitydrives_running,i)
@@ -1027,9 +1033,10 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 		for hash in pairs(carnodes) do
 			local piecepos = minetest.get_position_from_hash(hash)
 			local piece = celevator.get_node(piecepos)
-			if piece.name == "celevator:car_010" then
+			local ndef = minetest.registered_nodes[piece.name] or {}
+			if ndef._cop then
 				celevator.get_meta(piecepos):set_string("formspec",copformspec)
-			elseif piece.name == "celevator:car_000" then
+			elseif ndef._keyswitches then
 				celevator.get_meta(piecepos):set_string("formspec",switchformspec)
 			end
 		end

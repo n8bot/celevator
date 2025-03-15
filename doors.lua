@@ -271,7 +271,8 @@ function celevator.doors.hwopen(pos,drivepos)
 		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 		local carpos = vector.add(pos,fdir)
-		if celevator.get_node(carpos).name == "celevator:car_000" then
+		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		if carndef._root then
 			celevator.doors.caropen(carpos)
 		end
 	elseif hwdoors_moving[hash].direction == "close" then
@@ -280,7 +281,8 @@ function celevator.doors.hwopen(pos,drivepos)
 		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
 		local fdir = minetest.fourdir_to_dir(hwdoors_moving[hash].param2)
 		local carpos = vector.add(pos,fdir)
-		if celevator.get_node(carpos).name == "celevator:car_000" then
+		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		if carndef._root then
 			celevator.doors.caropen(carpos)
 		end
 		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=hwdoors_moving[hash].param2})
@@ -301,7 +303,8 @@ function celevator.doors.hwclose(pos,drivepos,nudge)
 	if state ~= "open" then return end
 	local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
 	local carpos = vector.add(pos,fdir)
-	if celevator.get_node(carpos).name == "celevator:car_000" then
+	local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+	if carndef._root then
 		celevator.doors.carclose(carpos,nudge)
 	end
 	local data = minetest.deserialize(pmeta:get_string("data"))
@@ -619,7 +622,7 @@ end
 
 minetest.register_abm({
 	label = "Respawn car doors",
-	nodenames = {"celevator:car_000"},
+	nodenames = {"group:_celevator_car_root"},
 	interval = 1,
 	chance = 1,
 	action = function(pos)

@@ -44,10 +44,19 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "celevator:car",
+	output = "celevator:car_standard",
 	recipe = {
 		{"default:steel_ingot","default:steel_ingot","default:steel_ingot"},
 		{"mesecons_button:button_off","celevator:hwdoor_glass","default:steel_ingot"},
+		{"mesecons_switch:mesecon_switch_off","default:steel_ingot","default:steel_ingot"},
+	},
+})
+
+minetest.register_craft({
+	output = "celevator:car_glassback",
+	recipe = {
+		{"default:steel_ingot","default:steel_ingot","default:steel_ingot"},
+		{"mesecons_button:button_off","celevator:hwdoor_glass","default:glass"},
 		{"mesecons_switch:mesecon_switch_off","default:steel_ingot","default:steel_ingot"},
 	},
 })
