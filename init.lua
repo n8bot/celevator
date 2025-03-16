@@ -15,6 +15,7 @@ local components = {
 	"dbdkiosk",
 	"genericswitch",
 	"decorations",
+	"governor",
 	"crafts",
 }
 

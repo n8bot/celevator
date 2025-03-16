@@ -444,6 +444,9 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 					celevator.drives[drivetype].pibeep(drivepos)
 				end
 			end
+			if type(mem.drive.status) == "table" then
+				meta:set_string("vel",tostring(mem.drive.status.vel))
+			end
 		end
 		local node = celevator.get_node(pos)
 		local oldmem = minetest.deserialize(meta:get_string("mem")) or {}
