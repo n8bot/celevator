@@ -258,7 +258,7 @@ function celevator.car.register(name,defs,size)
 	end
 end
 
-function celevator.car.spawncar(origin,yaw,carid,name)
+function celevator.car.spawncar(origin,yaw,carid,name,doortype)
 	if (not name) or name == "" then name = "standard" end
 	local size = celevator.car.types[name].size
 	local right = vector.rotate_around_axis(vector.new(1,0,0),vector.new(0,1,0),yaw)
@@ -276,7 +276,9 @@ function celevator.car.spawncar(origin,yaw,carid,name)
 					param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(yaw)),
 				}
 				minetest.set_node(pos,node)
-				if carid then minetest.get_meta(pos):set_int("carid",carid) end
+				local meta = minetest.get_meta(pos)
+				if carid then meta:set_int("carid",carid) end
+				meta:set_string("doortype",doortype or "glass")
 			end
 		end
 	end

@@ -406,8 +406,10 @@ function celevator.drives.entity.step(dtime)
 					local carparam2 = celevator.get_node(nodes[1]).param2
 					local cardef = minetest.registered_nodes[celevator.get_node(nodes[1]).name] or {}
 					local cartype = cardef._celevator_car_type or "standard"
+					local carmeta = celevator.get_meta(startv)
 					meta:set_int("carparam2",carparam2)
 					meta:set_string("cartype",cartype)
+					meta:set_string("doortype",carmeta:get_string("doortype"))
 					local handles = celevator.drives.entity.nodestoentities(nodes)
 					celevator.drives.entity.entityinfo[hash] = {
 						handles = handles,
@@ -444,10 +446,15 @@ function celevator.drives.entity.step(dtime)
 						motorsound(pos,"idle")
 						celevator.drives.entity.sheavetonode(carid)
 						local ok = celevator.drives.entity.entitiestonodes(handles,carid)
+						local doortype = meta:get_string("doortype")
+						if (not doortype) or doortype == "" then doortype = "glass" end
+						local spawnpos = vector.round(vector.add(origin,vector.new(0,apos,0)))
 						if not ok then
 							local carparam2 = meta:get_int("carparam2")
 							local cartype = meta:get_string("cartype")
-							celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype)
+							celevator.car.spawncar(spawnpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype,doortype)
+						else
+							celevator.get_meta(spawnpos):set_string("doortype",doortype)
 						end
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
@@ -494,7 +501,10 @@ function celevator.drives.entity.step(dtime)
 						celevator.drives.entity.sheavetonode(carid)
 						local carparam2 = meta:get_int("carparam2")
 						local cartype = meta:get_string("cartype")
-						celevator.car.spawncar(vector.round(vector.add(origin,vector.new(0,apos,0))),minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype)
+						local doortype = meta:get_string("doortype")
+						if (not doortype) or doortype == "" then doortype = "glass" end
+						local spawnpos = vector.round(vector.add(origin,vector.new(0,apos,0)))
+						celevator.car.spawncar(spawnpos,minetest.dir_to_yaw(minetest.fourdir_to_dir(carparam2)),carid,cartype,doortype)
 						apos = math.floor(apos+0.5)
 						minetest.after(0.25,celevator.drives.entity.updatecopformspec,pos)
 						table.remove(entitydrives_running,i)
