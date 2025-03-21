@@ -11,6 +11,8 @@ celevator.drives.entity = {
 	sheaverefs = {},
 }
 
+local playerposlimits = {}
+
 local function update_ui(pos)
 	local meta = minetest.get_meta(pos)
 	local apos = tonumber(meta:get_string("apos")) or 0
@@ -231,6 +233,80 @@ minetest.register_entity("celevator:car_moving",{
 	},
 })
 
+minetest.register_entity("celevator:player_holder",{
+	initial_properties = {
+		visual = "cube",
+		textures = {
+			"blank.png",
+			"blank.png",
+			"blank.png",
+			"blank.png",
+			"blank.png",
+			"blank.png",
+		},
+		--I have no idea where this magic number comes from, but it seems about right and that's good enough
+		visual_size = vector.new(3,3,3),
+		static_save = false,
+		pointable = false,
+	},
+	on_step = function(self,dtime)
+		local obj = self.object
+		local car,_,attachoffset = obj:get_attach()
+		if not car then
+			obj:remove()
+			return
+		end
+		local children = obj:get_children()
+		local player
+		for _,i in pairs(children) do
+			if i:is_player() then
+				player = i
+			end
+		end
+		if not player then return end
+		local caryaw = car:get_yaw()
+		local playeryaw = player:get_look_horizontal()
+		local attachrot = vector.new(0,(caryaw-playeryaw)*57.296,0)
+		local control = player:get_player_control()
+		if (control.up or control.down or control.left or control.right) then
+			local walkspeed = 120
+			local walkamount = walkspeed*dtime
+			local displacement = vector.new(0,0,0)
+			if control.up then
+				displacement = vector.add(displacement,vector.new(0,0,walkamount))
+			end
+			if control.down then
+				displacement = vector.add(displacement,vector.new(0,0,0-walkamount))
+			end
+			if control.left then
+				displacement = vector.add(displacement,vector.new(0-walkamount,0,0))
+			end
+			if control.right then
+				displacement = vector.add(displacement,vector.new(walkamount,0,0))
+			end
+			displacement = vector.rotate_around_axis(displacement,vector.new(0,1,0),playeryaw)
+			displacement = vector.rotate_around_axis(displacement,vector.new(0,-1,0),caryaw)
+			local oldattachoffset = vector.copy(attachoffset)
+			attachoffset = vector.add(attachoffset,displacement)
+			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset,1/30),vector.new(0,1,0),caryaw)
+			local newpos = vector.add(car:get_pos(),realattachoffset)
+			local limits = playerposlimits[player:get_player_name()] or {}
+			if limits.xmin and limits.xmax and limits.xmin < limits.xmax then
+				if newpos.x > limits.xmax or newpos.x < limits.xmin then
+					attachoffset = oldattachoffset
+				end
+			end
+			if limits.zmin and limits.zmax and limits.zmin < limits.zmax then
+				if newpos.z > limits.zmax or newpos.z < limits.zmin then
+					attachoffset = oldattachoffset
+				end
+			end
+		end
+		obj:set_attach(car,"",attachoffset,vector.new(0,0,0))
+		player:set_attach(obj,"",vector.new(0,0,0),attachrot)
+	end,
+})
+
 function celevator.drives.entity.gathercar(pos,yaw,nodes)
 	if not nodes then nodes = {} end
 	local hash = minetest.hash_node_position(pos)
@@ -259,6 +335,16 @@ end
 
 function celevator.drives.entity.nodestoentities(nodes,ename)
 	local refs = {}
+	local xmin = 32000
+	local xmax = -32000
+	local zmin = 32000
+	local zmax = -32000
+	for _,pos in ipairs(nodes) do
+		if pos.x < xmin then xmin = pos.x end
+		if pos.x > xmax then xmax = pos.x end
+		if pos.z < zmin then zmin = pos.z end
+		if pos.z > zmax then zmax = pos.z end
+	end
 	for _,pos in ipairs(nodes) do
 		local node = celevator.get_node(pos)
 		local attach = minetest.get_objects_inside_radius(pos,0.9)
@@ -286,12 +372,27 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 				}
 				if attachref:get_luaentity() and included[attachref:get_luaentity().name] then
 					table.insert(refs,attachref)
+				elseif attachref:is_player() then
+					local attachpos = attachref:get_pos()
+					local basepos = eref:get_pos()
+					local attachoffset = vector.subtract(attachpos,basepos)
+					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
+					local holder = minetest.add_entity(attachpos,"celevator:player_holder")
+					holder:set_attach(eref,"",vector.multiply(attachoffset,30),vector.new(0,0,0))
+					attachref:set_attach(holder,"")
+					local extra = 0.25 --To allow getting closer to walls
+					playerposlimits[attachref:get_player_name()] = {
+						xmin = xmin-extra,
+						xmax = xmax+extra,
+						zmin = zmin-extra,
+						zmax = zmax+extra,
+					}
 				else
 					local attachpos = attachref:get_pos()
 					local basepos = eref:get_pos()
-					local attachoffset = vector.multiply(vector.subtract(attachpos,basepos),30)
+					local attachoffset = vector.subtract(attachpos,basepos)
 					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
-					attachref:set_attach(eref,"",attachoffset)
+					attachref:set_attach(eref,"",vector.multiply(attachoffset,30),vector.new(0,0,0))
 				end
 			end
 		end
@@ -334,10 +435,16 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 				i:set_velocity(vector.new(0,0,0))
 				if i:is_player() then
 					local ppos = i:get_pos()
-					ppos.y=ppos.y-0.4
-					if top then ppos.y = ppos.y+1.1 end
+					ppos.y=ppos.y-0.48
+					if top then ppos.y = ppos.y+1.02 end
 					i:set_pos(ppos)
-					minetest.after(0.5,i.set_pos,i,ppos)
+					minetest.after(0.5,function()
+						if not i:is_player() then return end
+						local newpos = i:get_pos()
+						if newpos.y < (ppos.y-0.1) then
+							i:set_pos(ppos)
+						end
+					end)
 				elseif i:get_luaentity() and rounded[i:get_luaentity().name] then
 					local epos = i:get_pos()
 					epos.y = math.floor(epos.y+0.5)
