@@ -48,7 +48,7 @@ local modenames = {
 	stop = "Emergency Stop",
 	mrinspect = "Machine Room Inspection",
 	carinspect = "Car Top Inspection",
-	inspconflict = "Inspection Conflict",
+	inspconflict = "Inspection Conflict", --No longer used but some controllers may be in it at update time
 	fs1 = "Fire Service - Phase 1",
 	fs2 = "Fire Service - Phase 2",
 	fs2hold = "Fire Service - Phase 2 Hold",
@@ -904,19 +904,6 @@ elseif mem.controllerstopsw or mem.screenstate == "floortable" or mem.screenstat
 	mem.direction = nil
 	interrupt(nil,"opentimeout")
 	interrupt(nil,"closetimeout")
-elseif mem.controllerinspectsw and mem.cartopinspectsw then
-	mem.carstate = "inspconflict"
-	mem.carcalls = {}
-	mem.upcalls = {}
-	mem.dncalls = {}
-	mem.swingupcalls = {}
-	mem.swingdncalls = {}
-	mem.groupupcalls = {}
-	mem.groupdncalls = {}
-	mem.direction = nil
-	drivecmd({command="estop"})
-	interrupt(nil,"opentimeout")
-	interrupt(nil,"closetimeout")
 elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	mem.carstate = "mrinspect"
 	mem.carcalls = {}
@@ -930,7 +917,7 @@ elseif mem.controllerinspectsw and not mem.cartopinspectsw then
 	interrupt(nil,"opentimeout")
 	interrupt(nil,"closetimeout")
 	if oldstate ~= "mrinspect" then drivecmd({command="estop"}) end
-elseif mem.cartopinspectsw and not mem.controllerinspectsw then
+elseif mem.cartopinspectsw then
 	mem.carstate = "carinspect"
 	mem.carcalls = {}
 	mem.upcalls = {}
