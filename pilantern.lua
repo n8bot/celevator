@@ -578,3 +578,30 @@ minetest.register_abm({
 		celevator.pi.updatedisplay(pos)
 	end,
 })
+
+minetest.register_abm({
+	label = "Check PIs/lanterns for missing/replaced controllers",
+	nodenames = {"group:_celevator_pi","group:_celevator_lantern"},
+	interval = 15,
+	chance = 1,
+	action = function(pos)
+		local meta = minetest.get_meta(pos)
+		local carid = meta:get_int("carid")
+		if not (carid and carid > 0) then return end --Not set up yet
+		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		if not carinfo then
+			celevator.pi.settext(pos," --")
+			meta:set_string("infotext","Error reading car information!\nPlease remove and replace this node.")
+			return
+		end
+		if not (carinfo.controllerpos and celevator.controller.iscontroller(carinfo.controllerpos)) then
+			celevator.pi.settext(pos," --")
+			meta:set_string("infotext","Controller is missing!\nPlease remove and replace this node.")
+			return
+		end
+		if celevator.get_meta(carinfo.controllerpos):get_int("carid") ~= carid then
+			celevator.pi.settext(pos," --")
+			meta:set_string("infotext","Controller found but with incorrect ID!\nPlease remove and replace this node.")
+		end
+	end,
+})

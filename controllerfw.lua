@@ -74,6 +74,9 @@ local faultnames = {
 	drivebadorigin = "Drive Origin Invalid",
 	drivedoorinterlock = "Attempted to Move Doors With Car in Motion",
 	driveoutofbounds = "Target Position Out of Bounds",
+	drivenomachine = "Hoist Machine Missing",
+	drivemachinemismatch = "Drive<->Machine ID Mismatch",
+	drivecontrollermismatch = "Controller<->Drive ID Mismatch",
 }
 
 local function drivecmd(command)

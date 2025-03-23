@@ -239,3 +239,35 @@ for _,state in ipairs(validstates) do
 		end,
 	})
 end
+
+minetest.register_abm({
+	label = "Check call buttons for missing/replaced controllers",
+	nodenames = {"group:_celevator_callbutton",},
+	interval = 15,
+	chance = 1,
+	action = function(pos)
+		local meta = minetest.get_meta(pos)
+		local carid = meta:get_int("carid")
+		if not (carid and carid > 0) then return end --Not set up yet
+		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		if not carinfo then
+			meta:set_string("infotext","Error reading car information!\nPlease remove and replace this node.")
+			return
+		end
+		local iscontroller = (carinfo.controllerpos and celevator.controller.iscontroller(carinfo.controllerpos))
+		local isdispatcher = (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos))
+		if not (iscontroller or isdispatcher) then
+			meta:set_string("infotext","Controller/dispatcher is missing!\nPlease remove and replace this node.")
+			return
+		end
+		local metacarid = 0
+		if iscontroller then
+			metacarid = celevator.get_meta(carinfo.controllerpos):get_int("carid")
+		elseif isdispatcher then
+			metacarid = celevator.get_meta(carinfo.dispatcherpos):get_int("carid")
+		end
+		if metacarid ~= carid then
+			meta:set_string("infotext","Controller/dispatcher found but with incorrect ID!\nPlease remove and replace this node.")
+		end
+	end,
+})

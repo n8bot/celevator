@@ -653,7 +653,21 @@ function celevator.drives.entity.moveto(pos,target,inspection)
 	meta:mark_as_private({"apos","dpos","vel","maxvel","state","startpos","doorstate"})
 	local carid = celevator.get_meta(pos):get_int("carid")
 	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-	if not (carinfo and carinfo.machinepos) then return end
+	if not (carinfo and carinfo.machinepos and celevator.get_node(carinfo.machinepos).name == "celevator:machine") then
+		meta:set_string("fault","nomachine")
+		return
+	end
+	if not carinfo.controllerpos then return end
+	local controllermeta = celevator.get_meta(carinfo.controllerpos)
+	if controllermeta:get_int("carid") ~= carid then
+		meta:set_string("fault","controllermismatch")
+		return
+	end
+	local machinemeta = celevator.get_meta(carinfo.machinepos)
+	if machinemeta:get_int("carid") ~= carid then
+		meta:set_string("fault","machinemismatch")
+		return
+	end
 	local origin = minetest.string_to_pos(meta:get_string("origin"))
 	if not origin then
 		minetest.log("error","[celevator] [entity drive] Invalid origin for drive at "..minetest.pos_to_string(pos))
