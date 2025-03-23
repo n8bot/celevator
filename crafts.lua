@@ -62,6 +62,15 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
+	output = "celevator:car_metal",
+	recipe = {
+		{"","basic_materials:steel_strip",""},
+		{"basic_materials:steel_strip","celevator:car_standard","basic_materials:steel_strip"},
+		{"","basic_materials:steel_strip",""},
+	},
+})
+
+minetest.register_craft({
 	output = "celevator:controller",
 	recipe = {
 		{"basic_materials:steel_strip","basic_materials:ic","basic_materials:steel_strip"},
@@ -145,6 +154,15 @@ minetest.register_craft({
 	recipe = {
 		{"basic_materials:steel_bar","basic_materials:steel_bar","basic_materials:steel_bar"},
 		{"default:glass","basic_materials:steel_bar","default:glass"},
+		{"basic_materials:steel_bar","basic_materials:steel_bar","basic_materials:steel_bar"},
+	},
+})
+
+minetest.register_craft({
+	output = "celevator:hwdoor_steel",
+	recipe = {
+		{"basic_materials:steel_bar","basic_materials:steel_bar","basic_materials:steel_bar"},
+		{"basic_materials:steel_strip","basic_materials:steel_bar","basic_materials:steel_strip"},
 		{"basic_materials:steel_bar","basic_materials:steel_bar","basic_materials:steel_bar"},
 	},
 })
@@ -303,5 +321,22 @@ minetest.register_craft({
 		{"basic_materials:steel_strip","basic_materials:ic","default:glass"},
 		{"basic_materials:steel_strip","mesecons_lightstone:lightstone_white_off","default:glass"},
 		{"basic_materials:steel_strip","","default:glass"},
+	},
+})
+
+minetest.register_craft({
+	output = "celevator:genericswitch",
+	recipe = {
+		{"basic_materials:steel_strip","",""},
+		{"basic_materials:steel_strip","mesecons_switch:mesecon_switch_off","dye:black"},
+		{"basic_materials:steel_strip","",""},
+	},
+})
+
+minetest.register_craft({
+	output = "celevator:governor",
+	recipe = {
+		{"basic_materials:steel_strip","basic_materials:steel_bar","mesecons_button:button_off"},
+		{"basic_materials:steel_strip","basic_materials:gear_steel","basic_materials:steel_strip"},
 	},
 })
