@@ -441,9 +441,8 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 					minetest.after(0.5,function()
 						if not i:is_player() then return end
 						local newpos = i:get_pos()
-						if newpos.y < (ppos.y-0.1) then
-							i:set_pos(ppos)
-						end
+						newpos.y = math.max(newpos.y,ppos.y)
+						i:set_pos(newpos)
 					end)
 				elseif i:get_luaentity() and rounded[i:get_luaentity().name] then
 					local epos = i:get_pos()
