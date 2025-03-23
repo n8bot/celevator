@@ -17,6 +17,7 @@ local components = {
 	"decorations",
 	"governor",
 	"crafts",
+	"chatcommands",
 }
 
 local integrations = {
