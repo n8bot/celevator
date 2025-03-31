@@ -14,4 +14,5 @@ read_globals = {
 	"laptop",
 	"mesecon",
 	"digilines",
+	"xcompat",
 }
