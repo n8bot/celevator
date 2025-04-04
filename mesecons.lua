@@ -83,6 +83,14 @@ local outputoptions = {
 		needsfloor = false,
 	},
 	{
+		id = "swing",
+		desc = "Swing Operation",
+		func = function(mem)
+			return (mem.carstate == "swing")
+		end,
+		needsfloor = false,
+	},
+	{
 		id = "opening",
 		desc = "Doors Opening",
 		func = function(mem)
@@ -392,6 +400,30 @@ local inputoptions = {
 			})
 		end,
 		needsfloor = true,
+	},
+	{
+		id = "swingon",
+		desc = "Activate Swing Operation",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = true,
+			})
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "swingoff",
+		desc = "Deactivate Swing Operation",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = false,
+			})
+		end,
+		needsfloor = false,
 	},
 }
 

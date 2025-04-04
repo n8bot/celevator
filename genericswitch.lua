@@ -154,6 +154,30 @@ local inputoptions = {
 		end,
 		needsfloor = true,
 	},
+	{
+		id = "swingon",
+		desc = "Activate Swing Operation",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = true,
+			})
+		end,
+		needsfloor = false,
+	},
+	{
+		id = "swingoff",
+		desc = "Deactivate Swing Operation",
+		func_on = function(controllerpos)
+			celevator.controller.run(controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = false,
+			})
+		end,
+		needsfloor = false,
+	},
 }
 
 local dinputoptions = {

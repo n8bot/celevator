@@ -55,6 +55,7 @@ local modenames = {
 	indep = "Independent Service",
 	capture = "Captured",
 	test = "Test Mode",
+	swing = "Swing Operation",
 }
 
 local doorstates = {
@@ -198,7 +199,7 @@ local function open()
 	interrupt(10,"opentimeout")
 	interrupt(nil,"closetimeout")
 	if mem.nudging then
-		if mem.carstate == "normal" then
+		if (mem.carstate == "normal" or mem.carstate == "swing") then
 			interrupt(0,"nudge")
 		else
 			mem.nudging = false
@@ -431,16 +432,17 @@ elseif event.type == "ui" then
 			   and (mem.carstate == "normal"
 			   or mem.carstate == "test"
 			   or mem.carstate == "capture"
-			   or mem.carstate == "indep")
+			   or mem.carstate == "indep"
+			   or mem.carstate == "swing")
 			then
 				mem.carcalls[i] = true
-			elseif event.fields[string.format("upcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
+			elseif event.fields[string.format("upcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "swing") and not mem.capturesw then
 				if mem.params.groupmode == "group" then
 					mem.swingupcalls[i] = true
 				else
 					mem.upcalls[i] = true
 				end
-			elseif event.fields[string.format("downcall%d",i)] and mem.carstate == "normal" and not mem.capturesw then
+			elseif event.fields[string.format("downcall%d",i)] and (mem.carstate == "normal" or mem.carstate == "swing") and not mem.capturesw then
 				if mem.params.groupmode == "group" then
 					mem.swingdncalls[i] = true
 				else
@@ -559,7 +561,7 @@ elseif event.type == "ui" then
 	end
 elseif event.iid == "opened" and mem.doorstate == "opening" then
 	mem.doorstate = "open"
-	if mem.carstate == "normal" then
+	if (mem.carstate == "normal" or mem.carstate == "swing") then
 		interrupt(mem.params.doortimer,"close")
 	end
 elseif event.iid == "close" and mem.doorstate == "open" then
@@ -581,7 +583,7 @@ elseif event.iid == "closed" and (mem.doorstate == "closing" or mem.doorstate ==
 			mem.carmotion = true
 			juststarted = true
 	end
-elseif event.type == "callbutton" and mem.carstate == "normal" then
+elseif event.type == "callbutton" and (mem.carstate == "normal" or mem.carstate == "swing") then
 	if mem.doorstate == "closed" or mem.direction ~= event.dir or getpos() ~= event.landing then
 		if mem.params.groupmode == "group" then
 			if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
@@ -604,10 +606,15 @@ elseif event.type == "callbutton" and mem.carstate == "normal" then
 elseif event.iid == "checkopen" then
 	if mem.drive.status.doorstate == "open" then
 		interrupt(0,"opened")
-		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold" then
+		if mem.carstate == "normal"
+			or mem.carstate == "indep"
+			or mem.carstate == "fs1"
+			or mem.carstate == "fs2"
+			or mem.carstate == "fs2hold"
+			or mem.carstate == "swing" then
 			interrupt(nil,"opentimeout")
 		end
-		if mem.carstate == "normal" and not mem.interrupts.nudge and mem.params.nudgetimer > 0 then
+		if (mem.carstate == "normal" or mem.carstate == "swing") and not mem.interrupts.nudge and mem.params.nudgetimer > 0 then
 			interrupt(mem.params.nudgetimer,"nudge")
 		end
 	else
@@ -628,7 +635,7 @@ elseif event.iid == "closetimeout" then
 	fault("closetimeout",true)
 elseif event.type == "cop" then
 	local fields = event.fields
-	if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs2" then
+	if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs2" or mem.carstate == "swing" then
 		for k,v in pairs(fields) do
 			if string.sub(k,1,7) == "carcall" then
 				local landing = tonumber(string.sub(k,8,-1))
@@ -652,7 +659,7 @@ elseif event.type == "cop" then
 				end
 				if v and landing and landing >= 1 and landing <= #mem.params.floorheights and secok then
 					if getpos() == landing then
-						if mem.carstate == "normal" or mem.carstate == "indep" then
+						if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "swing" then
 							if mem.doorstate == "closing" and not mem.nudging then
 								open()
 							elseif mem.doorstate == "open" then
@@ -797,11 +804,11 @@ elseif event.type == "dispatchermsg" then
 		mem.groupupcalls[event.msg] = nil
 	elseif event.channel == "groupdncancel" then
 		mem.groupdncalls[event.msg] = nil
-	elseif event.channel == "swingupcall" and mem.carstate == "normal" then
+	elseif event.channel == "swingupcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.swingupcalls[event.msg] = true
-	elseif event.channel == "swingdncall" and mem.carstate == "normal" then
+	elseif event.channel == "swingdncall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.swingdncalls[event.msg] = true
-	elseif event.channel == "carcall" and mem.carstate == "normal" then
+	elseif event.channel == "carcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.carcalls[event.msg] = true
 		send(event.source,"status",mem)
 	elseif event.channel == "fs1switch" then
@@ -817,34 +824,41 @@ elseif event.type == "remotemsg" then
 		mem.groupupcalls[event.msg] = true
 	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
 		mem.groupdncalls[event.msg] = true
-	elseif event.channel == "swingupcall" and mem.carstate == "normal" then
+	elseif event.channel == "swingupcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.swingupcalls[event.msg] = true
-	elseif event.channel == "swingdncall" and mem.carstate == "normal" then
+	elseif event.channel == "swingdncall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.swingdncalls[event.msg] = true
-	elseif event.channel == "upcall" and mem.carstate == "normal" then
+	elseif event.channel == "upcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.upcalls[event.msg] = true
-	elseif event.channel == "dncall" and mem.carstate == "normal" then
+	elseif event.channel == "dncall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.dncalls[event.msg] = true
 	elseif event.channel == "groupupcancel" then
 		mem.groupupcalls[event.msg] = nil
 	elseif event.channel == "groupdncancel" then
 		mem.groupdncalls[event.msg] = nil
-	elseif event.channel == "carcall" and mem.carstate == "normal" then
+	elseif event.channel == "carcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.carcalls[event.msg] = true
 	elseif event.channel == "security" and type(event.msg.floor) == "number" then
 		if mem.params.floornames[event.msg.floor] and event.msg.floor ~= (mem.params.mainlanding or 1) then
 			mem.params.carcallsecurity[event.msg.floor] = event.msg.mode
 		end
+	elseif event.channel == "swing" then
+		mem.swing = event.msg
+		if mem.carstate == "normal" and event.msg then
+			mem.carstate = "swing"
+		elseif mem.carstate == "swing" and not event.msg then
+			mem.carstate = "normal"
+		end
 	end
 elseif event.type == "lightcurtain" and not mem.nudging then
-	if mem.carstate == "normal" or mem.carstate == "indep" then
+	if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "swing" then
 		if mem.doorstate == "closing" then
 			open()
-		elseif mem.doorstate == "open" and mem.carstate == "normal" then
+		elseif mem.doorstate == "open" and (mem.carstate == "normal" or mem.carstate == "swing") then
 			interrupt(mem.params.doortimer,"close")
 		end
 	end
-elseif event.iid == "nudge" and mem.carstate == "normal" then
+elseif event.iid == "nudge" and (mem.carstate == "normal" or mem.carstate == "swing") then
 	mem.nudging = true
 	if mem.doorstate == "open" then
 		close(true)
@@ -1012,9 +1026,9 @@ elseif mem.indsw then
 	if oldstate == "stop" or oldstate == "mrinspect" or oldstate == "fault" then
 		mem.carstate = "resync"
 		gotofloor(getpos())
-	elseif oldstate == "normal" and (mem.doorstate == "closed" or mem.doorstate == "closing") and not (mem.carmotion or juststarted) then
+	elseif (oldstate == "normal" or oldstate == "swing") and (mem.doorstate == "closed" or mem.doorstate == "closing") and not (mem.carmotion or juststarted) then
 		open()
-	elseif oldstate == "normal" and mem.doorstate == "open" then
+	elseif (oldstate == "normal" or oldstate == "swing") and mem.doorstate == "open" then
 		interrupt(nil,"close")
 	end
 elseif mem.testsw then
@@ -1050,14 +1064,18 @@ else
 		if (oldstate == "fs1" or oldstate == "fs2" or oldstate == "fs2hold") and mem.doorstate == "open" then
 			interrupt(mem.params.doortimer,"close")
 		end
-		mem.carstate = "normal"
+		mem.carstate = (mem.swing and "swing" or "normal")
 	elseif oldstate == "indep" then
-		mem.carstate = "normal"
+		mem.carstate = (mem.swing and "swing" or "normal")
 		if mem.doorstate == "open" then interrupt(mem.params.doortimer,"close") end
 	end
 end
 
-if mem.carstate == "normal" and oldstate ~= "normal" and mem.doorstate ~= "closed" and mem.params.nudgetimer > 0 and not mem.interrupts.nudge then
+if (mem.carstate == "normal" or mem.carstate == "swing")
+	and oldstate ~= "normal" and oldstate ~= "swing"
+	and mem.doorstate ~= "closed"
+	and mem.params.nudgetimer > 0
+	and not mem.interrupts.nudge then
 	interrupt(mem.params.nudgetimer,"nudge")
 elseif mem.carstate ~= "normal" and oldstate == "normal" then
 	interrupt(nil,"nudge")
@@ -1069,7 +1087,7 @@ if mem.carmotion then
 		interrupt(0.1,"checkdrive")
 	else
 		local hallcall = mem.upcalls[getpos()] or mem.dncalls[getpos()]
-		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" then
+		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "swing" then
 			mem.carcalls[getpos()] = nil
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
@@ -1131,7 +1149,7 @@ if mem.carmotion then
 			elseif mem.capturesw then
 				mem.carstate = "capture"
 			else
-				mem.carstate = "normal"
+				mem.carstate = (mem.swing and "swing" or "normal")
 			end
 		end
 	end
@@ -1154,6 +1172,7 @@ local canprocesscalls = {
 	test = true,
 	indep = true,
 	fs2 = true,
+	swing = true,
 }
 
 if canprocesscalls[mem.carstate] and mem.doorstate == "closed" then
@@ -1202,14 +1221,14 @@ if canprocesscalls[mem.carstate] and mem.doorstate == "closed" then
 				gotofloor(gethighestdowncall())
 			end
 		end
-		if mem.carstate == "normal" and mem.capturesw and not mem.direction then
+		if (mem.carstate == "normal" or mem.carstate == "swing") and mem.capturesw and not mem.direction then
 			mem.upcalls = {}
 			mem.dncalls = {}
 			mem.carstate = "capture"
 		elseif mem.carstate == "capture" and mem.direction then
-			mem.carstate = "normal"
+			mem.carstate = (mem.swing and "swing" or "normal")
 		end
-	elseif (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test") and mem.carmotion then
+	elseif (mem.carstate == "normal" or mem.carstate == "capture" or mem.carstate == "test" or mem.carstate == "swing") and mem.carmotion then
 		if mem.drive.status.vel > 0 then
 			local nextup = getnextcallabove("up")
 			if nextup then
@@ -1523,7 +1542,7 @@ local hidepi = {
 }
 if hidepi[mem.carstate] then mem.pifloor = "--" end
 
-if mem.pifloor ~= oldpifloor and mem.carstate == "normal" then
+if mem.pifloor ~= oldpifloor and (mem.carstate == "normal" or mem.carstate == "swing") then
 	drivecmd({command="pibeep"})
 end
 
@@ -1543,9 +1562,9 @@ mem.flash_is = mem.carstate == "indep"
 mem.flash_blank = mem.nudging
 
 mem.lanterns = {}
-if mem.carstate == "normal" and (mem.doorstate == "open" or mem.doorstate == "opening") then
+if (mem.carstate == "normal" or mem.carstate == "swing") and (mem.doorstate == "open" or mem.doorstate == "opening") then
 	mem.lanterns[getpos()] = mem.direction
-elseif mem.carstate == "normal" and mem.doorstate == "closed" and mem.drive.status then
+elseif (mem.carstate == "normal" or mem.carstate == "swing") and mem.doorstate == "closed" and mem.drive.status then
 	local ring = false
 	if mem.drive.status.vel > 0 and mem.drive.status.neareststop > mem.drive.status.dpos then
 		ring = true

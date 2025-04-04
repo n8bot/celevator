@@ -158,6 +158,18 @@ local function handledigilines(pos,node,channel,msg)
 			celevator.controller.run(carinfo.controllerpos,{
 				type = "mrsmoke",
 			})
+		elseif msg.command == "swingon" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = true,
+			})
+		elseif msg.command == "swingoff" then
+			celevator.controller.run(carinfo.controllerpos,{
+				type = "remotemsg",
+				channel = "swing",
+				msg = false,
+			})
 		end
 	end
 end
