@@ -454,6 +454,12 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local olddownbuttonlights = oldmem.dncalls or {}
 		local newupbuttonlights = mem.upcalls or {}
 		local newdownbuttonlights = mem.dncalls or {}
+		if mem.params and mem.params.groupmode == "group" then
+			oldupbuttonlights = oldmem.swingupcalls
+			olddownbuttonlights = oldmem.swingdncalls
+			newupbuttonlights = mem.swingupcalls
+			newdownbuttonlights = mem.swingdncalls
+		end
 		local callbuttons = carinfo.callbuttons
 		for _,button in pairs(callbuttons) do
 			if oldupbuttonlights[button.landing] ~= newupbuttonlights[button.landing] then

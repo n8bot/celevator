@@ -232,6 +232,7 @@ if mem.params and not mem.recallto then mem.recallto = mem.params.mainlanding or
 if mem.params and not mem.params.inspectionspeed then mem.params.inspectionspeed = 0.2 end
 if mem.params and not mem.params.indepunlock then mem.params.indepunlock = {} end
 if mem.params and not mem.params.secoverrideusers then mem.params.secoverrideusers = {} end
+if mem.params and mem.params.swingcallwhennotswing == nil then mem.params.swingcallwhennotswing = true end
 if not mem.editinguser then mem.editinguser = 1 end
 
 if event.type == "program" then
@@ -279,6 +280,7 @@ if event.type == "program" then
 			inspectionspeed = 0.2,
 			indepunlock = {},
 			secoverrideusers = {},
+			swingcallwhennotswing = true,
 		}
 	end
 elseif event.type == "ui" then
@@ -508,6 +510,9 @@ elseif event.type == "ui" then
 		if event.fields.indepunlock then
 			mem.params.indepunlock[mem.editingfloor] = (event.fields.indepunlock == "true")
 		end
+		if event.fields.swingcallwhennotswing then
+			mem.params.swingcallwhennotswing = (event.fields.swingcallwhennotswing == "true")
+		end
 		if event.fields.save then
 			mem.screenstate = "parameters"
 		elseif event.fields.floor then
@@ -585,7 +590,7 @@ elseif event.iid == "closed" and (mem.doorstate == "closing" or mem.doorstate ==
 	end
 elseif event.type == "callbutton" and (mem.carstate == "normal" or mem.carstate == "swing") then
 	if mem.doorstate == "closed" or mem.direction ~= event.dir or getpos() ~= event.landing then
-		if mem.params.groupmode == "group" then
+		if mem.params.groupmode == "group" and not (mem.carstate == "normal" and not mem.params.swingcallwhennotswing) then
 			if event.dir == "up" and event.landing >= 1 and event.landing < #mem.params.floornames then
 				mem.swingupcalls[event.landing] = true
 			elseif event.dir == "down" and event.landing > 1 and event.landing <= #mem.params.floornames then
@@ -755,6 +760,12 @@ elseif event.type == "cartopbox" then
 		})
 	end
 elseif event.type == "dispatchermsg" then
+	local swingstateok = false
+	if mem.carstate == "normal" then
+		swingstateok = mem.params.swingcallwhennotswing
+	elseif mem.carstate == "swing" then
+		swingstateok = true
+	end
 	if event.channel == "pairrequest" and mem.screenstate == "oobe_dispatcherconnect" then
 		mem.params.floornames = event.msg.floornames
 		mem.params.floorheights = event.msg.floorheights
@@ -804,9 +815,9 @@ elseif event.type == "dispatchermsg" then
 		mem.groupupcalls[event.msg] = nil
 	elseif event.channel == "groupdncancel" then
 		mem.groupdncalls[event.msg] = nil
-	elseif event.channel == "swingupcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
+	elseif event.channel == "swingupcall" and swingstateok then
 		mem.swingupcalls[event.msg] = true
-	elseif event.channel == "swingdncall" and (mem.carstate == "normal" or mem.carstate == "swing") then
+	elseif event.channel == "swingdncall" and swingstateok then
 		mem.swingdncalls[event.msg] = true
 	elseif event.channel == "carcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.carcalls[event.msg] = true
@@ -820,13 +831,19 @@ elseif event.type == "dispatchermsg" then
 		if not event.msg then mem.flashfirehat = false end
 	end
 elseif event.type == "remotemsg" then
+	local swingstateok = false
+	if mem.carstate == "normal" then
+		swingstateok = mem.params.swingcallwhennotswing
+	elseif mem.carstate == "swing" then
+		swingstateok = true
+	end
 	if event.channel == "groupupcall" and mem.carstate == "normal" then
 		mem.groupupcalls[event.msg] = true
 	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
 		mem.groupdncalls[event.msg] = true
-	elseif event.channel == "swingupcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
+	elseif event.channel == "swingupcall" and swingstateok then
 		mem.swingupcalls[event.msg] = true
-	elseif event.channel == "swingdncall" and (mem.carstate == "normal" or mem.carstate == "swing") then
+	elseif event.channel == "swingdncall" and swingstateok then
 		mem.swingdncalls[event.msg] = true
 	elseif event.channel == "upcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
 		mem.upcalls[event.msg] = true
@@ -1480,6 +1497,7 @@ elseif mem.screenstate == "carcallsecurity" then
 		fs(minetest.formspec_escape(string.format("%s - %s",mem.params.floornames[i],secmode))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
+	fs("checkbox[1,9.5;swingcallwhennotswing;Allow Swing Calls When Not In Swing Operation;"..tostring(mem.params.swingcallwhennotswing).."]")
 	if mem.editingfloor ~= (mem.params.mainlanding or 1) then
 		fs("dropdown[8,2;4,1;secmode;Security Disabled,Authorized Users Only,Locked;")
 		if mem.params.carcallsecurity[mem.editingfloor] == "auth" then
@@ -1553,6 +1571,7 @@ local arrowenabled = {
 	indep = true,
 	capture = true,
 	test = true,
+	swing = true,
 }
 mem.piuparrow = mem.drive.status.vel > 0 and arrowenabled[mem.carstate]
 mem.pidownarrow = mem.drive.status.vel < 0 and arrowenabled[mem.carstate]
