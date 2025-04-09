@@ -97,7 +97,7 @@ local function getpos(pioffset)
 		ret = ret+v
 		if ret > searchpos then return k end
 	end
-	return mem.params.floorheights[#mem.params.floorheights]
+	return #mem.params.floorheights
 end
 
 local function gettarget(floor)
