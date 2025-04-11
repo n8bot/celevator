@@ -195,6 +195,15 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
+	output = "celevator:car_metal_glassback",
+	recipe = {
+		{"",m.steel_strip,""},
+		{m.steel_strip,"celevator:car_glassback",m.steel_strip},
+		{"",m.steel_strip,""},
+	},
+})
+
+minetest.register_craft({
 	output = "celevator:controller",
 	recipe = {
 		{m.steel_strip,m.ic,m.steel_strip},
