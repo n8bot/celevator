@@ -235,6 +235,24 @@ if mem.params and not mem.params.secoverrideusers then mem.params.secoverrideuse
 if mem.params and mem.params.swingcallwhennotswing == nil then mem.params.swingcallwhennotswing = true end
 if not mem.editinguser then mem.editinguser = 1 end
 
+if mem.params and #mem.params.floornames < 2 then
+	mem.params.floornames = {"1","2","3"}
+	mem.params.floorheights = {5,5,5}
+	mem.carstate = "bfdemand"
+	if mem.doorstate == "closed" then
+		drivecmd({
+			command = "setmaxvel",
+			maxvel = mem.params.contractspeed,
+		})
+		drivecmd({command = "resetpos"})
+		interrupt(0.1,"checkdrive")
+		mem.carmotion = true
+		juststarted = true
+	else
+		close()
+	end
+end
+
 if event.type == "program" then
 	mem.carstate = "uninit"
 	mem.editingfloor = 1
@@ -344,7 +362,7 @@ elseif event.type == "ui" then
 		elseif event.fields.add then
 			table.insert(mem.params.floorheights,5)
 			table.insert(mem.params.floornames,tostring(#mem.params.floornames+1))
-		elseif event.fields.remove then
+		elseif event.fields.remove and #mem.params.floornames > 2 then
 			table.remove(mem.params.floorheights,mem.editingfloor)
 			table.remove(mem.params.floornames,mem.editingfloor)
 			mem.editingfloor = math.max(1,mem.editingfloor-1)

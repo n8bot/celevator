@@ -300,6 +300,27 @@ local function fs(element)
 	mem.formspec = mem.formspec..element
 end
 
+if mem.params and #mem.params.floornames < 2 then
+	mem.params.floorheights = {5,5,5}
+	mem.params.floornames = {"1","2","3"}
+	for _,carid in ipairs(mem.params.carids) do
+		local floornames = {}
+		local floorheights = {}
+		for i=1,#mem.params.floornames,1 do
+			if mem.params.floorsserved[carid][i] then
+				table.insert(floornames,mem.params.floornames[i])
+				table.insert(floorheights,mem.params.floorheights[i])
+			elseif #floornames > 0 then
+				floorheights[#floorheights] = floorheights[#floorheights]+mem.params.floorheights[i]
+			end
+		end
+		send(carid,"newfloortable",{
+			floornames = floornames,
+			floorheights = floorheights,
+		})
+	end
+end
+
 if event.type == "program" then
 	mem.carstatus = {}
 	mem.screenstate = "oobe_welcome"
@@ -367,7 +388,7 @@ elseif event.type == "ui" then
 		elseif event.fields.add then
 			table.insert(mem.params.floorheights,5)
 			table.insert(mem.params.floornames,tostring(#mem.params.floornames+1))
-		elseif event.fields.remove then
+		elseif event.fields.remove and #mem.params.floornames > 2 then
 			table.remove(mem.params.floorheights,mem.editingfloor)
 			table.remove(mem.params.floornames,mem.editingfloor)
 			mem.editingfloor = math.max(1,mem.editingfloor-1)
