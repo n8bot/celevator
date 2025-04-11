@@ -61,6 +61,10 @@ laptop.register_app("celevator",{
 			fs = fs..mtos.theme:get_label("0.5,1","Could not find a controller or dispatcher with the given ID.")
 			fs = fs..mtos.theme:get_label("0.5,1.3","Please check the ID number and try again.")
 			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
+		elseif ram.screenstate == "protected" then
+			fs = fs..mtos.theme:get_label("0.5,0.5","Error")
+			fs = fs..mtos.theme:get_label("0.5,1","Controller or dispatcher is protected.")
+			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
 		elseif ram.screenstate == "dispatcherstatus" then
 			local connection = mem.connections[mem.selectedconnection]
 			local pos = connection.pos
@@ -201,6 +205,7 @@ laptop.register_app("celevator",{
 					indep = "Independent Service",
 					capture = "Captured",
 					test = "Test Mode",
+					swing = "Swing Operation",
 				}
 				local doorstates = {
 					open = "Open",
@@ -331,10 +336,16 @@ laptop.register_app("celevator",{
 				mem.screenpage = 1
 				if exp.type == "DCL" then mem.selectedconnection = #mem.connections-exp.index+1 end
 				local connection = mem.connections[mem.selectedconnection]
-				if connection.itemtype == "controller" and celevator.controller.iscontroller(connection.pos) then
+				local cpos = connection.pos
+				if minetest.is_protected(cpos,mtos.sysram.current_player) and not minetest.check_player_privs(mtos.sysram.current_player,{protection_bypass=true}) then
+					minetest.record_protection_violation(cpos,mtos.sysram.current_player)
+					ram.screenstate = "protected"
+					return
+				end
+				if connection.itemtype == "controller" and celevator.controller.iscontroller(cpos) then
 					ram.screenstate = "controllerstatus"
 					app:get_timer():start(0.2)
-				elseif connection.itemtype == "dispatcher" and celevator.dispatcher.isdispatcher(connection.pos) then
+				elseif connection.itemtype == "dispatcher" and celevator.dispatcher.isdispatcher(cpos) then
 					ram.screenstate = "dispatcherstatus"
 					app:get_timer():start(0.2)
 				else
@@ -365,6 +376,11 @@ laptop.register_app("celevator",{
 					ram.screenstate = "notfound"
 					return
 				end
+				if minetest.is_protected(pos,mtos.sysram.current_player) and not minetest.check_player_privs(mtos.sysram.current_player,{protection_bypass=true}) then
+					minetest.record_protection_violation(pos,mtos.sysram.current_player)
+					ram.screenstate = "protected"
+					return
+				end
 				local connection = {
 					name = fields.name,
 					carid = carid,
@@ -380,6 +396,10 @@ laptop.register_app("celevator",{
 		elseif ram.screenstate == "notfound" then
 			if fields.ok then
 				ram.screenstate = "newconnection"
+			end
+		elseif ram.screenstate == "protected" then
+			if fields.ok then
+				ram.screenstate = #mem.connections > 0 and "connections" or "newconnection"
 			end
 		elseif ram.screenstate == "dispatcherstatus" then
 			if fields.disconnect then
