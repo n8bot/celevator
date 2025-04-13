@@ -1,0 +1,54 @@
+celevator
+Fully functional realistic elevators for Luanti/Minetest (5.7+)
+===============================================================
+
+Description
+-----------
+
+Adds fully functional, realistic elevators capable of moving players between multiple floors in a building.
+
+Features include:
+
+    2 to 100 floors with customizable names
+    Travel speed adjustable for each elevator independently, up to 20m/s (more than 7.5m/s not recommended in multiplayer)
+    Can travel through loaded or unloaded mapblocks
+    Full selective-collective operation
+    Group dispatching with up to 16 cars in a group and true ETA dispatching
+    Optional destination-based dispatching
+    Swing car operation
+    Animated doors, hoist machine, and tapehead
+    Controller interface with diagnostic LEDs, display, and GUI configuration
+    Optional car call security settings (require area access to place a car call, or disallow car calls to a specific floor entirely)
+    Functional independent service and fire service phase I and II (approximately following ASME A17.1 codes) modes
+    Car top and machine room inspection operation with adjustable speed
+    Adjustable door dwell and nudging timers
+    mView remote monitoring software (optional, available if "laptop" mod is installed)
+    Mesecons input and output modules (optional, available if "mesecons" mod is installed)
+    Communication with Luacontrollers via digilines input/output modules (optional, available if "digilines" mod is installed)
+
+Documentation
+-------------
+
+Documentation is located in the "docs" subdirectory.
+See "docs/celevator_controller_manual.pdf" for full installation and setup instructions.
+
+Contributing
+------------
+
+If you would like to contribute code, the easiest way is to publish your changes somewhere and request that I pull them.
+I can be reached on Libera.Chat in #luanti as "cheapie", or you can contact me via ContentDB or the Luanti forums (same username).
+If you don't have anywhere to publish your changes, I can also accept patches.
+
+Reporting Issues
+----------------
+
+See the previous "Contributing" section for contact information.
+You are encouraged to report any issues you have to me using any of those contact methods.
+If you just have a question or you're not sure if something is a bug, IRC is probably the easiest method.
+
+License
+-------
+
+This software is offered under The Unlicense.
+See the LICENSE file for the full license text.
+If you do use this code for something I'd love to hear what it is, but you're not required to tell me.
