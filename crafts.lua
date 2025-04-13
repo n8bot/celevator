@@ -29,6 +29,9 @@ if not xcompat_available then
 		m.mese = "mesecons_torch:redstoneblock" -- mcla still carries this as an alias
 		m.pick_steel = "mcl_core:pick_steel"
 		m.torch = "mcl_torches:torch"
+	else
+		minetest.log("warning","[celevator] Unsupported game and xcompat not found, not registering craft recipes")
+		return
 	end
 	if minetest.get_modpath("dye") then
 		m.dye_black = "dye:black"
