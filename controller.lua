@@ -645,7 +645,9 @@ end
 function celevator.controller.checkiqueue(dtime)
 	for hash,iqueue in pairs(celevator.controller.iqueue) do
 		local pos = minetest.get_position_from_hash(hash)
+		local noneleft = true
 		for iid,time in pairs(iqueue) do
+			noneleft = false
 			iqueue[iid] = time-dtime
 			if iqueue[iid] < 0 then
 				iqueue[iid] = nil
@@ -654,6 +656,10 @@ function celevator.controller.checkiqueue(dtime)
 				event.iid = iid
 				celevator.controller.run(pos,event)
 			end
+		end
+		if noneleft then
+			celevator.controller.iqueue[hash] = nil
+			celevator.storage:set_string("controller_iqueue",minetest.serialize(celevator.controller.iqueue))
 		end
 	end
 end
