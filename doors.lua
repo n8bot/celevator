@@ -2,6 +2,12 @@ celevator.doors = {}
 
 celevator.doors.erefs = {}
 
+--These get overwritten on globalstep and aren't settings.
+--They're just set to true here so the globalstep functions run at least once,
+--in case a door was moving when the server last shut down.
+celevator.doors.hwdoor_step_enabled = true
+celevator.doors.cardoor_step_enabled = true
+
 local function placesill(pos,node)
 	local erefs = minetest.get_objects_inside_radius(pos,0.5)
 	for _,ref in pairs(erefs) do
@@ -412,6 +418,7 @@ minetest.register_entity("celevator:hwdoor_moving",{
 })
 
 function celevator.doors.hwopen(pos,drivepos)
+	celevator.doors.hwdoor_step_enabled = true
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if not hwdoors_moving[hash] then
@@ -475,6 +482,7 @@ function celevator.doors.hwopen(pos,drivepos)
 end
 
 function celevator.doors.hwclose(pos,drivepos,nudge)
+	celevator.doors.hwdoor_step_enabled = true
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if hwdoors_moving[hash] then
@@ -513,6 +521,7 @@ function celevator.doors.hwclose(pos,drivepos,nudge)
 end
 
 function celevator.doors.hwstep(dtime)
+	if not celevator.doors.hwdoor_step_enabled then return end
 	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local save = false
 	for hash,data in pairs(hwdoors_moving) do
@@ -587,11 +596,13 @@ function celevator.doors.hwstep(dtime)
 	if save then
 		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
 	end
+	celevator.doors.hwdoor_step_enabled = save
 end
 
 minetest.register_globalstep(celevator.doors.hwstep)
 
 function celevator.doors.carstep(dtime)
+	if not celevator.doors.cardoor_step_enabled then return end
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local save = false
 	for hash,data in pairs(cardoors_moving) do
@@ -663,6 +674,7 @@ function celevator.doors.carstep(dtime)
 	if save then
 		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
 	end
+	celevator.doors.cardoor_step_enabled = save
 end
 
 minetest.register_globalstep(celevator.doors.carstep)
@@ -708,6 +720,7 @@ function celevator.doors.spawncardoors(pos,dir,doortype,replace)
 end
 
 function celevator.doors.caropen(pos)
+	celevator.doors.cardoor_step_enabled = true
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	local cartimer = minetest.get_node_timer(pos)
@@ -770,6 +783,7 @@ function celevator.doors.caropen(pos)
 end
 
 function celevator.doors.carclose(pos,nudge)
+	celevator.doors.cardoor_step_enabled = true
 	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local hash = minetest.hash_node_position(pos)
 	if cardoors_moving[hash] then

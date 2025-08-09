@@ -9,6 +9,7 @@ celevator.drives.entity = {
 	carsoundstate = {},
 	entityinfo = {},
 	sheaverefs = {},
+	step_enabled = true, --Not a setting, is overwritten on globalstep, true here to check for running drives on startup
 }
 
 local playerposlimits = {}
@@ -459,6 +460,7 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 end
 
 function celevator.drives.entity.step(dtime)
+	if not celevator.drives.entity.step_enabled then return end
 	local entitydrives_running = minetest.deserialize(celevator.storage:get_string("entitydrives_running")) or {}
 	local save = false
 	for i,hash in ipairs(entitydrives_running) do
@@ -644,6 +646,7 @@ function celevator.drives.entity.step(dtime)
 	if save then
 		celevator.storage:set_string("entitydrives_running",minetest.serialize(entitydrives_running))
 	end
+	celevator.drives.entity.step_enabled = save
 end
 
 minetest.register_globalstep(celevator.drives.entity.step)
@@ -704,6 +707,7 @@ function celevator.drives.entity.moveto(pos,target,inspection)
 			end
 		end
 		if not running then
+			celevator.drives.entity.step_enabled = true
 			table.insert(entitydrives_running,hash)
 			celevator.storage:set_string("entitydrives_running",minetest.serialize(entitydrives_running))
 			--Controller needs to see something so it knows the drive is running

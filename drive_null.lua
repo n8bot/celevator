@@ -3,6 +3,7 @@ celevator.drives.null = {
 	description = "Simulation only, no movement, for testing and demonstration",
 	nname = "celevator:drive_null",
 	soundhandles = {},
+	step_enabled = true, --Not a setting, is overwritten on globalstep, true here to check for running drives on startup
 }
 
 local function update_ui(pos)
@@ -90,6 +91,7 @@ minetest.register_node("celevator:drive_null",{
 })
 
 function celevator.drives.null.step(dtime)
+	if not celevator.drives.null.step_enabled then return end
 	local nulldrives_running = minetest.deserialize(celevator.storage:get_string("nulldrives_running")) or {}
 	local save = false
 	for i,hash in ipairs(nulldrives_running) do
@@ -146,6 +148,7 @@ function celevator.drives.null.step(dtime)
 	if save then
 		celevator.storage:set_string("nulldrives_running",minetest.serialize(nulldrives_running))
 	end
+	celevator.drives.null.step_enabled = save
 end
 
 minetest.register_globalstep(celevator.drives.null.step)
@@ -163,6 +166,7 @@ function celevator.drives.null.moveto(pos,target)
 		end
 	end
 	if not running then
+		celevator.drives.null.step_enabled = true
 		table.insert(nulldrives_running,hash)
 		celevator.storage:set_string("nulldrives_running",minetest.serialize(nulldrives_running))
 	end
