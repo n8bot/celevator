@@ -240,6 +240,7 @@ local function estimatetraveltime(carid,src,dest)
 end
 
 local function buildstopsequence(carid,startfloor,direction,target,targetdir,leaving)
+	if not startfloor then return {} end
 	local carcalls = cartorealfloor(carid,mem.carstatus[carid].carcalls)
 	local upcalls = cartorealfloor(carid,mem.carstatus[carid].upcalls)
 	local dncalls = cartorealfloor(carid,mem.carstatus[carid].dncalls)
@@ -258,7 +259,9 @@ local function buildstopsequence(carid,startfloor,direction,target,targetdir,lea
 	end
 	repeat
 		local src = carpos
+		if not src then return sequence end
 		carpos,direction = predictnextstop(carid,carpos,direction,carcalls,upcalls,dncalls,leaving)
+		if not carpos then return sequence end
 		carcalls[carpos] = nil
 		if direction == "up" then
 			upcalls[carpos] = nil

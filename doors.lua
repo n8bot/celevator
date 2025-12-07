@@ -646,12 +646,17 @@ function celevator.doors.carstep(dtime)
 				end
 				if data.time >= math.pi then
 					for _,ref in ipairs(celevator.doors.erefs[hash]) do
-						ref:set_velocity(vector.new(0,0,0))
+						ref:remove()
 					end
-					celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
+					local carmeta = celevator.get_meta(data.positions[1])
+					carmeta:set_string("doorstate","closed")
 					cardoors_moving[hash] = nil
 					local cartimer = minetest.get_node_timer(data.positions[1])
 					cartimer:stop()
+					local fdir = minetest.facedir_to_dir(minetest.get_node(data.positions[1]).param2)
+					local doortype = carmeta:get_string("doortype")
+					if (not doortype) or doortype == "" then doortype = "glass" end
+					celevator.doors.spawncardoors(data.positions[1],fdir,doortype)
 				end
 			end
 		else
@@ -738,7 +743,7 @@ function celevator.doors.caropen(pos)
 		}
 		local erefs = {}
 		for _,dpos in ipairs(positions) do
-			local objs = minetest.get_objects_inside_radius(dpos,0.1)
+			local objs = minetest.get_objects_inside_radius(dpos,0.5)
 			for _,obj in pairs(objs) do
 				if obj:get_luaentity() and obj:get_luaentity().name == "celevator:car_door" then
 					table.insert(erefs,obj)
