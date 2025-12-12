@@ -107,6 +107,7 @@ minetest.register_entity("celevator:governor_sheave",{
 		local sheave = self.object
 		if not sheave then return end
 		local governorpos = vector.round(sheave:get_pos())
+		if not minetest.compare_block_status(governorpos,"active") then return self.object:remove() end
 		local governormeta = celevator.get_meta(governorpos)
 		local controllerpos = minetest.string_to_pos(governormeta:get_string("controllerpos"))
 		if not controllerpos then return end

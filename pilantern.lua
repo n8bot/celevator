@@ -29,7 +29,9 @@ minetest.register_entity("celevator:incar_pi_entity",{
 		glow = minetest.LIGHT_MAX,
 	},
 	on_step = function(self)
+		if not self.object then return end
 		local pos = self.object:get_pos()
+		if not minetest.compare_block_status(pos,"active") then return self.object:remove() end
 		local props = self.object:get_properties()
 		if props.breath_max and props.breath_max ~= 0 then
 			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",props.breath_max)))
