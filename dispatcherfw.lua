@@ -936,7 +936,7 @@ if mem.screenstate == "oobe_welcome" then
 	fs("button[1,10;2,1;license;License Info]")
 	fs("button[13,10;2,1;next;Next >]")
 elseif mem.screenstate == "oobe_license" then
-	local licensefile = io.open(core.get_modpath("celevator")..DIR_DELIM.."LICENSE")
+	local licensefile = io.open(core.get_modpath("celevator").."/LICENSE")
 	local license = core.formspec_escape(licensefile:read("*all"))
 	licensefile:close()
 	fs("textarea[1,1;14,8;license;This applies to the whole celevator mod\\, not just this dispatcher:;"..license.."]")

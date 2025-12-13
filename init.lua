@@ -32,5 +32,5 @@ for _,i in ipairs(integrations) do
 end
 
 for _,v in ipairs(components) do
-	dofile(string.format("%s%s%s.lua",core.get_modpath("celevator"),DIR_DELIM,v))
+	dofile(string.format("%s/%s.lua",core.get_modpath("celevator"),v))
 end

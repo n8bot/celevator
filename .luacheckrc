@@ -5,7 +5,6 @@ globals = {
 }
 
 read_globals = {
-	"DIR_DELIM",
 	"vector",
 	"screwdriver",
 	"core",

@@ -6,7 +6,7 @@ celevator.dispatcher.equeue = core.deserialize(celevator.storage:get_string("dis
 
 celevator.dispatcher.running = {}
 
-local fw,err = loadfile(core.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
+local fw,err = loadfile(core.get_modpath("celevator").."/dispatcherfw.lua")
 if not fw then error(err) end
 
 core.register_chatcommand("celevator_reloaddispatcher",{
@@ -14,7 +14,7 @@ core.register_chatcommand("celevator_reloaddispatcher",{
 	description = "Reload celevator dispatcher firmware from disk",
 	privs = {server = true},
 	func = function()
-		local newfw,loaderr = loadfile(core.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
+		local newfw,loaderr = loadfile(core.get_modpath("celevator").."/dispatcherfw.lua")
 		if newfw then
 			fw = newfw
 			return true,"Firmware reloaded successfully"
