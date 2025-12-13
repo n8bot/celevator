@@ -55,39 +55,39 @@ local validstates = {
 
 function celevator.callbutton.setlight(pos,dir,newstate)
 	local node = celevator.get_node(pos)
-	if minetest.get_item_group(node.name,"_celevator_callbutton") ~= 1 then return end
+	if core.get_item_group(node.name,"_celevator_callbutton") ~= 1 then return end
 	if dir == "up" then
-		if minetest.get_item_group(node.name,"_celevator_callbutton_has_up") ~= 1 then return end
-		local lit = minetest.get_item_group(node.name,"_celevator_callbutton_up_lit") == 1
+		if core.get_item_group(node.name,"_celevator_callbutton_has_up") ~= 1 then return end
+		local lit = core.get_item_group(node.name,"_celevator_callbutton_up_lit") == 1
 		if lit == newstate then return end
 		local newname = "celevator:callbutton_"
-		if minetest.get_item_group(node.name,"_celevator_callbutton_has_down") == 1 then
+		if core.get_item_group(node.name,"_celevator_callbutton_has_down") == 1 then
 			newname = newname.."both"
 		else
 			newname = newname.."up"
 		end
 		if newstate then newname = newname.."_upon" end
-		if minetest.get_item_group(node.name,"_celevator_callbutton_down_lit") == 1 then
+		if core.get_item_group(node.name,"_celevator_callbutton_down_lit") == 1 then
 			newname = newname.."_downon"
 		end
 		node.name = newname
-		minetest.swap_node(pos,node)
+		core.swap_node(pos,node)
 	elseif dir == "down" then
-		if minetest.get_item_group(node.name,"_celevator_callbutton_has_down") ~= 1 then return end
-		local lit = minetest.get_item_group(node.name,"_celevator_callbutton_down_lit") == 1
+		if core.get_item_group(node.name,"_celevator_callbutton_has_down") ~= 1 then return end
+		local lit = core.get_item_group(node.name,"_celevator_callbutton_down_lit") == 1
 		if lit == newstate then return end
 		local newname = "celevator:callbutton_"
-		if minetest.get_item_group(node.name,"_celevator_callbutton_has_up") == 1 then
+		if core.get_item_group(node.name,"_celevator_callbutton_has_up") == 1 then
 			newname = newname.."both"
 		else
 			newname = newname.."down"
 		end
-		if minetest.get_item_group(node.name,"_celevator_callbutton_up_lit") == 1 then
+		if core.get_item_group(node.name,"_celevator_callbutton_up_lit") == 1 then
 			newname = newname.."_upon"
 		end
 		if newstate then newname = newname.."_downon" end
 		node.name = newname
-		minetest.swap_node(pos,node)
+		core.swap_node(pos,node)
 	end
 end
 
@@ -97,13 +97,13 @@ local function disambiguatedir(pos,player)
 		local lookdir = player:get_look_dir()
 		local distance = vector.distance(eyepos,pos)
 		local endpos = vector.add(eyepos,vector.multiply(lookdir,distance+1))
-		local ray = minetest.raycast(eyepos,endpos,true,false)
+		local ray = core.raycast(eyepos,endpos,true,false)
 		local pointed,button,hitpos
 		repeat
 			pointed = ray:next()
 			if pointed and pointed.type == "node" then
-				local node = minetest.get_node(pointed.under)
-				if node.name and (minetest.get_item_group(node.name,"_celevator_callbutton") == 1) then
+				local node = core.get_node(pointed.under)
+				if node.name and (core.get_item_group(node.name,"_celevator_callbutton") == 1) then
 					button = pointed.under
 					hitpos = vector.subtract(pointed.intersection_point,button)
 				end
@@ -135,7 +135,7 @@ for _,state in ipairs(validstates) do
 	end
 	local idle = not (state[2] or state[3])
 	local description = string.format("Elevator %s Call Button%s%s",state[4],(state[1] == "both" and "s" or ""),(idle and "" or " (on state, you hacker you!)"))
-	minetest.register_node(nname,{
+	core.register_node(nname,{
 		description = description,
 		groups = {
 			dig_immediate = 2,
@@ -167,45 +167,45 @@ for _,state in ipairs(validstates) do
 			},
 		},
 		after_place_node = function(pos)
-			local meta = minetest.get_meta(pos)
+			local meta = core.get_meta(pos)
 			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
 		end,
 		on_receive_fields = function(pos,_,fields)
 			if tonumber(fields.carid) and tonumber(fields.landing) then
 				local carid = tonumber(fields.carid)
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not carinfo then return end
 				table.insert(carinfo.callbuttons,{pos=pos,landing=tonumber(fields.landing)})
-				celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
-				local meta = minetest.get_meta(pos)
+				celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
+				local meta = core.get_meta(pos)
 				meta:set_int("carid",carid)
 				meta:set_int("landing",tonumber(fields.landing))
 				meta:set_string("formspec","")
 			end
 		end,
 		on_destruct = function(pos)
-			local meta = minetest.get_meta(pos)
+			local meta = core.get_meta(pos)
 			local carid = meta:get_int("carid")
 			if carid == 0 then return end
-			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 			if not carinfo then return end
 			for i,button in pairs(carinfo.callbuttons) do
 				if vector.equals(pos,button.pos) then
 					table.remove(carinfo.callbuttons,i)
-					celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+					celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
 				end
 			end
 		end,
 		on_rightclick = function(pos,_,clicker)
-			local meta = minetest.get_meta(pos)
+			local meta = core.get_meta(pos)
 			local carid = meta:get_int("carid")
 			if carid == 0 then return end
-			local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+			local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 			if not carinfo then return end
 			local controllerpos = carinfo.controllerpos or carinfo.dispatcherpos
 			local isdispatcher = carinfo.dispatcherpos
 			if not controllerpos then return end
-			local controllermeta = minetest.get_meta(controllerpos)
+			local controllermeta = core.get_meta(controllerpos)
 			if controllermeta:get_int("carid") ~= carid then return end
 			local landing = meta:get_int("landing")
 			if state[1] == "up" then
@@ -240,16 +240,16 @@ for _,state in ipairs(validstates) do
 	})
 end
 
-minetest.register_abm({
+core.register_abm({
 	label = "Check call buttons for missing/replaced controllers",
 	nodenames = {"group:_celevator_callbutton",},
 	interval = 15,
 	chance = 1,
 	action = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local carid = meta:get_int("carid")
 		if not (carid and carid > 0) then return end --Not set up yet
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not carinfo then
 			meta:set_string("infotext","Error reading car information!\nPlease remove and replace this node.")
 			return

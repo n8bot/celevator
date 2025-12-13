@@ -1,19 +1,19 @@
 local function spawngovsheave(pos)
-	local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+	local entitiesnearby = core.get_objects_inside_radius(pos,0.5)
 	for _,i in pairs(entitiesnearby) do
 		if i:get_luaentity() and i:get_luaentity().name == "celevator:governor_sheave" then
 			return
 		end
 	end
-	local entity = minetest.add_entity(pos,"celevator:governor_sheave")
-	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
-	local yaw = minetest.dir_to_yaw(fdir)
+	local entity = core.add_entity(pos,"celevator:governor_sheave")
+	local fdir = core.fourdir_to_dir(core.get_node(pos).param2)
+	local yaw = core.dir_to_yaw(fdir)
 	local offset = vector.rotate_around_axis(vector.new(0,-0.05,-0.143),vector.new(0,1,0),yaw)
 	entity:set_yaw(yaw)
 	entity:set_pos(vector.add(pos,offset))
 end
 
-minetest.register_node("celevator:governor",{
+core.register_node("celevator:governor",{
 	description = "Elevator Governor",
 	groups = {
 		cracky = 1,
@@ -39,11 +39,11 @@ minetest.register_node("celevator:governor",{
 		},
 	},
 	on_construct = function(pos)
-		minetest.get_meta(pos):set_string("formspec","field[carid;Car ID;]")
+		core.get_meta(pos):set_string("formspec","field[carid;Car ID;]")
 		spawngovsheave(pos)
 	end,
 	after_dig_node = function(pos)
-		local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+		local entitiesnearby = core.get_objects_inside_radius(pos,0.5)
 		for _,i in pairs(entitiesnearby) do
 			if i:get_luaentity() and i:get_luaentity().name == "celevator:governor_sheave" then
 				i:remove()
@@ -53,16 +53,16 @@ minetest.register_node("celevator:governor",{
 	on_receive_fields = function(pos,_,fields)
 		if not (fields.carid and tonumber(fields.carid)) then return end
 		local carid = tonumber(fields.carid)
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not (carinfo and carinfo.controllerpos) then return end
 		if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-		local meta = minetest.get_meta(pos)
-		meta:set_string("controllerpos",minetest.pos_to_string(carinfo.controllerpos))
+		local meta = core.get_meta(pos)
+		meta:set_string("controllerpos",core.pos_to_string(carinfo.controllerpos))
 		meta:set_string("formspec","")
 	end,
 })
 
-minetest.register_node("celevator:governor_sheave",{
+core.register_node("celevator:governor_sheave",{
 	description = "Governor Sheave (you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -95,7 +95,7 @@ minetest.register_node("celevator:governor_sheave",{
 	},
 })
 
-minetest.register_entity("celevator:governor_sheave",{
+core.register_entity("celevator:governor_sheave",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.4,0.4,0.27),
@@ -107,9 +107,9 @@ minetest.register_entity("celevator:governor_sheave",{
 		local sheave = self.object
 		if not sheave then return end
 		local governorpos = vector.round(sheave:get_pos())
-		if not minetest.compare_block_status(governorpos,"active") then return self.object:remove() end
+		if not core.compare_block_status(governorpos,"active") then return self.object:remove() end
 		local governormeta = celevator.get_meta(governorpos)
-		local controllerpos = minetest.string_to_pos(governormeta:get_string("controllerpos"))
+		local controllerpos = core.string_to_pos(governormeta:get_string("controllerpos"))
 		if not controllerpos then return end
 		local controllermeta = celevator.get_meta(controllerpos)
 		local vel = tonumber(controllermeta:get_string("vel")) or 0
@@ -123,7 +123,7 @@ minetest.register_entity("celevator:governor_sheave",{
 	end,
 })
 
-minetest.register_lbm({
+core.register_lbm({
 	name = "celevator:spawngovsheave",
 	label = "Spawn governor sheaves",
 	nodenames = {"celevator:governor"},

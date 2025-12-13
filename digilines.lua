@@ -2,14 +2,14 @@ local function handledigilines(pos,node,channel,msg)
 	local multi = node.name == "celevator:digilines_multi_io"
 	if msg == "GET" then msg = {command = "GET"} end
 	if type(msg) ~= "table" or type(msg.command) ~= "string" then return end
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local setchannel = meta:get_string("channel")
 	if setchannel ~= channel then return end
 	if multi and type(msg.carid) ~= "number" then return end
 	local carid = multi and msg.carid or meta:get_int("carid")
 	if carid == 0 then return end
 	local dmode = meta:get_int("dispatcher") == 1
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 	if multi then
 		dmode = carinfo.dispatcherpos
 	end
@@ -18,7 +18,7 @@ local function handledigilines(pos,node,channel,msg)
 		if not carinfo.dispatcherpos then return end
 		if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
 		if msg.command == "get" then
-			local mem = minetest.deserialize(minetest.get_meta(carinfo.dispatcherpos):get_string("mem"))
+			local mem = core.deserialize(core.get_meta(carinfo.dispatcherpos):get_string("mem"))
 			if not mem then return end
 			local ret = {
 				upcalls = {},
@@ -67,7 +67,7 @@ local function handledigilines(pos,node,channel,msg)
 		if not carinfo.controllerpos then return end
 		if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 		if msg.command == "get" then
-			local mem = minetest.deserialize(minetest.get_meta(carinfo.controllerpos):get_string("mem"))
+			local mem = core.deserialize(core.get_meta(carinfo.controllerpos):get_string("mem"))
 			if not mem then return end
 			local ret = {
 				carstate = mem.carstate,
@@ -174,7 +174,7 @@ local function handledigilines(pos,node,channel,msg)
 	end
 end
 
-minetest.register_node("celevator:digilines_io",{
+core.register_node("celevator:digilines_io",{
 	description = "Elevator Digilines Input/Output",
 	tiles = {
 		"celevator_digilinesio_top.png",
@@ -199,7 +199,7 @@ minetest.register_node("celevator:digilines_io",{
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local fs = "formspec_version[7]size[8,4.5]"
 		fs = fs.."field[0.5,0.5;3,1;channel;Channel;${channel}]"
 		fs = fs.."field[4.5,0.5;3,1;carid;Car ID;${carid}]"
@@ -207,19 +207,19 @@ minetest.register_node("celevator:digilines_io",{
 		meta:set_string("formspec",fs)
 	end,
 	on_receive_fields = function(pos,_,fields,player)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		if not fields.save then return end
 		local name = player:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 			if player:is_player() then
-				minetest.record_protection_violation(pos,name)
+				core.record_protection_violation(pos,name)
 			end
 			return
 		end
 		if not tonumber(fields.carid) then return end
 		meta:set_int("carid",fields.carid)
 		local carid = tonumber(fields.carid)
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 		if not (carinfo.controllerpos or carinfo.dispatcherpos) then return end
 		local dmode = false
 		if carinfo.dispatcherpos then
@@ -229,18 +229,18 @@ minetest.register_node("celevator:digilines_io",{
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 		end
 		if dmode then
-			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
-					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
 			end
 		else
-			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-					minetest.record_protection_violation(carinfo.controllerpos,name)
+					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
 			end
@@ -252,7 +252,7 @@ minetest.register_node("celevator:digilines_io",{
 	end,
 })
 
-minetest.register_node("celevator:digilines_multi_io",{
+core.register_node("celevator:digilines_multi_io",{
 	description = "Elevator Digilines Multi-Car Input/Output",
 	tiles = {
 		"celevator_digilinesio_multi_top.png",
@@ -279,28 +279,28 @@ minetest.register_node("celevator:digilines_multi_io",{
 	},
 	after_place_node = function(pos,player)
 		local name = player:get_player_name()
-		if not (minetest.check_player_privs(name,{protection_bypass=true}) or minetest.check_player_privs(name,{server=true})) then
+		if not (core.check_player_privs(name,{protection_bypass=true}) or core.check_player_privs(name,{server=true})) then
 			if player:is_player() then
-				minetest.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
-				minetest.record_protection_violation(pos,name)
+				core.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
+				core.record_protection_violation(pos,name)
 			end
-			minetest.remove_node(pos)
+			core.remove_node(pos)
 			return
 		end
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local fs = "formspec_version[7]size[8,4.5]"
 		fs = fs.."field[0.5,0.5;7,1;channel;Channel;${channel}]"
 		fs = fs.."button_exit[2.5,2;3,1;save;Save]"
 		meta:set_string("formspec",fs)
 	end,
 	on_receive_fields = function(pos,_,fields,player)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		if not fields.save then return end
 		local name = player:get_player_name()
-		if not (minetest.check_player_privs(name,{protection_bypass=true}) or minetest.check_player_privs(name,{server=true})) then
+		if not (core.check_player_privs(name,{protection_bypass=true}) or core.check_player_privs(name,{server=true})) then
 			if player:is_player() then
-				minetest.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
-				minetest.record_protection_violation(pos,name)
+				core.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
+				core.record_protection_violation(pos,name)
 			end
 			return
 		end

@@ -1,20 +1,20 @@
 celevator.dispatcher = {}
 
-celevator.dispatcher.iqueue = minetest.deserialize(celevator.storage:get_string("dispatcher_iqueue")) or {}
+celevator.dispatcher.iqueue = core.deserialize(celevator.storage:get_string("dispatcher_iqueue")) or {}
 
-celevator.dispatcher.equeue = minetest.deserialize(celevator.storage:get_string("dispatcher_equeue")) or {}
+celevator.dispatcher.equeue = core.deserialize(celevator.storage:get_string("dispatcher_equeue")) or {}
 
 celevator.dispatcher.running = {}
 
-local fw,err = loadfile(minetest.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
+local fw,err = loadfile(core.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
 if not fw then error(err) end
 
-minetest.register_chatcommand("celevator_reloaddispatcher",{
+core.register_chatcommand("celevator_reloaddispatcher",{
 	params = "",
 	description = "Reload celevator dispatcher firmware from disk",
 	privs = {server = true},
 	func = function()
-		local newfw,loaderr = loadfile(minetest.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
+		local newfw,loaderr = loadfile(core.get_modpath("celevator")..DIR_DELIM.."dispatcherfw.lua")
 		if newfw then
 			fw = newfw
 			return true,"Firmware reloaded successfully"
@@ -25,57 +25,57 @@ minetest.register_chatcommand("celevator_reloaddispatcher",{
 })
 
 local function after_place(pos,placer)
-	local node = minetest.get_node(pos)
+	local node = core.get_node(pos)
 	local toppos = {x=pos.x,y=pos.y + 1,z=pos.z}
-	local topnode = minetest.get_node(toppos)
+	local topnode = core.get_node(toppos)
 	local placername = placer:get_player_name()
 	if topnode.name ~= "air" then
 		if placer:is_player() then
-			minetest.chat_send_player(placername,"Can't place cabinet - no room for the top half!")
+			core.chat_send_player(placername,"Can't place cabinet - no room for the top half!")
 		end
-		minetest.set_node(pos,{name="air"})
+		core.set_node(pos,{name="air"})
 		return true
 	end
-	if minetest.is_protected(toppos,placername) and not minetest.check_player_privs(placername,{protection_bypass=true}) then
+	if core.is_protected(toppos,placername) and not core.check_player_privs(placername,{protection_bypass=true}) then
 		if placer:is_player() then
-			minetest.chat_send_player(placername,"Can't place cabinet - top half is protected!")
-			minetest.record_protection_violation(toppos,placername)
+			core.chat_send_player(placername,"Can't place cabinet - top half is protected!")
+			core.record_protection_violation(toppos,placername)
 		end
-		minetest.set_node(pos,{name="air"})
+		core.set_node(pos,{name="air"})
 		return true
 	end
 	node.name = "celevator:dispatcher_top"
-	minetest.set_node(toppos,node)
+	core.set_node(toppos,node)
 end
 
 local function ondestruct(pos)
 	pos.y = pos.y + 1
-	local topnode = minetest.get_node(pos)
+	local topnode = core.get_node(pos)
 	local dispatchertops = {
 		["celevator:dispatcher_top"] = true,
 		["celevator:dispatcher_top_open"] = true,
 	}
 	if dispatchertops[topnode.name] then
-		minetest.set_node(pos,{name="air"})
+		core.set_node(pos,{name="air"})
 	end
-	celevator.dispatcher.equeue[minetest.hash_node_position(pos)] = nil
-	celevator.storage:set_string("dispatcher_equeue",minetest.serialize(celevator.dispatcher.equeue))
-	local carid = minetest.get_meta(pos):get_int("carid")
+	celevator.dispatcher.equeue[core.hash_node_position(pos)] = nil
+	celevator.storage:set_string("dispatcher_equeue",core.serialize(celevator.dispatcher.equeue))
+	local carid = core.get_meta(pos):get_int("carid")
 	if carid ~= 0 then celevator.storage:set_string(string.format("car%d",carid),"") end
 end
 
 local function onrotate(controllerpos,node,user,mode,new_param2)
-	if not minetest.global_exists("screwdriver") then
+	if not core.global_exists("screwdriver") then
 		return false
 	end
 	local ret = screwdriver.rotate_simple(controllerpos,node,user,mode,new_param2)
-	minetest.after(0,function(pos)
-		local newnode = minetest.get_node(pos)
+	core.after(0,function(pos)
+		local newnode = core.get_node(pos)
 		local param2 = newnode.param2
 		pos.y = pos.y + 1
-		local topnode = minetest.get_node(pos)
+		local topnode = core.get_node(pos)
 		topnode.param2 = param2
-		minetest.set_node(pos,topnode)
+		core.set_node(pos,topnode)
 	end,controllerpos)
 	return ret
 end
@@ -94,12 +94,12 @@ local function candig(_,player)
 	if controls.sneak then
 		return true
 	else
-		minetest.chat_send_player(player:get_player_name(),"Hold the sneak button while digging to remove.")
+		core.chat_send_player(player:get_player_name(),"Hold the sneak button while digging to remove.")
 		return false
 	end
 end
 
-minetest.register_node("celevator:dispatcher",{
+core.register_node("celevator:dispatcher",{
 	description = "Elevator Dispatcher",
 	groups = {
 		cracky = 1,
@@ -133,15 +133,15 @@ minetest.register_node("celevator:dispatcher",{
 	on_receive_fields = handlefields,
 	can_dig = candig,
 	on_construct = function(pos)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("mem",minetest.serialize({}))
+		local meta = core.get_meta(pos)
+		meta:set_string("mem",core.serialize({}))
 		meta:mark_as_private("mem")
 		local event = {}
 		event.type = "program"
 		local carid = celevator.storage:get_int("maxcarid")+1
 		meta:set_int("carid",carid)
 		celevator.storage:set_int("maxcarid",carid)
-		celevator.storage:set_string(string.format("car%d",carid),minetest.serialize({dispatcherpos=pos,callbuttons={},fs1switches={}}))
+		celevator.storage:set_string(string.format("car%d",carid),core.serialize({dispatcherpos=pos,callbuttons={},fs1switches={}}))
 		celevator.dispatcher.run(pos,event)
 	end,
 	on_punch = function(pos,node,puncher)
@@ -149,20 +149,20 @@ minetest.register_node("celevator:dispatcher",{
 			return
 		end
 		local name = puncher:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			minetest.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
-			minetest.record_protection_violation(pos,name)
+		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+			core.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
+			core.record_protection_violation(pos,name)
 			return
 		end
 		node.name = "celevator:dispatcher_open"
-		minetest.swap_node(pos,node)
-		local meta = minetest.get_meta(pos)
+		core.swap_node(pos,node)
+		local meta = core.get_meta(pos)
 		meta:set_string("formspec",meta:get_string("formspec_hidden"))
 		pos.y = pos.y + 1
-		node = minetest.get_node(pos)
+		node = core.get_node(pos)
 		node.name = "celevator:dispatcher_top_open"
-		minetest.swap_node(pos,node)
-		minetest.sound_play("celevator_cabinet_open",{
+		core.swap_node(pos,node)
+		core.sound_play("celevator_cabinet_open",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10
@@ -170,7 +170,7 @@ minetest.register_node("celevator:dispatcher",{
 	end,
 })
 
-minetest.register_node("celevator:dispatcher_open",{
+core.register_node("celevator:dispatcher_open",{
 	description = "Dispatcher (door open - you hacker you!)",
 	groups = {
 		cracky = 1,
@@ -215,14 +215,14 @@ minetest.register_node("celevator:dispatcher_open",{
 			return
 		end
 		node.name = "celevator:dispatcher"
-		minetest.swap_node(pos,node)
-		local meta = minetest.get_meta(pos)
+		core.swap_node(pos,node)
+		local meta = core.get_meta(pos)
 		meta:set_string("formspec","")
 		pos.y = pos.y + 1
-		node = minetest.get_node(pos)
+		node = core.get_node(pos)
 		node.name = "celevator:dispatcher_top"
-		minetest.swap_node(pos,node)
-		minetest.sound_play("celevator_cabinet_close",{
+		core.swap_node(pos,node)
+		core.sound_play("celevator_cabinet_close",{
 			pos = pos,
 			gain = 0.5,
 			max_hear_distance = 10
@@ -230,7 +230,7 @@ minetest.register_node("celevator:dispatcher_open",{
 	end,
 })
 
-minetest.register_node("celevator:dispatcher_top",{
+core.register_node("celevator:dispatcher_top",{
 	description = "Dispatcher (top section - you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -261,7 +261,7 @@ minetest.register_node("celevator:dispatcher_top",{
 	},
 })
 
-minetest.register_node("celevator:dispatcher_top_open",{
+core.register_node("celevator:dispatcher_top_open",{
 	description = "Dispatcher (top section, open - you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -303,16 +303,16 @@ function celevator.dispatcher.finish(pos,mem,changedinterrupts)
 	if not celevator.dispatcher.isdispatcher(pos) then
 		return
 	else
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local carid = meta:get_int("carid")
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 		local carinfodirty = false
 		if not carinfo then
-			minetest.log("error","[celevator] [controller] Bad car info for dispatcher at "..minetest.pos_to_string(pos))
+			core.log("error","[celevator] [controller] Bad car info for dispatcher at "..core.pos_to_string(pos))
 			return
 		end
 		local node = celevator.get_node(pos)
-		local oldmem = minetest.deserialize(meta:get_string("mem")) or {}
+		local oldmem = core.deserialize(meta:get_string("mem")) or {}
 		local oldupbuttonlights = oldmem.upcalls or {}
 		local olddownbuttonlights = oldmem.dncalls or {}
 		local newupbuttonlights = mem.upcalls or {}
@@ -335,7 +335,7 @@ function celevator.dispatcher.finish(pos,mem,changedinterrupts)
 			end
 		end
 		for _,message in ipairs(mem.messages) do
-			local destinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",message.carid)))
+			local destinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",message.carid)))
 			if destinfo and destinfo.controllerpos then
 				celevator.controller.run(destinfo.controllerpos,{
 					type = "dispatchermsg",
@@ -346,27 +346,27 @@ function celevator.dispatcher.finish(pos,mem,changedinterrupts)
 			end
 		end
 		for _,message in ipairs(mem.kioskmessages) do
-			celevator.dbdkiosk.showassignment(minetest.get_position_from_hash(message.pos),message.car)
+			celevator.dbdkiosk.showassignment(core.get_position_from_hash(message.pos),message.car)
 		end
-		meta:set_string("mem",minetest.serialize(mem))
+		meta:set_string("mem",core.serialize(mem))
 		if node.name == "celevator:dispatcher_open" then meta:set_string("formspec",mem.formspec or "") end
 		meta:set_string("formspec_hidden",mem.formspec or "")
 		meta:set_string("infotext",mem.infotext or "")
-		local hash = minetest.hash_node_position(pos)
+		local hash = core.hash_node_position(pos)
 		if not celevator.dispatcher.iqueue[hash] then celevator.dispatcher.iqueue[hash] = mem.interrupts end
 		for iid in pairs(changedinterrupts) do
 			celevator.dispatcher.iqueue[hash][iid] = mem.interrupts[iid]
 		end
-		celevator.storage:set_string("dispatcher_iqueue",minetest.serialize(celevator.dispatcher.iqueue))
+		celevator.storage:set_string("dispatcher_iqueue",core.serialize(celevator.dispatcher.iqueue))
 		celevator.dispatcher.running[hash] = nil
 		if #celevator.dispatcher.equeue[hash] > 0 then
 			local event = celevator.dispatcher.equeue[hash][1]
 			table.remove(celevator.dispatcher.equeue[hash],1)
-			celevator.storage:set_string("dispatcher_equeue",minetest.serialize(celevator.dispatcher.equeue))
+			celevator.storage:set_string("dispatcher_equeue",core.serialize(celevator.dispatcher.equeue))
 			celevator.dispatcher.run(pos,event)
 		end
 		if carinfodirty then
-			celevator.storage:set_string(string.format("car%d",carid),minetest.serialize(carinfo))
+			celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
 		end
 	end
 end
@@ -375,30 +375,30 @@ function celevator.dispatcher.run(pos,event)
 	if not celevator.dispatcher.isdispatcher(pos) then
 		return
 	else
-		local hash = minetest.hash_node_position(pos)
+		local hash = core.hash_node_position(pos)
 		if not celevator.dispatcher.equeue[hash] then
 			celevator.dispatcher.equeue[hash] = {}
-			celevator.storage:set_string("dispatcher_equeue",minetest.serialize(celevator.dispatcher.equeue))
+			celevator.storage:set_string("dispatcher_equeue",core.serialize(celevator.dispatcher.equeue))
 		end
 		if celevator.dispatcher.running[hash] then
 			table.insert(celevator.dispatcher.equeue[hash],event)
-			celevator.storage:set_string("dispatcher_equeue",minetest.serialize(celevator.dispatcher.equeue))
+			celevator.storage:set_string("dispatcher_equeue",core.serialize(celevator.dispatcher.equeue))
 			if #celevator.dispatcher.equeue[hash] > 20 then
 				local message = "[celevator] [dispatcher] Async process for dispatcher at %s is falling behind, %d events in queue"
-				minetest.log("warning",string.format(message,minetest.pos_to_string(pos),#celevator.dispatcher.equeue[hash]))
+				core.log("warning",string.format(message,core.pos_to_string(pos),#celevator.dispatcher.equeue[hash]))
 			end
 			return
 		end
 		celevator.dispatcher.running[hash] = true
-		local meta = minetest.get_meta(pos)
-		local mem = minetest.deserialize(meta:get_string("mem"))
+		local meta = core.get_meta(pos)
+		local mem = core.deserialize(meta:get_string("mem"))
 		if not mem then
-			minetest.log("error","[celevator] [controller] Failed to load dispatcher memory at "..minetest.pos_to_string(pos))
+			core.log("error","[celevator] [controller] Failed to load dispatcher memory at "..core.pos_to_string(pos))
 			return
 		end
-		mem.interrupts = celevator.dispatcher.iqueue[minetest.hash_node_position(pos)] or {}
+		mem.interrupts = celevator.dispatcher.iqueue[core.hash_node_position(pos)] or {}
 		mem.carid = meta:get_int("carid")
-		minetest.handle_async(fw,celevator.dispatcher.finish,pos,event,mem)
+		core.handle_async(fw,celevator.dispatcher.finish,pos,event,mem)
 	end
 end
 
@@ -421,7 +421,7 @@ end
 
 function celevator.dispatcher.checkiqueue(dtime)
 	for hash,iqueue in pairs(celevator.dispatcher.iqueue) do
-		local pos = minetest.get_position_from_hash(hash)
+		local pos = core.get_position_from_hash(hash)
 		local noneleft = true
 		for iid,time in pairs(iqueue) do
 			noneleft = false
@@ -436,14 +436,14 @@ function celevator.dispatcher.checkiqueue(dtime)
 		end
 		if noneleft then
 			celevator.dispatcher.iqueue[hash] = nil
-			celevator.storage:set_string("dispatcher_iqueue",minetest.serialize(celevator.dispatcher.iqueue))
+			celevator.storage:set_string("dispatcher_iqueue",core.serialize(celevator.dispatcher.iqueue))
 		end
 	end
 end
 
-minetest.register_globalstep(celevator.dispatcher.checkiqueue)
+core.register_globalstep(celevator.dispatcher.checkiqueue)
 
-minetest.register_abm({
+core.register_abm({
 	label = "Run otherwise idle dispatchers if a user is nearby",
 	nodenames = {"celevator:dispatcher","celevator:dispatcher_open"},
 	interval = 1,

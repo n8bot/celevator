@@ -28,9 +28,9 @@ local integrations = {
 }
 
 for _,i in ipairs(integrations) do
-	if minetest.get_modpath(i) then table.insert(components,i) end
+	if core.get_modpath(i) then table.insert(components,i) end
 end
 
 for _,v in ipairs(components) do
-	dofile(string.format("%s%s%s.lua",minetest.get_modpath("celevator"),DIR_DELIM,v))
+	dofile(string.format("%s%s%s.lua",core.get_modpath("celevator"),DIR_DELIM,v))
 end

@@ -359,7 +359,7 @@ elseif event.type == "ui" then
 			mem.screenstate = "oobe_welcome"
 		end
 	elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
-		local exp = event.fields.floor and minetest.explode_textlist_event(event.fields.floor) or {}
+		local exp = event.fields.floor and core.explode_textlist_event(event.fields.floor) or {}
 		if event.fields.back then
 			mem.screenstate = "oobe_welcome"
 		elseif event.fields.next then
@@ -423,7 +423,7 @@ elseif event.type == "ui" then
 			mem.params.floornames[mem.editingfloor] = string.sub(event.fields.name,1,256)
 		end
 	elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections" then
-		local exp = event.fields.connection and minetest.explode_textlist_event(event.fields.connection) or {}
+		local exp = event.fields.connection and core.explode_textlist_event(event.fields.connection) or {}
 		if event.fields.back then
 			mem.screenstate = "oobe_floortable"
 		elseif event.fields.next and #mem.params.carids > 0 then
@@ -449,7 +449,7 @@ elseif event.type == "ui" then
 			mem.editingconnection = math.max(1,mem.editingconnection-1)
 		end
 	elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnection" then
-		local exp = event.fields.floors and minetest.explode_textlist_event(event.fields.floors) or {}
+		local exp = event.fields.floors and core.explode_textlist_event(event.fields.floors) or {}
 		if event.fields.back then
 			mem.screenstate = (mem.screenstate == "oobe_newconnection" and "oobe_connections" or "connections")
 		elseif event.fields.connect and fields.carid and tonumber(fields.carid) then
@@ -474,7 +474,7 @@ elseif event.type == "ui" then
 			mem.newconnfloors[floor] = not mem.newconnfloors[floor]
 		end
 	elseif mem.screenstate == "oobe_connection" or mem.screenstate == "connection" then
-		local exp = event.fields.floors and minetest.explode_textlist_event(event.fields.floors) or {}
+		local exp = event.fields.floors and core.explode_textlist_event(event.fields.floors) or {}
 		if event.fields.back then
 			mem.screenstate = (mem.screenstate == "oobe_connection" and "oobe_connections" or "connections")
 		elseif event.fields.save then
@@ -936,8 +936,8 @@ if mem.screenstate == "oobe_welcome" then
 	fs("button[1,10;2,1;license;License Info]")
 	fs("button[13,10;2,1;next;Next >]")
 elseif mem.screenstate == "oobe_license" then
-	local licensefile = io.open(minetest.get_modpath("celevator")..DIR_DELIM.."LICENSE")
-	local license = minetest.formspec_escape(licensefile:read("*all"))
+	local licensefile = io.open(core.get_modpath("celevator")..DIR_DELIM.."LICENSE")
+	local license = core.formspec_escape(licensefile:read("*all"))
 	licensefile:close()
 	fs("textarea[1,1;14,8;license;This applies to the whole celevator mod\\, not just this dispatcher:;"..license.."]")
 	fs("button[7,10.5;2,1;back;OK]")
@@ -953,7 +953,7 @@ elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" t
 	end
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(minetest.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
+		fs(core.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
 	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;New Floor]") end
@@ -972,7 +972,7 @@ elseif mem.screenstate == "oobe_floortable_edit" or mem.screenstate == "floortab
 	end
 	fs("label[1,1;Editing floor "..tostring(mem.editingfloor).."]")
 	fs("field[1,3;3,1;height;Floor Height;"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
-	fs("field[5,3;3,1;name;Floor Name;"..minetest.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
+	fs("field[5,3;3,1;name;Floor Name;"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
 elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections" then
 	if mem.screenstate == "oobe_connections" then
 		fs("label[1,1;Connect to each car in the group, then click Done.]")
@@ -1011,7 +1011,7 @@ elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnect
 	end
 	fs("textlist[8,2;6,7;floors;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(string.format("%s - %s",minetest.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
+		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
 	end
 	fs(";0;false]")
 	fs("field[2,3;4,1;carid;Car ID;]")
@@ -1032,7 +1032,7 @@ elseif mem.screenstate == "oobe_connection" or mem.screenstate == "connection" t
 	end
 	fs("textlist[8,2;6,7;floors;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(string.format("%s - %s",minetest.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
+		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
 	end
 	fs(";0;false]")
 	fs("label[2,3;Car ID: "..mem.params.carids[mem.editingconnection].."]")
@@ -1057,7 +1057,7 @@ elseif mem.screenstate == "status" then
 		local carid = mem.params.carids[car]
 		local carstate = mem.carstatus[carid].state
 		fs(string.format("label[%f,11;CAR %d]",xp,car))
-		fs(string.format("label[%f,11.35;%s]",xp+0.1,minetest.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT"))))
+		fs(string.format("label[%f,11.35;%s]",xp+0.1,core.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT"))))
 	end
 	local lowestfloor = (mem.screenpage-1)*10+1
 	for i=1,math.min(10,#mem.params.floornames-lowestfloor+1),1 do
@@ -1065,11 +1065,11 @@ elseif mem.screenstate == "status" then
 		local floor = i+lowestfloor-1
 		fs(string.format("label[0.9,%f;%s]",yp+0.35,mem.params.floornames[floor]))
 		local uplabel = ""
-		if mem.upcalls[floor] then uplabel = minetest.colorize("#55FF55",math.floor(mem.upeta[floor] or 0)) end
+		if mem.upcalls[floor] then uplabel = core.colorize("#55FF55",math.floor(mem.upeta[floor] or 0)) end
 		if floor < #mem.params.floornames then fs(string.format("image_button[0.15,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",yp,floor,uplabel)) end
 		fs(string.format("label[18.65,%f;%s]",yp+0.35,mem.params.floornames[floor]))
 		local dnlabel = ""
-		if mem.dncalls[floor] then dnlabel = minetest.colorize("#FF5555",math.floor(mem.dneta[floor] or 0)) end
+		if mem.dncalls[floor] then dnlabel = core.colorize("#FF5555",math.floor(mem.dneta[floor] or 0)) end
 		if floor > 1 then fs(string.format("image_button[19.1,%f;0.75,0.75;celevator_fs_bg.png;dncall%d;%s]",yp,floor,dnlabel)) end
 		for car=1,#mem.params.carids,1 do
 			local xp = 1.7+(car-1)
@@ -1077,10 +1077,10 @@ elseif mem.screenstate == "status" then
 			local carfloor = realtocarfloor(carid,floor)
 			if carfloor then
 				local ccdot = mem.carstatus[carid].carcalls[carfloor] and "*" or ""
-				local groupup = mem.carstatus[carid].groupupcalls[carfloor] and minetest.colorize("#55FF55","^") or ""
-				local swingup = mem.carstatus[carid].swingupcalls[carfloor] and minetest.colorize("#FFFF55","^") or ""
-				local swingdn = mem.carstatus[carid].swingdncalls[carfloor] and minetest.colorize("#FFFF55","v") or ""
-				local groupdn = mem.carstatus[carid].groupdncalls[carfloor] and minetest.colorize("#FF5555","v") or ""
+				local groupup = mem.carstatus[carid].groupupcalls[carfloor] and core.colorize("#55FF55","^") or ""
+				local swingup = mem.carstatus[carid].swingupcalls[carfloor] and core.colorize("#FFFF55","^") or ""
+				local swingdn = mem.carstatus[carid].swingdncalls[carfloor] and core.colorize("#FFFF55","v") or ""
+				local groupdn = mem.carstatus[carid].groupdncalls[carfloor] and core.colorize("#FF5555","v") or ""
 				ccdot = groupup..swingup..ccdot..swingdn..groupdn
 				if getpos(carid) == floor then
 					local cargraphics = {
@@ -1092,9 +1092,9 @@ elseif mem.screenstate == "status" then
 					}
 					ccdot = cargraphics[mem.carstatus[carid].doorstate]
 					if mem.carstatus[carid].direction == "up" then
-						ccdot = minetest.colorize("#55FF55",ccdot)
+						ccdot = core.colorize("#55FF55",ccdot)
 					elseif mem.carstatus[carid].direction == "down" then
-						ccdot = minetest.colorize("#FF5555",ccdot)
+						ccdot = core.colorize("#FF5555",ccdot)
 					end
 				end
 				fs(string.format("image_button[%f,%f;0.75,0.75;celevator_fs_bg.png;carcall%02d%d;%s]",xp,yp,car,floor,ccdot))

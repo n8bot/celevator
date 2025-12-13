@@ -6,13 +6,13 @@ local function disambiguatecartopbutton(pos,facedir,player)
 		local lookdir = player:get_look_dir()
 		local distance = vector.distance(eyepos,pos)
 		local endpos = vector.add(eyepos,vector.multiply(lookdir,distance+1))
-		local ray = minetest.raycast(eyepos,endpos,true,false)
+		local ray = core.raycast(eyepos,endpos,true,false)
 		local pointed,button,hitpos
 		repeat
 			pointed = ray:next()
 			if pointed and pointed.type == "node" then
-				local node = minetest.get_node(pointed.under)
-				local ndef = minetest.registered_nodes[node.name] or {}
+				local node = core.get_node(pointed.under)
+				local ndef = core.registered_nodes[node.name] or {}
 				if ndef._cartopbox then
 					button = pointed.under
 					hitpos = vector.subtract(pointed.intersection_point,button)
@@ -20,7 +20,7 @@ local function disambiguatecartopbutton(pos,facedir,player)
 			end
 		until button or not pointed
 		if not hitpos then return end
-		hitpos = vector.rotate_around_axis(hitpos,vector.new(0,-1,0),minetest.dir_to_yaw(facedir)+(math.pi/2))
+		hitpos = vector.rotate_around_axis(hitpos,vector.new(0,-1,0),core.dir_to_yaw(facedir)+(math.pi/2))
 		if hitpos.y < 0.55 then return end
 		if hitpos.z > 0.36 or hitpos.z < 0.09 then return end
 		if hitpos.x >= -0.36 and hitpos.x <= -0.16 then
@@ -35,33 +35,33 @@ end
 
 local function updatecartopbox(pos)
 	local toppos = vector.add(pos,vector.new(0,1.1,0))
-	local entitiesnearby = minetest.get_objects_inside_radius(toppos,0.5)
+	local entitiesnearby = core.get_objects_inside_radius(toppos,0.5)
 	for _,i in pairs(entitiesnearby) do
 		if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
 			i:remove()
 		end
 	end
-	local carmeta = minetest.get_meta(pos)
+	local carmeta = core.get_meta(pos)
 	local carid = carmeta:get_int("carid")
 	if carid == 0 then return end
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 	if not carinfo then return end
-	local entity = minetest.add_entity(pos,"celevator:car_top_box")
+	local entity = core.add_entity(pos,"celevator:car_top_box")
 	local inspon = carinfo.cartopinspect
 	entity:set_properties({
 		wield_item = inspon and "celevator:car_top_box_on" or "celevator:car_top_box_off",
 	})
-	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local fdir = core.fourdir_to_dir(core.get_node(pos).param2)
 	fdir = vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi/2)
-	entity:set_yaw(minetest.dir_to_yaw(fdir))
+	entity:set_yaw(core.dir_to_yaw(fdir))
 	entity:set_pos(toppos)
 end
 
 local held = {}
 
-minetest.register_globalstep(function()
+core.register_globalstep(function()
 	for k,v in ipairs(held) do
-		local player = minetest.get_player_by_name(v.name)
+		local player = core.get_player_by_name(v.name)
 		if not (player and player:get_player_control()[v.button]) then
 			table.remove(held,k)
 			celevator.controller.handlecartopbox(v.pos,v.control.."_release")
@@ -110,13 +110,13 @@ function celevator.car.register(name,defs,size)
 		def.drop = ""
 		if def._cop then
 			def.on_receive_fields = function(pos,_,fields,player)
-				local meta = minetest.get_meta(pos)
+				local meta = core.get_meta(pos)
 				local carid = meta:get_int("carid")
 				if carid == 0 then return end
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not carinfo then return end
 				local playername = player:get_player_name()
-				local protected = minetest.is_protected(pos,playername) and not minetest.check_player_privs(playername,{protection_bypass=true})
+				local protected = core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true})
 				local event = {
 					type = "cop",
 					fields = fields,
@@ -128,15 +128,15 @@ function celevator.car.register(name,defs,size)
 		elseif def._keyswitches then
 			def.on_receive_fields = function(pos,_,fields,player)
 				if fields.quit then return end
-				local meta = minetest.get_meta(pos)
+				local meta = core.get_meta(pos)
 				local carid = meta:get_int("carid")
 				if carid == 0 then return end
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not carinfo then return end
 				local playername = player:get_player_name()
-				if minetest.is_protected(pos,playername) and not minetest.check_player_privs(playername,{protection_bypass=true}) then
-					minetest.chat_send_player(playername,"You don't have access to these switches.")
-					minetest.record_protection_violation(pos,playername)
+				if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+					core.chat_send_player(playername,"You don't have access to these switches.")
+					core.record_protection_violation(pos,playername)
 					return
 				end
 				local event = {
@@ -154,17 +154,17 @@ function celevator.car.register(name,defs,size)
 				for _,v in ipairs(held) do
 					if playername == v.name then return end
 				end
-				local fdir = minetest.fourdir_to_dir(node.param2)
+				local fdir = core.fourdir_to_dir(node.param2)
 				local control = disambiguatecartopbutton(pos,fdir,clicker)
 				if not control then return end
-				local meta = minetest.get_meta(pos)
+				local meta = core.get_meta(pos)
 				local carid = meta:get_int("carid")
 				if carid == 0 then return end
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not (carinfo and carinfo.controllerpos) then return end
 				if control == "inspectswitch" then
 					local boxpos = vector.add(pos,vector.new(0,1,0))
-					local erefs = minetest.get_objects_inside_radius(boxpos,0.5)
+					local erefs = core.get_objects_inside_radius(boxpos,0.5)
 					for _,ref in pairs(erefs) do
 						if ref:get_luaentity() and ref:get_luaentity().name == "celevator:car_top_box" then
 							local state = ref:get_properties().wield_item
@@ -187,7 +187,7 @@ function celevator.car.register(name,defs,size)
 			end
 			def.after_dig_node = function(pos)
 				local toppos = vector.add(pos,vector.new(0,1.1,0))
-				local entitiesnearby = minetest.get_objects_inside_radius(toppos,0.5)
+				local entitiesnearby = core.get_objects_inside_radius(toppos,0.5)
 				for _,i in pairs(entitiesnearby) do
 					if i:get_luaentity() and i:get_luaentity().name == "celevator:car_top_box" then
 						i:remove()
@@ -205,29 +205,29 @@ function celevator.car.register(name,defs,size)
 			def.groups._celevator_car_root = 1
 			def._root = true
 			def.on_construct = function(pos)
-				minetest.get_meta(pos):set_string("doorstate","closed")
+				core.get_meta(pos):set_string("doorstate","closed")
 			end
 			def.on_punch = function(pos,_,player)
 				if player.is_fake_player then return end
 				local playername = player:get_player_name()
 				local sneak = player:get_player_control().sneak
 				if not sneak then return end
-				if minetest.is_protected(pos,playername) and not minetest.check_player_privs(playername,{protection_bypass=true}) then
-					minetest.record_protection_violation(pos,playername)
+				if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+					core.record_protection_violation(pos,playername)
 					return
 				end
-				local hash = minetest.hash_node_position(pos)
+				local hash = core.hash_node_position(pos)
 				local fs = "formspec_version[7]size[6,4]"
 				fs = fs.."label[0.5,1;Really remove this car?]"
 				fs = fs.."button_exit[0.5,2;2,1;yes;Yes]"
 				fs = fs.."button_exit[3,2;2,1;no;No]"
-				minetest.show_formspec(playername,string.format("celevator:remove_car_%d",hash),fs)
+				core.show_formspec(playername,string.format("celevator:remove_car_%d",hash),fs)
 			end
 			def.on_timer = function(pos)
-				local carid = minetest.get_meta(pos):get_int("carid")
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carid = core.get_meta(pos):get_int("carid")
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not (carinfo and carinfo.controllerpos) then return end
-				local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(pos).param2))
+				local yaw = core.dir_to_yaw(core.fourdir_to_dir(core.get_node(pos).param2))
 				local positions = {
 					vector.new(-0.25,-0.1,-0.5),
 					vector.new(0.25,-0.1,-0.5),
@@ -237,7 +237,7 @@ function celevator.car.register(name,defs,size)
 				local playerseen = false
 				for _,searchpos in ipairs(positions) do
 					local rotatedpos = vector.rotate_around_axis(searchpos,vector.new(0,1,0),yaw)
-					local erefs = minetest.get_objects_inside_radius(vector.add(pos,rotatedpos),0.5)
+					local erefs = core.get_objects_inside_radius(vector.add(pos,rotatedpos),0.5)
 					for _,ref in pairs(erefs) do
 						if ref:is_player() then
 							playerseen = true
@@ -254,7 +254,7 @@ function celevator.car.register(name,defs,size)
 				return true
 			end
 		end
-		minetest.register_node("celevator:car_"..name.."_"..def._position,def)
+		core.register_node("celevator:car_"..name.."_"..def._position,def)
 	end
 end
 
@@ -273,10 +273,10 @@ function celevator.car.spawncar(origin,yaw,carid,name,doortype)
 				pos = vector.add(pos,vector.multiply(up,y))
 				local node = {
 					name = string.format("celevator:car_%s_%d%d%d",name,x,y,z),
-					param2 = minetest.dir_to_fourdir(minetest.yaw_to_dir(yaw)),
+					param2 = core.dir_to_fourdir(core.yaw_to_dir(yaw)),
 				}
-				minetest.set_node(pos,node)
-				local meta = minetest.get_meta(pos)
+				core.set_node(pos,node)
+				local meta = core.get_meta(pos)
 				if carid then meta:set_int("carid",carid) end
 				meta:set_string("doortype",doortype or "glass")
 			end
@@ -284,30 +284,30 @@ function celevator.car.spawncar(origin,yaw,carid,name,doortype)
 	end
 end
 
-minetest.register_abm({
+core.register_abm({
 	label = "Respawn in-car PI displays",
 	nodenames = {"group:_celevator_car_spawnspi"},
 	interval = 1,
 	chance = 1,
 	action = function(pos)
-		local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+		local entitiesnearby = core.get_objects_inside_radius(pos,0.5)
 		for _,i in pairs(entitiesnearby) do
 			if i:get_luaentity() and i:get_luaentity().name == "celevator:incar_pi_entity" then
 				return
 			end
 		end
-		local entity = minetest.add_entity(pos,"celevator:incar_pi_entity")
-		local fdir = vector.rotate_around_axis(minetest.facedir_to_dir(minetest.get_node(pos).param2),vector.new(0,1,0),math.pi/2)
+		local entity = core.add_entity(pos,"celevator:incar_pi_entity")
+		local fdir = vector.rotate_around_axis(core.facedir_to_dir(core.get_node(pos).param2),vector.new(0,1,0),math.pi/2)
 		local etex = celevator.pi.generatetexture(" --",false,false,false,true)
 		entity:set_properties({
 			textures = {etex},
 		})
-		entity:set_yaw(minetest.dir_to_yaw(fdir))
+		entity:set_yaw(core.dir_to_yaw(fdir))
 		entity:set_pos(vector.add(pos,vector.multiply(fdir,0.44)))
 	end,
 })
 
-minetest.register_node("celevator:car_top_box_off",{
+core.register_node("celevator:car_top_box_off",{
 	description = "Car-top Inspection Box, Off State (you hacker you!)",
 	drop = "",
 	groups = {
@@ -327,7 +327,7 @@ minetest.register_node("celevator:car_top_box_off",{
 	},
 })
 
-minetest.register_node("celevator:car_top_box_on",{
+core.register_node("celevator:car_top_box_on",{
 	description = "Car-top Inspection Box, On State (you hacker you!)",
 	drop = "",
 	groups = {
@@ -347,18 +347,18 @@ minetest.register_node("celevator:car_top_box_on",{
 	},
 })
 
-minetest.register_entity("celevator:car_top_box",{
+core.register_entity("celevator:car_top_box",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "celevator:car_top_box_off",
 		static_save = false,
 		pointable = false,
-		glow = minetest.LIGHT_MAX,
+		glow = core.LIGHT_MAX,
 	},
 })
 
-minetest.register_abm({
+core.register_abm({
 	label = "Respawn car-top inspection boxes",
 	nodenames = {"group:_celevator_car_spawnstopbox"},
 	interval = 1,
@@ -366,16 +366,16 @@ minetest.register_abm({
 	action = updatecartopbox,
 })
 
-minetest.register_on_player_receive_fields(function(_,formname,fields)
+core.register_on_player_receive_fields(function(_,formname,fields)
 	if string.sub(formname,1,21) ~= "celevator:remove_car_" then return false end
 	if not fields.yes then return true end
 	local hash = tonumber(string.sub(formname,22,-1))
 	if not hash then return true end
-	local rootpos = minetest.get_position_from_hash(hash)
-	local rootdef = minetest.registered_nodes[celevator.get_node(rootpos).name] or {}
+	local rootpos = core.get_position_from_hash(hash)
+	local rootdef = core.registered_nodes[celevator.get_node(rootpos).name] or {}
 	local cartype = rootdef._celevator_car_type
 	if cartype and celevator.car.types[cartype] then
-		local rootdir = minetest.dir_to_yaw(minetest.fourdir_to_dir(minetest.get_node(rootpos).param2))
+		local rootdir = core.dir_to_yaw(core.fourdir_to_dir(core.get_node(rootpos).param2))
 		celevator.car.types[cartype].remove(rootpos,rootdir)
 	end
 end)

@@ -1,17 +1,17 @@
 celevator.dbdkiosk = {}
 
 function celevator.dbdkiosk.checkprot(pos,name)
-	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-		minetest.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
-		minetest.record_protection_violation(pos,name)
+	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+		core.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
+		core.record_protection_violation(pos,name)
 		return false
 	end
 	return true
 end
 
 function celevator.dbdkiosk.updatefields(pos)
-	if minetest.get_node(pos).name ~= "celevator:dbdkiosk" then return end
-	local meta = minetest.get_meta(pos)
+	if core.get_node(pos).name ~= "celevator:dbdkiosk" then return end
+	local meta = core.get_meta(pos)
 	local screenstate = meta:get_string("screenstate")
 	if screenstate == "connect" then
 		meta:set_string("formspec","formspec_version[7]"..
@@ -25,8 +25,8 @@ function celevator.dbdkiosk.updatefields(pos)
 		local fs = "formspec_version[7]"
 		fs = fs.."size[8,14]"
 		fs = fs.."label[3,0.5;Please select a floor\\:]"
-		local floornames = minetest.deserialize(meta:get_string("floornames"))
-		local floorsavailable = minetest.deserialize(meta:get_string("floorsavailable"))
+		local floornames = core.deserialize(meta:get_string("floornames"))
+		local floorsavailable = core.deserialize(meta:get_string("floorsavailable"))
 		local showfloors = {}
 		for i=1,#floornames,1 do
 			if floorsavailable[i] then
@@ -38,7 +38,7 @@ function celevator.dbdkiosk.updatefields(pos)
 			local floornum = showfloors[startfloor+i-1]
 			local floorname = floornum and floornames[floornum]
 			if floorname and floornum ~= landing then
-				fs = fs..string.format("button[2,%f;4,1;floor%d;%s]",12-i,floornum,minetest.formspec_escape(floorname))
+				fs = fs..string.format("button[2,%f;4,1;floor%d;%s]",12-i,floornum,core.formspec_escape(floorname))
 			end
 		end
 		if startfloor > 1 then
@@ -67,23 +67,23 @@ end
 
 function celevator.dbdkiosk.handlefields(pos,_,fields,player)
 	local name = player:get_player_name()
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local screenstate = meta:get_string("screenstate")
 	if screenstate == "connect" then
 		if not (fields.save and celevator.dbdkiosk.checkprot(pos,name)) then return end
 		if not (tonumber(fields.carid) and tonumber(fields.landing)) then return end
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",fields.carid)))
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",fields.carid)))
 		if not carinfo then return end
 		if not (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos)) then return end
-		local dmem = minetest.deserialize(minetest.get_meta(carinfo.dispatcherpos):get_string("mem"))
+		local dmem = core.deserialize(core.get_meta(carinfo.dispatcherpos):get_string("mem"))
 		if not dmem then return end
 		local floornames = dmem.params.floornames
 		local floorsavailable = {}
 		for i=1,#floornames,1 do
 			floorsavailable[i] = true
 		end
-		meta:set_string("floornames",minetest.serialize(floornames))
-		meta:set_string("floorsavailable",minetest.serialize(floorsavailable))
+		meta:set_string("floornames",core.serialize(floornames))
+		meta:set_string("floorsavailable",core.serialize(floorsavailable))
 		meta:set_int("screenpage",1)
 		meta:set_string("screenstate","main")
 		meta:set_int("carid",tonumber(fields.carid))
@@ -95,17 +95,17 @@ function celevator.dbdkiosk.handlefields(pos,_,fields,player)
 				local floor = tonumber(string.sub(k,6,-1))
 				if not floor then return end
 				local carid = meta:get_int("carid")
-				local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not carinfo then return end
 				if not (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos)) then return end
-				local dmem = minetest.deserialize(minetest.get_meta(carinfo.dispatcherpos):get_string("mem"))
+				local dmem = core.deserialize(core.get_meta(carinfo.dispatcherpos):get_string("mem"))
 				if dmem then
 					local floornames = dmem.params.floornames
-					meta:set_string("floornames",minetest.serialize(floornames))
+					meta:set_string("floornames",core.serialize(floornames))
 				end
 				local event = {
 					type = "dbdkiosk",
-					source = minetest.hash_node_position(pos),
+					source = core.hash_node_position(pos),
 					player = name,
 					srcfloor = meta:get_int("landing"),
 					destfloor = floor,
@@ -128,7 +128,7 @@ function celevator.dbdkiosk.handlefields(pos,_,fields,player)
 end
 
 function celevator.dbdkiosk.showassignment(pos,assignment)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	if meta:get_string("screenstate") == "main" then
 		local carnames = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"}
 		if carnames[assignment] then
@@ -138,14 +138,14 @@ function celevator.dbdkiosk.showassignment(pos,assignment)
 			meta:set_string("screenstate","error")
 		end
 		celevator.dbdkiosk.updatefields(pos)
-		minetest.after(5,function()
+		core.after(5,function()
 			meta:set_string("screenstate","main")
 			celevator.dbdkiosk.updatefields(pos)
 		end)
 	end
 end
 
-minetest.register_node("celevator:dbdkiosk",{
+core.register_node("celevator:dbdkiosk",{
 	description = "Elevator Destination Entry Kiosk",
 	drawtype = "nodebox",
 	paramtype = "light",
@@ -168,7 +168,7 @@ minetest.register_node("celevator:dbdkiosk",{
 		"celevator_cabinet_sides.png^celevator_dbdkiosk.png",
 	},
 	on_construct = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_string("screenstate","connect")
 		celevator.dbdkiosk.updatefields(pos)
 	end,

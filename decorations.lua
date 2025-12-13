@@ -1,4 +1,4 @@
-minetest.register_node("celevator:buffer_rubber",{
+core.register_node("celevator:buffer_rubber",{
 	description = "Elevator Elastomeric Buffer",
 	groups = {
 		choppy = 1,
@@ -39,7 +39,7 @@ minetest.register_node("celevator:buffer_rubber",{
 	},
 })
 
-minetest.register_node("celevator:buffer_oil",{
+core.register_node("celevator:buffer_oil",{
 	description = "Elevator Oil-Filled Buffer",
 	groups = {
 		choppy = 1,
@@ -65,38 +65,38 @@ minetest.register_node("celevator:buffer_oil",{
 		},
 	},
 	after_place_node = function(pos,placer)
-		local node = minetest.get_node(pos)
+		local node = core.get_node(pos)
 		local toppos = {x=pos.x,y=pos.y + 1,z=pos.z}
-		local topnode = minetest.get_node(toppos)
+		local topnode = core.get_node(toppos)
 		local placername = placer:get_player_name()
 		if topnode.name ~= "air" then
 			if placer:is_player() then
-				minetest.chat_send_player(placername,"Can't place buffer - no room for the top half!")
+				core.chat_send_player(placername,"Can't place buffer - no room for the top half!")
 			end
-			minetest.set_node(pos,{name="air"})
+			core.set_node(pos,{name="air"})
 			return true
 		end
-		if minetest.is_protected(toppos,placername) and not minetest.check_player_privs(placername,{protection_bypass=true}) then
+		if core.is_protected(toppos,placername) and not core.check_player_privs(placername,{protection_bypass=true}) then
 			if placer:is_player() then
-				minetest.chat_send_player(placername,"Can't place buffer - top half is protected!")
-				minetest.record_protection_violation(toppos,placername)
+				core.chat_send_player(placername,"Can't place buffer - top half is protected!")
+				core.record_protection_violation(toppos,placername)
 			end
-			minetest.set_node(pos,{name="air"})
+			core.set_node(pos,{name="air"})
 			return true
 		end
 		node.name = "celevator:buffer_oil_top"
-		minetest.set_node(toppos,node)
+		core.set_node(toppos,node)
 	end,
 	on_destruct = function(pos)
 		pos.y = pos.y + 1
-		local topnode = minetest.get_node(pos)
+		local topnode = core.get_node(pos)
 		if topnode.name == "celevator:buffer_oil_top" then
-			minetest.set_node(pos,{name="air"})
+			core.set_node(pos,{name="air"})
 		end
 	end,
 })
 
-minetest.register_node("celevator:buffer_oil_top",{
+core.register_node("celevator:buffer_oil_top",{
 	description = "Elevator Oil-Filled Buffer (top half - you hacker you!)",
 	groups = {
 		choppy = 1,
@@ -116,7 +116,7 @@ minetest.register_node("celevator:buffer_oil_top",{
 	},
 })
 
-minetest.register_node("celevator:guide_rail",{
+core.register_node("celevator:guide_rail",{
 	description = "Elevator Guide Rail",
 	groups = {
 		choppy = 1,
@@ -140,7 +140,7 @@ minetest.register_node("celevator:guide_rail",{
 	},
 })
 
-minetest.register_node("celevator:guide_rail_bracket",{
+core.register_node("celevator:guide_rail_bracket",{
 	description = "Elevator Guide Rail with Bracket",
 	groups = {
 		choppy = 1,
@@ -169,7 +169,7 @@ minetest.register_node("celevator:guide_rail_bracket",{
 	},
 })
 
-minetest.register_node("celevator:tape",{
+core.register_node("celevator:tape",{
 	description = "Elevator Positioning System Tape",
 	groups = {
 		choppy = 1,
@@ -194,7 +194,7 @@ minetest.register_node("celevator:tape",{
 	},
 })
 
-minetest.register_node("celevator:tape_magnets",{
+core.register_node("celevator:tape_magnets",{
 	description = "Elevator Positioning System Tape with Magnets",
 	groups = {
 		choppy = 1,
@@ -219,7 +219,7 @@ minetest.register_node("celevator:tape_magnets",{
 	},
 })
 
-minetest.register_node("celevator:tape_bracket",{
+core.register_node("celevator:tape_bracket",{
 	description = "Elevator Positioning System Tape with Bracket",
 	groups = {
 		choppy = 1,
@@ -246,14 +246,14 @@ minetest.register_node("celevator:tape_bracket",{
 	},
 })
 
-minetest.register_entity("celevator:tapehead",{
+core.register_entity("celevator:tapehead",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "celevator:tapehead",
 		static_save = false,
 		pointable = false,
-		glow = minetest.LIGHT_MAX,
+		glow = core.LIGHT_MAX,
 	},
 	on_step = function(self)
 		local obj = self.object
@@ -261,9 +261,9 @@ minetest.register_entity("celevator:tapehead",{
 		local pos = obj:get_pos()
 		if not pos then return end
 		local roundpos = vector.round(pos)
-		local backdir = minetest.yaw_to_dir(obj:get_yaw())
+		local backdir = core.yaw_to_dir(obj:get_yaw())
 		local tapepos = vector.add(roundpos,backdir)
-		local tapename = minetest.get_node(tapepos).name
+		local tapename = core.get_node(tapepos).name
 		if tapename ~= "celevator:tape" and tapename ~= "celevator:tape_magnets" and tapename ~= "celevator:tape_bracket" then
 			obj:remove()
 			return
@@ -289,20 +289,20 @@ minetest.register_entity("celevator:tapehead",{
 
 local function spawntapehead(pos)
 	local toppos = vector.add(pos,vector.new(0,1,0))
-	local entitiesnearby = minetest.get_objects_inside_radius(toppos,0.5)
+	local entitiesnearby = core.get_objects_inside_radius(toppos,0.5)
 	for _,i in pairs(entitiesnearby) do
 		if i:get_luaentity() and i:get_luaentity().name == "celevator:tapehead" then
 			return
 		end
 	end
-	local entity = minetest.add_entity(pos,"celevator:tapehead")
-	local fdir = minetest.fourdir_to_dir(minetest.get_node(pos).param2)
+	local entity = core.add_entity(pos,"celevator:tapehead")
+	local fdir = core.fourdir_to_dir(core.get_node(pos).param2)
 	fdir = vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2)
-	entity:set_yaw(minetest.dir_to_yaw(fdir))
+	entity:set_yaw(core.dir_to_yaw(fdir))
 	entity:set_pos(toppos)
 end
 
-minetest.register_abm({
+core.register_abm({
 	label = "Spawn tapeheads",
 	nodenames = {"group:_celevator_car_spawnstapehead"},
 	neighbors = {"celevator:tape","celevator:tape_magnets","celevator:tape_bracket"},
@@ -311,7 +311,7 @@ minetest.register_abm({
 	action = spawntapehead,
 })
 
-minetest.register_node("celevator:tapehead",{
+core.register_node("celevator:tapehead",{
 	description = "Elevator Positioning System Tapehead (off, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -338,7 +338,7 @@ minetest.register_node("celevator:tapehead",{
 	},
 })
 
-minetest.register_node("celevator:tapehead_ulm",{
+core.register_node("celevator:tapehead_ulm",{
 	description = "Elevator Positioning System Tapehead (ULM on, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -365,7 +365,7 @@ minetest.register_node("celevator:tapehead_ulm",{
 	},
 })
 
-minetest.register_node("celevator:tapehead_ulm_dz",{
+core.register_node("celevator:tapehead_ulm_dz",{
 	description = "Elevator Positioning System Tapehead (ULM and DZ on, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -392,7 +392,7 @@ minetest.register_node("celevator:tapehead_ulm_dz",{
 	},
 })
 
-minetest.register_node("celevator:tapehead_ulm_dlm_dz",{
+core.register_node("celevator:tapehead_ulm_dlm_dz",{
 	description = "Elevator Positioning System Tapehead (ULM, DLM, and DZ on, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -419,7 +419,7 @@ minetest.register_node("celevator:tapehead_ulm_dlm_dz",{
 	},
 })
 
-minetest.register_node("celevator:tapehead_dlm_dz",{
+core.register_node("celevator:tapehead_dlm_dz",{
 	description = "Elevator Positioning System Tapehead (DLM and DZ on, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -446,7 +446,7 @@ minetest.register_node("celevator:tapehead_dlm_dz",{
 	},
 })
 
-minetest.register_node("celevator:tapehead_dlm",{
+core.register_node("celevator:tapehead_dlm",{
 	description = "Elevator Positioning System Tapehead (DLM on, you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,

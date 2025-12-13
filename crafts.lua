@@ -1,9 +1,9 @@
-local xcompat_available = minetest.global_exists("xcompat")
+local xcompat_available = core.global_exists("xcompat")
 local m = xcompat_available and table.copy(xcompat.materials) or {}
 
 -- provide required materials if xcompat is missing
 if not xcompat_available then
-	if minetest.get_modpath("default") then
+	if core.get_modpath("default") then
 		m.empty_bucket = "bucket:bucket_empty"
 		m.iron_lump = "default:iron_lump"
 		m.steel_ingot = "default:steel_ingot"
@@ -16,7 +16,7 @@ if not xcompat_available then
 		m.mese = "default:mese"
 		m.pick_steel = "default:pick_steel"
 		m.torch = "default:torch"
-	elseif minetest.get_modpath("mcl_core") then
+	elseif core.get_modpath("mcl_core") then
 		m.empty_bucket = "mcl_buckets:bucket_empty"
 		m.iron_lump = "mcl_raw_ores:raw_iron"
 		m.steel_ingot = "mcl_core:iron_ingot"
@@ -30,20 +30,20 @@ if not xcompat_available then
 		m.pick_steel = "mcl_core:pick_steel"
 		m.torch = "mcl_torches:torch"
 	else
-		minetest.log("warning","[celevator] Unsupported game and xcompat not found, not registering craft recipes")
+		core.log("warning","[celevator] Unsupported game and xcompat not found, not registering craft recipes")
 		return
 	end
-	if minetest.get_modpath("dye") then
+	if core.get_modpath("dye") then
 		m.dye_black = "dye:black"
 		m.dye_blue = "dye:blue"
 		m.dye_red = "dye:red"
 		m.dye_green = "dye:green"
-	elseif minetest.get_modpath("mcl_dyes") then
+	elseif core.get_modpath("mcl_dyes") then
 		m.dye_black = "mcl_dyes:black"
 		m.dye_blue = "mcl_dyes:blue"
 		m.dye_red = "mcl_dyes:red"
 		m.dye_green = "mcl_dyes:green"
-	elseif minetest.get_modpath("mcl_dye") then
+	elseif core.get_modpath("mcl_dye") then
 		m.dye_black = "mcl_dye:black"
 		m.dye_blue = "mcl_dye:blue"
 		m.dye_red = "mcl_dye:red"
@@ -51,7 +51,7 @@ if not xcompat_available then
 	end
 end
 
-if minetest.get_modpath("basic_materials") then
+if core.get_modpath("basic_materials") then
 	m.steel_bar = "basic_materials:steel_bar"
 	m.steel_strip = "basic_materials:steel_strip"
 	m.steel_gear = "basic_materials:gear_steel"
@@ -72,8 +72,8 @@ else
 end
 
 -- vl mesecons has colored lightstone with different naming scheme
-local mc_lightstone = minetest.registered_nodes["mesecons_lightstone:lightstone_blue_off"]
-local vl_lightstone = minetest.registered_nodes["mesecons_lightstone:lightstone_off_blue"]
+local mc_lightstone = core.registered_nodes["mesecons_lightstone:lightstone_blue_off"]
+local vl_lightstone = core.registered_nodes["mesecons_lightstone:lightstone_off_blue"]
 if mc_lightstone then
 	-- real mesecons_lightstone
 	m.lightstone_blue = "mesecons_lightstone:lightstone_blue_off"
@@ -96,36 +96,36 @@ else
 	m.lightstone_extra = m.torch
 end
 
-local mesecons_button = minetest.registered_nodes["mesecons_button:button_off"]
+local mesecons_button = core.registered_nodes["mesecons_button:button_off"]
 if mesecons_button then
 	-- real mesecons
 	m.button = mesecons_button.name
-elseif minetest.get_modpath("mcl_core") then
+elseif core.get_modpath("mcl_core") then
 	m.button = "group:button"
 else
 	m.button = m.mese
 end
 
-if minetest.get_modpath("mesecons_switch") then
+if core.get_modpath("mesecons_switch") then
 	-- real mesecons
 	m.switch = "mesecons_switch:mesecon_switch_off"
-elseif minetest.get_modpath("mcl_lever") then
+elseif core.get_modpath("mcl_lever") then
 	-- mcla
 	m.switch = "mcl_lever:lever_off"
-elseif minetest.get_modpath("mesecons_walllever") then
+elseif core.get_modpath("mesecons_walllever") then
 	-- other mcl
 	m.switch = "mesecons_walllever:wall_lever_off"
 else
 	m.switch = m.mese
 end
 
-if minetest.get_modpath("digilines") then
+if core.get_modpath("digilines") then
 	m.lcd = "digilines:lcd"
 else
 	m.lcd = m.mese
 end
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:buffer_oil",
 	recipe = {
 		{"",m.steel_bar,""},
@@ -134,7 +134,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:buffer_rubber",
 	recipe = {
 		{m.plastic_sheet,m.dye_black,m.plastic_sheet},
@@ -143,7 +143,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:callbutton_both",
 	recipe = {
 		{m.steel_strip,m.lightstone_blue,m.button},
@@ -152,7 +152,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:callbutton_up",
 	recipe = {
 		{m.steel_strip,m.lightstone_blue,m.button},
@@ -161,7 +161,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:callbutton_down",
 	recipe = {
 		{m.steel_strip,"",""},
@@ -170,7 +170,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:car_standard",
 	recipe = {
 		{m.steel_ingot,m.steel_ingot,m.steel_ingot},
@@ -179,7 +179,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:car_glassback",
 	recipe = {
 		{m.steel_ingot,m.steel_ingot,m.steel_ingot},
@@ -188,7 +188,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:car_metal",
 	recipe = {
 		{"",m.steel_strip,""},
@@ -197,7 +197,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:car_metal_glassback",
 	recipe = {
 		{"",m.steel_strip,""},
@@ -206,7 +206,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:controller",
 	recipe = {
 		{m.steel_strip,m.ic,m.steel_strip},
@@ -215,7 +215,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:dispatcher",
 	recipe = {
 		{m.steel_strip,m.ic,m.steel_strip},
@@ -224,7 +224,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:drive",
 	recipe = {
 		{m.silicon,m.steel_strip,m.silicon},
@@ -233,7 +233,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:digilines_io",
 	recipe = {
 		{"","",""},
@@ -242,7 +242,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:mesecons_input_off",
 	recipe = {
 		{"","",""},
@@ -251,7 +251,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:mesecons_output_off",
 	recipe = {
 		{"","",""},
@@ -260,7 +260,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:fs1switch_off",
 	recipe = {
 		{m.steel_strip,m.lightstone_red,m.lightstone_extra},
@@ -269,7 +269,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:guide_rail 10",
 	recipe = {
 		{m.steel_strip,m.steel_ingot,m.steel_strip},
@@ -278,14 +278,14 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:guide_rail_bracket",
 	recipe = {
 		{m.steel_strip,"celevator:guide_rail",m.steel_strip},
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:hwdoor_glass",
 	recipe = {
 		{m.steel_bar,m.steel_bar,m.steel_bar},
@@ -294,7 +294,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:hwdoor_steel",
 	recipe = {
 		{m.steel_bar,m.steel_bar,m.steel_bar},
@@ -303,7 +303,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_up",
 	recipe = {
 		{m.steel_strip,m.lightstone_green},
@@ -312,7 +312,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_down",
 	recipe = {
 		{m.steel_strip,""},
@@ -321,7 +321,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_both",
 	recipe = {
 		{m.steel_strip,m.lightstone_green},
@@ -330,7 +330,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_vertical_up",
 	type = "shapeless",
 	recipe = {
@@ -338,7 +338,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_vertical_down",
 	type = "shapeless",
 	recipe = {
@@ -346,7 +346,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_vertical_both",
 	type = "shapeless",
 	recipe = {
@@ -354,7 +354,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_up",
 	type = "shapeless",
 	recipe = {
@@ -362,7 +362,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_down",
 	type = "shapeless",
 	recipe = {
@@ -370,7 +370,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:lantern_both",
 	type = "shapeless",
 	recipe = {
@@ -378,7 +378,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:machine",
 	recipe = {
 		{m.steel_gear,m.copper_wire,""},
@@ -387,7 +387,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:pi",
 	recipe = {
 		{m.steel_strip,m.lightstone_extra},
@@ -396,7 +396,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:pilantern_up",
 	type = "shapeless",
 	recipe = {
@@ -405,7 +405,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:pilantern_down",
 	type = "shapeless",
 	recipe = {
@@ -414,7 +414,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:pilantern_both",
 	type = "shapeless",
 	recipe = {
@@ -423,7 +423,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:tape 15",
 	recipe = {
 		{m.steel_strip,"",m.steel_strip},
@@ -432,7 +432,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:tape_magnets",
 	type = "shapeless",
 	recipe = {
@@ -442,7 +442,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:tape_bracket",
 	type = "shapeless",
 	recipe = {
@@ -451,7 +451,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:dbdkiosk",
 	recipe = {
 		{m.steel_strip,m.ic,m.glass},
@@ -460,7 +460,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:genericswitch",
 	recipe = {
 		{m.steel_strip,"",""},
@@ -469,7 +469,7 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "celevator:governor",
 	recipe = {
 		{m.steel_strip,m.steel_bar,m.button},

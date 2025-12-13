@@ -328,12 +328,12 @@ celevator.car.register("standard",pieces,vector.new(2,3,3))
 for x=0,1,1 do
 	for y=0,2,1 do
 		for z=0,2,1 do
-			minetest.register_alias(string.format("celevator:car_%d%d%d",x,y,z),string.format("celevator:car_standard_%d%d%d",x,y,z))
+			core.register_alias(string.format("celevator:car_%d%d%d",x,y,z),string.format("celevator:car_standard_%d%d%d",x,y,z))
 		end
 	end
 end
 
-minetest.register_node("celevator:car_standard",{
+core.register_node("celevator:car_standard",{
 	description = "Basic Elevator Car",
 	paramtype2 = "4dir",
 	buildable_to = true,
@@ -343,28 +343,28 @@ minetest.register_node("celevator:car_standard",{
 	tiles = {"celevator_transparent.png"},
 	after_place_node = function(pos,player)
 		if not player:is_player() then
-			minetest.remove_node(pos)
+			core.remove_node(pos)
 			return true
 		end
 		local name = player:get_player_name()
-		local newnode = minetest.get_node(pos)
-		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		local newnode = core.get_node(pos)
+		local facedir = core.dir_to_yaw(core.fourdir_to_dir(newnode.param2))
 		for x=0,1,1 do
 			for y=0,2,1 do
 				for z=0,2,1 do
 					local offsetdesc = string.format("%dm to the right, %dm up, and %dm back",x,y,z)
 					local placeoffset = vector.new(x,y,z)
 					local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-					local replaces = minetest.get_node(placepos).name
-					if not (minetest.registered_nodes[replaces] and minetest.registered_nodes[replaces].buildable_to) then
-						minetest.chat_send_player(name,string.format("Can't place car here - position %s is blocked!",offsetdesc))
-						minetest.remove_node(pos)
+					local replaces = core.get_node(placepos).name
+					if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
+						core.chat_send_player(name,string.format("Can't place car here - position %s is blocked!",offsetdesc))
+						core.remove_node(pos)
 						return true
 					end
-					if minetest.is_protected(placepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-						minetest.chat_send_player(name,string.format("Can't place car here - position %s is protected!",offsetdesc))
-						minetest.record_protection_violation(placepos,name)
-						minetest.remove_node(pos)
+					if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+						core.chat_send_player(name,string.format("Can't place car here - position %s is protected!",offsetdesc))
+						core.record_protection_violation(placepos,name)
+						core.remove_node(pos)
 						return true
 					end
 				end
@@ -376,14 +376,14 @@ minetest.register_node("celevator:car_standard",{
 					local piecename = string.format("celevator:car_standard_%d%d%d",x,y,z)
 					local placeoffset = vector.new(x,y,z)
 					local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-					minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+					core.set_node(placepos,{name=piecename,param2=newnode.param2})
 				end
 			end
 		end
 	end,
 })
 
-minetest.register_alias("celevator:car","celevator:car_standard")
+core.register_alias("celevator:car","celevator:car_standard")
 
 celevator.car.types.standard.remove = function(rootpos,rootdir)
 	local toberemoved = {
@@ -397,9 +397,9 @@ celevator.car.types.standard.remove = function(rootpos,rootdir)
 				local piecename = string.format("celevator:car_standard_%d%d%d",x,y,z)
 				local pieceoffset = vector.new(x,y,z)
 				local piecepos = vector.add(rootpos,vector.rotate_around_axis(pieceoffset,vector.new(0,1,0),rootdir))
-				if minetest.get_node(piecepos).name == piecename then
-					minetest.remove_node(piecepos)
-					local erefs = minetest.get_objects_inside_radius(piecepos,0.5)
+				if core.get_node(piecepos).name == piecename then
+					core.remove_node(piecepos)
+					local erefs = core.get_objects_inside_radius(piecepos,0.5)
 					for _,ref in pairs(erefs) do
 						if ref:get_luaentity() and toberemoved[ref:get_luaentity().name] then
 							ref:remove()
@@ -410,7 +410,7 @@ celevator.car.types.standard.remove = function(rootpos,rootdir)
 		end
 	end
 	local cartopboxpos = vector.add(rootpos,vector.rotate_around_axis(vector.new(0,3,1),vector.new(0,1,0),rootdir))
-	local erefs = minetest.get_objects_inside_radius(cartopboxpos,0.5)
+	local erefs = core.get_objects_inside_radius(cartopboxpos,0.5)
 	for _,ref in pairs(erefs) do
 		if ref:get_luaentity() and toberemoved[ref:get_luaentity().name] then
 			ref:remove()

@@ -236,7 +236,7 @@ local dinputoptions = {
 }
 
 local function updateinputform(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
 	local fs = "formspec_version[7]size[8,8.5]"
 	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
@@ -245,7 +245,7 @@ local function updateinputform(pos)
 	local selected_on = 1
 	local currentid_on = meta:get_string("signal_on")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
-		fs = fs..minetest.formspec_escape(v.desc)..","
+		fs = fs..core.formspec_escape(v.desc)..","
 		if v.id == currentid_on then selected_on = k end
 	end
 	fs = string.sub(fs,1,-2)
@@ -258,7 +258,7 @@ local function updateinputform(pos)
 	local selected_off = 1
 	local currentid_off = meta:get_string("signal_off")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
-		fs = fs..minetest.formspec_escape(v.desc)..","
+		fs = fs..core.formspec_escape(v.desc)..","
 		if v.id == currentid_off then selected_off = k end
 	end
 	fs = string.sub(fs,1,-2)
@@ -271,11 +271,11 @@ end
 
 local function handleinputfields(pos,_,fields,player)
 	if fields.quit and not fields.save then return end
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local name = player:get_player_name()
-	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 		if player:is_player() then
-			minetest.record_protection_violation(pos,name)
+			core.record_protection_violation(pos,name)
 		end
 		return
 	end
@@ -284,24 +284,24 @@ local function handleinputfields(pos,_,fields,player)
 		if not tonumber(fields.carid) then return end
 		meta:set_int("carid",fields.carid)
 		local carid = tonumber(fields.carid)
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 		if dmode then
 			if not carinfo.dispatcherpos then return end
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
-			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
-					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
 			end
 		else
 			if not carinfo.controllerpos then return end
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-					minetest.record_protection_violation(carinfo.controllerpos,name)
+					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
 			end
@@ -342,9 +342,9 @@ local function handleinputfields(pos,_,fields,player)
 		if def_on.id ~= "none" or def_off.id ~= "none" then
 			meta:set_string("formspec","")
 			local momentary = def_off.id == "none"
-			local node = minetest.get_node(pos)
+			local node = core.get_node(pos)
 			node.name = (momentary and "celevator:genericswitch_momentary_off" or "celevator:genericswitch_maintained_off")
-			minetest.swap_node(pos,node)
+			core.swap_node(pos,node)
 		end
 	elseif fields.tab then
 		meta:set_int("dispatcher",tonumber(fields.tab)-1)
@@ -353,10 +353,10 @@ local function handleinputfields(pos,_,fields,player)
 end
 
 local function handleinput(pos,on)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local carid = meta:get_int("carid")
 	if carid == 0 then return end
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 	local dmode = meta:get_int("dispatcher") == 1
 	if dmode then
 		if not carinfo.dispatcherpos then return end
@@ -382,7 +382,7 @@ local function handleinput(pos,on)
 	end
 end
 
-minetest.register_node("celevator:genericswitch",{
+core.register_node("celevator:genericswitch",{
 	description = "Elevator Keyswitch",
 	tiles = {
 		"celevator_cabinet_sides.png",
@@ -405,14 +405,14 @@ minetest.register_node("celevator:genericswitch",{
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_int("floor",1)
 		updateinputform(pos)
 	end,
 	on_receive_fields = handleinputfields,
 })
 
-minetest.register_node("celevator:genericswitch_maintained_off",{
+core.register_node("celevator:genericswitch_maintained_off",{
 	description = "Elevator Keyswitch (maintained, off state - you hacker you!)",
 	tiles = {
 		"celevator_cabinet_sides.png",
@@ -438,18 +438,18 @@ minetest.register_node("celevator:genericswitch_maintained_off",{
 	},
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			minetest.chat_send_player(name,"You don't have a key for this switch.")
-			minetest.record_protection_violation(pos,name)
+		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.record_protection_violation(pos,name)
 			return
 		end
 		node.name = "celevator:genericswitch_maintained_on"
-		minetest.swap_node(pos,node)
+		core.swap_node(pos,node)
 		handleinput(pos,true)
 	end,
 })
 
-minetest.register_node("celevator:genericswitch_maintained_on",{
+core.register_node("celevator:genericswitch_maintained_on",{
 	description = "Elevator Keyswitch (maintained, on state - you hacker you!)",
 	tiles = {
 		"celevator_cabinet_sides.png",
@@ -475,18 +475,18 @@ minetest.register_node("celevator:genericswitch_maintained_on",{
 	},
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			minetest.chat_send_player(name,"You don't have a key for this switch.")
-			minetest.record_protection_violation(pos,name)
+		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.record_protection_violation(pos,name)
 			return
 		end
 		node.name = "celevator:genericswitch_maintained_off"
-		minetest.swap_node(pos,node)
+		core.swap_node(pos,node)
 		handleinput(pos,false)
 	end,
 })
 
-minetest.register_node("celevator:genericswitch_momentary_off",{
+core.register_node("celevator:genericswitch_momentary_off",{
 	description = "Elevator Keyswitch (momentary, off state - you hacker you!)",
 	tiles = {
 		"celevator_cabinet_sides.png",
@@ -512,25 +512,25 @@ minetest.register_node("celevator:genericswitch_momentary_off",{
 	},
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
-		if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-			minetest.chat_send_player(name,"You don't have a key for this switch.")
-			minetest.record_protection_violation(pos,name)
+		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.record_protection_violation(pos,name)
 			return
 		end
 		node.name = "celevator:genericswitch_momentary_on"
-		minetest.swap_node(pos,node)
+		core.swap_node(pos,node)
 		handleinput(pos,true)
-		minetest.after(1,function()
-			local newnode = minetest.get_node(pos)
+		core.after(1,function()
+			local newnode = core.get_node(pos)
 			if newnode.name == "celevator:genericswitch_momentary_on" then
 				newnode.name = "celevator:genericswitch_momentary_off"
-				minetest.swap_node(pos,newnode)
+				core.swap_node(pos,newnode)
 			end
 		end)
 	end,
 })
 
-minetest.register_node("celevator:genericswitch_momentary_on",{
+core.register_node("celevator:genericswitch_momentary_on",{
 	description = "Elevator Keyswitch (momentary, on state - you hacker you!)",
 	tiles = {
 		"celevator_cabinet_sides.png",

@@ -8,7 +8,7 @@ read_globals = {
 	"DIR_DELIM",
 	"vector",
 	"screwdriver",
-	"minetest",
+	"core",
 	"table.copy",
 	"VoxelManip",
 	"laptop",

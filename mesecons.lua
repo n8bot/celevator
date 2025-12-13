@@ -477,7 +477,7 @@ local dinputoptions = {
 }
 
 local function updateoutputform(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
 	local fs = "formspec_version[7]size[8,6.5]"
 	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
@@ -485,7 +485,7 @@ local function updateoutputform(pos)
 	local selected = 1
 	local currentid = meta:get_string("signal")
 	for k,v in ipairs(dmode and doutputoptions or outputoptions) do
-		fs = fs..minetest.formspec_escape(v.desc)..","
+		fs = fs..core.formspec_escape(v.desc)..","
 		if v.id == currentid then selected = k end
 	end
 	fs = string.sub(fs,1,-2)
@@ -498,12 +498,12 @@ local function updateoutputform(pos)
 end
 
 local function handleoutputfields(pos,_,fields,player)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	if fields.quit and not fields.save then return end
 	local name = player:get_player_name()
-	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 		if player:is_player() then
-			minetest.record_protection_violation(pos,name)
+			core.record_protection_violation(pos,name)
 		end
 		return
 	end
@@ -512,24 +512,24 @@ local function handleoutputfields(pos,_,fields,player)
 		if not tonumber(fields.carid) then return end
 		meta:set_int("carid",fields.carid)
 		local carid = tonumber(fields.carid)
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 		if dmode then
 			if not carinfo.dispatcherpos then return end
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
-			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
-					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
 			end
 		else
 			if not carinfo.controllerpos then return end
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-					minetest.record_protection_violation(carinfo.controllerpos,name)
+					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
 			end
@@ -559,7 +559,7 @@ local function handleoutputfields(pos,_,fields,player)
 	end
 end
 
-minetest.register_node("celevator:mesecons_output_off",{
+core.register_node("celevator:mesecons_output_off",{
 	description = "Elevator Mesecons Output",
 	tiles = {
 		"celevator_meseconsoutput_top_off.png",
@@ -584,14 +584,14 @@ minetest.register_node("celevator:mesecons_output_off",{
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_int("floor",1)
 		updateoutputform(pos)
 	end,
 	on_receive_fields = handleoutputfields,
 })
 
-minetest.register_node("celevator:mesecons_output_on",{
+core.register_node("celevator:mesecons_output_on",{
 	description = "Elevator Mesecons Output (on state - you hacker you!)",
 	tiles = {
 		"celevator_meseconsoutput_top_on.png",
@@ -618,25 +618,25 @@ minetest.register_node("celevator:mesecons_output_on",{
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_int("floor",1)
 		updateoutputform(pos)
 	end,
 	on_receive_fields = handleoutputfields,
 })
 
-minetest.register_abm({
+core.register_abm({
 	label = "Update mesecons output",
 	nodenames = {"celevator:mesecons_output_off","celevator:mesecons_output_on",},
 	interval = 1,
 	chance = 1,
 	action = function(pos,node)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		local dmode = meta:get_int("dispatcher") == 1
 		local oldstate = (node.name == "celevator:mesecons_output_on")
 		local carid = meta:get_int("carid")
 		if carid == 0 then return end
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 		if dmode then
 			if not carinfo.dispatcherpos then return end
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
@@ -645,7 +645,7 @@ minetest.register_abm({
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 		end
 		local floor = meta:get_int("floor")
-		local mem = minetest.deserialize(minetest.get_meta(dmode and carinfo.dispatcherpos or carinfo.controllerpos):get_string("mem")) or {}
+		local mem = core.deserialize(core.get_meta(dmode and carinfo.dispatcherpos or carinfo.controllerpos):get_string("mem")) or {}
 		local signal = meta:get_string("signal")
 		local def
 		for _,v in ipairs(dmode and doutputoptions or outputoptions) do
@@ -658,7 +658,7 @@ minetest.register_abm({
 		local newstate = def.func(mem,floor)
 		if newstate ~= oldstate then
 			node.name = (newstate and "celevator:mesecons_output_on" or "celevator:mesecons_output_off")
-			minetest.swap_node(pos,node)
+			core.swap_node(pos,node)
 			if newstate then
 				mesecon.receptor_on(pos,iorules)
 			else
@@ -669,7 +669,7 @@ minetest.register_abm({
 })
 
 local function updateinputform(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
 	local fs = "formspec_version[7]size[8,6.5]"
 	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
@@ -677,7 +677,7 @@ local function updateinputform(pos)
 	local selected = 1
 	local currentid = meta:get_string("signal")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
-		fs = fs..minetest.formspec_escape(v.desc)..","
+		fs = fs..core.formspec_escape(v.desc)..","
 		if v.id == currentid then selected = k end
 	end
 	fs = string.sub(fs,1,-2)
@@ -691,11 +691,11 @@ end
 
 local function handleinputfields(pos,_,fields,player)
 	if fields.quit and not fields.save then return end
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local name = player:get_player_name()
-	if minetest.is_protected(pos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 		if player:is_player() then
-			minetest.record_protection_violation(pos,name)
+			core.record_protection_violation(pos,name)
 		end
 		return
 	end
@@ -704,24 +704,24 @@ local function handleinputfields(pos,_,fields,player)
 		if not tonumber(fields.carid) then return end
 		meta:set_int("carid",fields.carid)
 		local carid = tonumber(fields.carid)
-		local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 		if dmode then
 			if not carinfo.dispatcherpos then return end
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
-			if minetest.is_protected(carinfo.dispatcherpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
-					minetest.record_protection_violation(carinfo.dispatcherpos,name)
+					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
 			end
 		else
 			if not carinfo.controllerpos then return end
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
-			if minetest.is_protected(carinfo.controllerpos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
+			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					minetest.chat_send_player(name,"Can't connect to a controller you don't have access to.")
-					minetest.record_protection_violation(carinfo.controllerpos,name)
+					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
 			end
@@ -752,10 +752,10 @@ local function handleinputfields(pos,_,fields,player)
 end
 
 local function handleinput(pos,on)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local carid = meta:get_int("carid")
 	if carid == 0 then return end
-	local carinfo = minetest.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid))) or {}
 	local dmode = meta:get_int("dispatcher") == 1
 	if dmode then
 		if not carinfo.dispatcherpos then return end
@@ -789,7 +789,7 @@ local function handleinput(pos,on)
 	end
 end
 
-minetest.register_node("celevator:mesecons_input_off",{
+core.register_node("celevator:mesecons_input_off",{
 	description = "Elevator Mesecons Input",
 	tiles = {
 		"celevator_meseconsinput_top_off.png",
@@ -812,20 +812,20 @@ minetest.register_node("celevator:mesecons_input_off",{
 			rules = iorules,
 			action_on = function(pos,node)
 				node.name = "celevator:mesecons_input_on"
-				minetest.swap_node(pos,node)
+				core.swap_node(pos,node)
 				handleinput(pos,true)
 			end,
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_int("floor",1)
 		updateinputform(pos)
 	end,
 	on_receive_fields = handleinputfields,
 })
 
-minetest.register_node("celevator:mesecons_input_on",{
+core.register_node("celevator:mesecons_input_on",{
 	description = "Elevator Mesecons Input (on state - you hacker you!)",
 	tiles = {
 		"celevator_meseconsinput_top_on.png",
@@ -850,13 +850,13 @@ minetest.register_node("celevator:mesecons_input_on",{
 			rules = iorules,
 			action_off = function(pos,node)
 				node.name = "celevator:mesecons_input_off"
-				minetest.swap_node(pos,node)
+				core.swap_node(pos,node)
 				handleinput(pos,false)
 			end,
 		},
 	},
 	after_place_node = function(pos)
-		local meta = minetest.get_meta(pos)
+		local meta = core.get_meta(pos)
 		meta:set_int("floor",1)
 		updateinputform(pos)
 	end,

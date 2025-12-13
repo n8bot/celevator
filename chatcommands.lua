@@ -1,4 +1,4 @@
-minetest.register_chatcommand("carcall",{
+core.register_chatcommand("carcall",{
 	description = "Places a car call at the specified landing on the specified elevator",
 	params = "<car ID> <landing number>",
 	func = function(name,param)
@@ -9,7 +9,7 @@ minetest.register_chatcommand("carcall",{
 		if not (landing and tonumber(landing)) then
 			return false,"Invalid landing number"
 		end
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not (carinfo and carinfo.controllerpos) then
 			return false,"No such car or car info is missing"
 		end
@@ -19,8 +19,8 @@ minetest.register_chatcommand("carcall",{
 		if celevator.get_meta(carinfo.controllerpos):get_int("carid") ~= tonumber(carid) then
 			return false,"Controller found but with wrong ID"
 		end
-		if minetest.is_protected(carinfo.controllerpos,name) then
-			minetest.record_protection_violation(carinfo.controllerpos,name)
+		if core.is_protected(carinfo.controllerpos,name) then
+			core.record_protection_violation(carinfo.controllerpos,name)
 			return false,"Controller is protected"
 		end
 		celevator.controller.run(carinfo.controllerpos,{
@@ -32,7 +32,7 @@ minetest.register_chatcommand("carcall",{
 	end,
 })
 
-minetest.register_chatcommand("upcall",{
+core.register_chatcommand("upcall",{
 	description = "Places an up hall call at the specified landing on the specified elevator or dispatcher",
 	params = "<car ID> <landing number>",
 	func = function(name,param)
@@ -43,7 +43,7 @@ minetest.register_chatcommand("upcall",{
 		if not (landing and tonumber(landing)) then
 			return false,"Invalid landing number"
 		end
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not (carinfo and (carinfo.controllerpos or carinfo.dispatcherpos)) then
 			return false,"No such car or car info is missing"
 		end
@@ -54,8 +54,8 @@ minetest.register_chatcommand("upcall",{
 			if celevator.get_meta(carinfo.controllerpos):get_int("carid") ~= tonumber(carid) then
 				return false,"Controller found but with wrong ID"
 			end
-			if minetest.is_protected(carinfo.controllerpos,name) then
-				minetest.record_protection_violation(carinfo.controllerpos,name)
+			if core.is_protected(carinfo.controllerpos,name) then
+				core.record_protection_violation(carinfo.controllerpos,name)
 				return false,"Controller is protected"
 			end
 			--One of these will work depending on the mode, the other will be ignored
@@ -77,8 +77,8 @@ minetest.register_chatcommand("upcall",{
 			if celevator.get_meta(carinfo.dispatcherpos):get_int("carid") ~= tonumber(carid) then
 				return false,"Dispatcher found but with wrong ID"
 			end
-			if minetest.is_protected(carinfo.dispatcherpos,name) then
-				minetest.record_protection_violation(carinfo.dispatcherpos,name)
+			if core.is_protected(carinfo.dispatcherpos,name) then
+				core.record_protection_violation(carinfo.dispatcherpos,name)
 				return false,"Dispatcher is protected"
 			end
 			celevator.dispatcher.run(carinfo.dispatcherpos,{
@@ -91,7 +91,7 @@ minetest.register_chatcommand("upcall",{
 	end,
 })
 
-minetest.register_chatcommand("downcall",{
+core.register_chatcommand("downcall",{
 	description = "Places a down hall call at the specified landing on the specified elevator or dispatcher",
 	params = "<car ID> <landing number>",
 	func = function(name,param)
@@ -102,7 +102,7 @@ minetest.register_chatcommand("downcall",{
 		if not (landing and tonumber(landing)) then
 			return false,"Invalid landing number"
 		end
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..carid))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not (carinfo and (carinfo.controllerpos or carinfo.dispatcherpos)) then
 			return false,"No such car or car info is missing"
 		end
@@ -113,8 +113,8 @@ minetest.register_chatcommand("downcall",{
 			if celevator.get_meta(carinfo.controllerpos):get_int("carid") ~= tonumber(carid) then
 				return false,"Controller found but with wrong ID"
 			end
-			if minetest.is_protected(carinfo.controllerpos,name) then
-				minetest.record_protection_violation(carinfo.controllerpos,name)
+			if core.is_protected(carinfo.controllerpos,name) then
+				core.record_protection_violation(carinfo.controllerpos,name)
 				return false,"Controller is protected"
 			end
 			--One of these will work depending on the mode, the other will be ignored
@@ -136,8 +136,8 @@ minetest.register_chatcommand("downcall",{
 			if celevator.get_meta(carinfo.dispatcherpos):get_int("carid") ~= tonumber(carid) then
 				return false,"Dispatcher found but with wrong ID"
 			end
-			if minetest.is_protected(carinfo.dispatcherpos,name) then
-				minetest.record_protection_violation(carinfo.dispatcherpos,name)
+			if core.is_protected(carinfo.dispatcherpos,name) then
+				core.record_protection_violation(carinfo.dispatcherpos,name)
 				return false,"Dispatcher is protected"
 			end
 			celevator.dispatcher.run(carinfo.dispatcherpos,{
@@ -150,14 +150,14 @@ minetest.register_chatcommand("downcall",{
 	end,
 })
 
-minetest.register_chatcommand("elevstatus",{
+core.register_chatcommand("elevstatus",{
 	description = "View the status of the specified elevator",
 	params = "<car ID>",
 	func = function(_,param)
 		if not (param and tonumber(param)) then
 			return false,"Invalid car ID"
 		end
-		local carinfo = minetest.deserialize(celevator.storage:get_string("car"..param))
+		local carinfo = core.deserialize(celevator.storage:get_string("car"..param))
 		if not (carinfo and carinfo.controllerpos) then
 			return false,"No such car or car info is missing"
 		end
@@ -168,7 +168,7 @@ minetest.register_chatcommand("elevstatus",{
 		if controllermeta:get_int("carid") ~= tonumber(param) then
 			return false,"Controller found but with wrong ID"
 		end
-		local mem = minetest.deserialize(controllermeta:get_string("mem"))
+		local mem = core.deserialize(controllermeta:get_string("mem"))
 		if not mem then
 			return false,"Failed to load controller memory"
 		end

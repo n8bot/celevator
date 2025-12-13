@@ -9,12 +9,12 @@ celevator.doors.hwdoor_step_enabled = true
 celevator.doors.cardoor_step_enabled = true
 
 local function placesill(pos,node)
-	local erefs = minetest.get_objects_inside_radius(pos,0.5)
+	local erefs = core.get_objects_inside_radius(pos,0.5)
 	for _,ref in pairs(erefs) do
 		if ref:get_luaentity() and ref:get_luaentity().name == "celevator:door_sill" then return end
 	end
-	local yaw = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
-	local entity = minetest.add_entity(pos,"celevator:door_sill")
+	local yaw = core.dir_to_yaw(core.fourdir_to_dir(node.param2))
+	local entity = core.add_entity(pos,"celevator:door_sill")
 	if node.name == "celevator:hwdoor_slow_glass_bottom" or node.name == "celevator:hwdoor_slow_steel_bottom" then
 		entity:set_properties({
 			wield_item = "celevator:door_sill_double",
@@ -23,7 +23,7 @@ local function placesill(pos,node)
 	entity:set_yaw(yaw)
 end
 
-minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
+core.register_node("celevator:hwdoor_fast_glass_bottom",{
 	description = "Glass Hoistway Door (fast, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -50,11 +50,11 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 		},
 	},
 	after_dig_node = function(pos,node)
-		local erefs = minetest.get_objects_inside_radius(pos,1.5)
+		local erefs = core.get_objects_inside_radius(pos,1.5)
 		for _,ref in pairs(erefs) do
 			if ref:get_luaentity() and ref:get_luaentity().name == "celevator:door_sill" then ref:remove() end
 		end
-		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+		local facedir = core.dir_to_yaw(core.fourdir_to_dir(node.param2))
 		local xnames = {
 			[0] = "fast",
 			[1] = "slow",
@@ -69,13 +69,13 @@ minetest.register_node("celevator:hwdoor_fast_glass_bottom",{
 				local piecename = string.format("celevator:hwdoor_%s_glass_%s",xnames[x],ynames[y])
 				local pieceoffset = vector.new(x,y,0)
 				local piecepos = vector.add(pos,vector.rotate_around_axis(pieceoffset,vector.new(0,1,0),facedir))
-				if minetest.get_node(piecepos).name == piecename then minetest.remove_node(piecepos) end
+				if core.get_node(piecepos).name == piecename then core.remove_node(piecepos) end
 			end
 		end
 	end,
 })
 
-minetest.register_node("celevator:hwdoor_fast_glass_middle",{
+core.register_node("celevator:hwdoor_fast_glass_middle",{
 	description = "Glass Hoistway Door (fast, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -101,7 +101,7 @@ minetest.register_node("celevator:hwdoor_fast_glass_middle",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_fast_glass_top",{
+core.register_node("celevator:hwdoor_fast_glass_top",{
 	description = "Glass Hoistway Door (fast, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
@@ -127,7 +127,7 @@ minetest.register_node("celevator:hwdoor_fast_glass_top",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_glass_bottom",{
+core.register_node("celevator:hwdoor_slow_glass_bottom",{
 	description = "Glass Hoistway Door (slow, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -153,7 +153,7 @@ minetest.register_node("celevator:hwdoor_slow_glass_bottom",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_glass_middle",{
+core.register_node("celevator:hwdoor_slow_glass_middle",{
 	description = "Glass Hoistway Door (slow, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -179,7 +179,7 @@ minetest.register_node("celevator:hwdoor_slow_glass_middle",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_glass_top",{
+core.register_node("celevator:hwdoor_slow_glass_top",{
 	description = "Glass Hoistway Door (slow, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
@@ -205,7 +205,7 @@ minetest.register_node("celevator:hwdoor_slow_glass_top",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_fast_steel_bottom",{
+core.register_node("celevator:hwdoor_fast_steel_bottom",{
 	description = "Steel Hoistway Door (fast, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -231,11 +231,11 @@ minetest.register_node("celevator:hwdoor_fast_steel_bottom",{
 		},
 	},
 	after_dig_node = function(pos,node)
-		local erefs = minetest.get_objects_inside_radius(pos,1.5)
+		local erefs = core.get_objects_inside_radius(pos,1.5)
 		for _,ref in pairs(erefs) do
 			if ref:get_luaentity() and ref:get_luaentity().name == "celevator:door_sill" then ref:remove() end
 		end
-		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(node.param2))
+		local facedir = core.dir_to_yaw(core.fourdir_to_dir(node.param2))
 		local xnames = {
 			[0] = "fast",
 			[1] = "slow",
@@ -250,13 +250,13 @@ minetest.register_node("celevator:hwdoor_fast_steel_bottom",{
 				local piecename = string.format("celevator:hwdoor_%s_steel_%s",xnames[x],ynames[y])
 				local pieceoffset = vector.new(x,y,0)
 				local piecepos = vector.add(pos,vector.rotate_around_axis(pieceoffset,vector.new(0,1,0),facedir))
-				if minetest.get_node(piecepos).name == piecename then minetest.remove_node(piecepos) end
+				if core.get_node(piecepos).name == piecename then core.remove_node(piecepos) end
 			end
 		end
 	end,
 })
 
-minetest.register_node("celevator:hwdoor_fast_steel_middle",{
+core.register_node("celevator:hwdoor_fast_steel_middle",{
 	description = "Steel Hoistway Door (fast, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -281,7 +281,7 @@ minetest.register_node("celevator:hwdoor_fast_steel_middle",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_fast_steel_top",{
+core.register_node("celevator:hwdoor_fast_steel_top",{
 	description = "Steel Hoistway Door (fast, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
@@ -306,7 +306,7 @@ minetest.register_node("celevator:hwdoor_fast_steel_top",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_steel_bottom",{
+core.register_node("celevator:hwdoor_slow_steel_bottom",{
 	description = "Steel Hoistway Door (slow, bottom - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -331,7 +331,7 @@ minetest.register_node("celevator:hwdoor_slow_steel_bottom",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_steel_middle",{
+core.register_node("celevator:hwdoor_slow_steel_middle",{
 	description = "Steel Hoistway Door (slow, middle - you hacker you!)",
 	tiles = {
 		"celevator_transparent.png",
@@ -356,7 +356,7 @@ minetest.register_node("celevator:hwdoor_slow_steel_middle",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_slow_steel_top",{
+core.register_node("celevator:hwdoor_slow_steel_top",{
 	description = "Steel Hoistway Door (slow, top - you hacker you!)",
 	tiles = {
 		"celevator_door_glass_edge.png",
@@ -381,7 +381,7 @@ minetest.register_node("celevator:hwdoor_slow_steel_top",{
 	},
 })
 
-minetest.register_node("celevator:hwdoor_placeholder",{
+core.register_node("celevator:hwdoor_placeholder",{
 	description = "Hoistway Door Open-State Placeholder (you hacker you!)",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -407,7 +407,7 @@ minetest.register_node("celevator:hwdoor_placeholder",{
 	},
 })
 
-minetest.register_entity("celevator:hwdoor_moving",{
+core.register_entity("celevator:hwdoor_moving",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.667,0.667,0.667),
@@ -419,11 +419,11 @@ minetest.register_entity("celevator:hwdoor_moving",{
 
 function celevator.doors.hwopen(pos,drivepos)
 	celevator.doors.hwdoor_step_enabled = true
-	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
-	local hash = minetest.hash_node_position(pos)
+	local hwdoors_moving = core.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
+	local hash = core.hash_node_position(pos)
 	if not hwdoors_moving[hash] then
 		local param2 = celevator.get_node(pos).param2
-		local fdir = minetest.fourdir_to_dir(param2)
+		local fdir = core.fourdir_to_dir(param2)
 		local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
 		local positions = {
 			pos,
@@ -453,54 +453,54 @@ function celevator.doors.hwopen(pos,drivepos)
 			doortype = doortype,
 		}
 		celevator.doors.erefs[hash] = erefs
-		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
-		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=param2})
+		celevator.storage:set_string("hwdoors_moving",core.serialize(hwdoors_moving))
+		core.set_node(pos,{name="celevator:hwdoor_placeholder",param2=param2})
 		local pmeta = celevator.get_meta(pos)
-		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
+		pmeta:set_string("data",core.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 		pmeta:set_string("doortype",doortype)
 		local carpos = vector.add(pos,fdir)
-		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		local carndef = core.registered_nodes[celevator.get_node(carpos).name] or {}
 		if carndef._root then
 			celevator.doors.caropen(carpos)
 		end
 	elseif hwdoors_moving[hash].direction == "close" then
 		hwdoors_moving[hash].direction = "open"
 		hwdoors_moving[hash].time = math.pi-hwdoors_moving[hash].time
-		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
-		local fdir = minetest.fourdir_to_dir(hwdoors_moving[hash].param2)
+		celevator.storage:set_string("hwdoors_moving",core.serialize(hwdoors_moving))
+		local fdir = core.fourdir_to_dir(hwdoors_moving[hash].param2)
 		local carpos = vector.add(pos,fdir)
-		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		local carndef = core.registered_nodes[celevator.get_node(carpos).name] or {}
 		if carndef._root then
 			celevator.doors.caropen(carpos)
 		end
-		minetest.set_node(pos,{name="celevator:hwdoor_placeholder",param2=hwdoors_moving[hash].param2})
+		core.set_node(pos,{name="celevator:hwdoor_placeholder",param2=hwdoors_moving[hash].param2})
 		local pmeta = celevator.get_meta(pos)
-		pmeta:set_string("data",minetest.serialize(hwdoors_moving[hash]))
+		pmeta:set_string("data",core.serialize(hwdoors_moving[hash]))
 		pmeta:set_string("state","opening")
 	end
 end
 
 function celevator.doors.hwclose(pos,drivepos,nudge)
 	celevator.doors.hwdoor_step_enabled = true
-	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
-	local hash = minetest.hash_node_position(pos)
+	local hwdoors_moving = core.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
+	local hash = core.hash_node_position(pos)
 	if hwdoors_moving[hash] then
 		return
 	end
 	local pmeta = celevator.get_meta(pos)
 	local state = pmeta:get_string("state")
 	if state ~= "open" then return end
-	local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
+	local fdir = core.fourdir_to_dir(celevator.get_node(pos).param2)
 	local carpos = vector.add(pos,fdir)
-	local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+	local carndef = core.registered_nodes[celevator.get_node(carpos).name] or {}
 	if carndef._root then
 		celevator.doors.carclose(carpos,nudge)
 	end
-	local data = minetest.deserialize(pmeta:get_string("data"))
+	local data = core.deserialize(pmeta:get_string("data"))
 	if not data then return end
 	for i=1,6,1 do
-		minetest.set_node(data.positions[i],data.nodes[i])
+		core.set_node(data.positions[i],data.nodes[i])
 	end
 	data.direction = "close"
 	data.time = 0
@@ -517,12 +517,12 @@ function celevator.doors.hwclose(pos,drivepos,nudge)
 	end
 	celevator.doors.erefs[hash] = erefs
 	hwdoors_moving[hash] = data
-	celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
+	celevator.storage:set_string("hwdoors_moving",core.serialize(hwdoors_moving))
 end
 
 function celevator.doors.hwstep(dtime)
 	if not celevator.doors.hwdoor_step_enabled then return end
-	local hwdoors_moving = minetest.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
+	local hwdoors_moving = core.deserialize(celevator.storage:get_string("hwdoors_moving")) or {}
 	local save = false
 	for hash,data in pairs(hwdoors_moving) do
 		save = true
@@ -585,7 +585,7 @@ function celevator.doors.hwstep(dtime)
 				hwdoors_moving[hash] = nil
 			elseif data.direction == "close" then
 				for i=1,6,1 do
-					minetest.set_node(data.positions[i],data.nodes[i])
+					core.set_node(data.positions[i],data.nodes[i])
 				end
 				celevator.get_meta(data.positions[1]):set_string("state","closed")
 				if hwdoors_moving[hash].drivepos then celevator.get_meta(hwdoors_moving[hash].drivepos):set_string("doorstate","closed") end
@@ -594,16 +594,16 @@ function celevator.doors.hwstep(dtime)
 		end
 	end
 	if save then
-		celevator.storage:set_string("hwdoors_moving",minetest.serialize(hwdoors_moving))
+		celevator.storage:set_string("hwdoors_moving",core.serialize(hwdoors_moving))
 	end
 	celevator.doors.hwdoor_step_enabled = save
 end
 
-minetest.register_globalstep(celevator.doors.hwstep)
+core.register_globalstep(celevator.doors.hwstep)
 
 function celevator.doors.carstep(dtime)
 	if not celevator.doors.cardoor_step_enabled then return end
-	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local cardoors_moving = core.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
 	local save = false
 	for hash,data in pairs(cardoors_moving) do
 		save = true
@@ -651,9 +651,9 @@ function celevator.doors.carstep(dtime)
 					local carmeta = celevator.get_meta(data.positions[1])
 					carmeta:set_string("doorstate","closed")
 					cardoors_moving[hash] = nil
-					local cartimer = minetest.get_node_timer(data.positions[1])
+					local cartimer = core.get_node_timer(data.positions[1])
 					cartimer:stop()
-					local fdir = minetest.facedir_to_dir(minetest.get_node(data.positions[1]).param2)
+					local fdir = core.facedir_to_dir(core.get_node(data.positions[1]).param2)
 					local doortype = carmeta:get_string("doortype")
 					if (not doortype) or doortype == "" then doortype = "glass" end
 					celevator.doors.spawncardoors(data.positions[1],fdir,doortype)
@@ -669,7 +669,7 @@ function celevator.doors.carstep(dtime)
 				celevator.get_meta(data.positions[1]):set_string("doorstate","open")
 				cardoors_moving[hash] = nil
 			elseif data.direction == "close" then
-				local fdir = minetest.fourdir_to_dir(celevator.get_node(data.positions[1]).param2)
+				local fdir = core.fourdir_to_dir(celevator.get_node(data.positions[1]).param2)
 				celevator.doors.spawncardoors(data.positions[1],vector.rotate_around_axis(fdir,vector.new(0,1,0),math.pi))
 				celevator.get_meta(data.positions[1]):set_string("doorstate","closed")
 				cardoors_moving[hash] = nil
@@ -677,21 +677,21 @@ function celevator.doors.carstep(dtime)
 		end
 	end
 	if save then
-		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+		celevator.storage:set_string("cardoors_moving",core.serialize(cardoors_moving))
 	end
 	celevator.doors.cardoor_step_enabled = save
 end
 
-minetest.register_globalstep(celevator.doors.carstep)
+core.register_globalstep(celevator.doors.carstep)
 
-minetest.register_entity("celevator:car_door",{
+core.register_entity("celevator:car_door",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "default:dirt",
 		static_save = false,
 		pointable = false,
-		glow = minetest.LIGHT_MAX,
+		glow = core.LIGHT_MAX,
 	},
 })
 
@@ -700,20 +700,20 @@ function celevator.doors.spawncardoors(pos,dir,doortype,replace)
 	local refs = {}
 	for x=2,1,-1 do
 		for y=1,3,1 do
-			local yaw = minetest.dir_to_yaw(dir)+math.pi
+			local yaw = core.dir_to_yaw(dir)+math.pi
 			local doorpos = vector.add(pos,vector.rotate_around_axis(vector.new(x-2,y-1,0),vector.new(0,1,0),yaw))
 			local xnames = {"slow","fast"}
 			local ynames = {"bottom","middle","top"}
 			local nname = string.format("celevator:hwdoor_%s_%s_%s",xnames[x],doortype,ynames[y])
 			if replace then
-				local oldrefs = minetest.get_objects_inside_radius(doorpos,0.1)
+				local oldrefs = core.get_objects_inside_radius(doorpos,0.1)
 				for _,i in pairs(oldrefs) do
 					if i:get_luaentity() and i:get_luaentity().name == "celevator:car_door" then
 						i:remove()
 					end
 				end
 			end
-			local ref = minetest.add_entity(doorpos,"celevator:car_door")
+			local ref = core.add_entity(doorpos,"celevator:car_door")
 			ref:set_yaw(yaw)
 			ref:set_properties({
 				wield_item = nname,
@@ -726,12 +726,12 @@ end
 
 function celevator.doors.caropen(pos)
 	celevator.doors.cardoor_step_enabled = true
-	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
-	local hash = minetest.hash_node_position(pos)
-	local cartimer = minetest.get_node_timer(pos)
+	local cardoors_moving = core.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local hash = core.hash_node_position(pos)
+	local cartimer = core.get_node_timer(pos)
 	cartimer:start(0.25)
 	if not cardoors_moving[hash] then
-		local fdir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
+		local fdir = core.fourdir_to_dir(celevator.get_node(pos).param2)
 		local otherpanel = vector.add(pos,vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2))
 		local positions = {
 			pos,
@@ -743,7 +743,7 @@ function celevator.doors.caropen(pos)
 		}
 		local erefs = {}
 		for _,dpos in ipairs(positions) do
-			local objs = minetest.get_objects_inside_radius(dpos,0.5)
+			local objs = core.get_objects_inside_radius(dpos,0.5)
 			for _,obj in pairs(objs) do
 				if obj:get_luaentity() and obj:get_luaentity().name == "celevator:car_door" then
 					table.insert(erefs,obj)
@@ -756,26 +756,26 @@ function celevator.doors.caropen(pos)
 			time = 0,
 			opendir = vector.rotate_around_axis(fdir,vector.new(0,1,0),-math.pi/2),
 		}
-		minetest.sound_play("celevator_door_open",{
+		core.sound_play("celevator_door_open",{
 			pos = pos,
 			gain = 0.4,
 			max_hear_distance = 10
 		},true)
 		celevator.doors.erefs[hash] = erefs
-		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+		celevator.storage:set_string("cardoors_moving",core.serialize(cardoors_moving))
 		local meta = celevator.get_meta(pos)
-		meta:set_string("doordata",minetest.serialize(cardoors_moving[hash]))
+		meta:set_string("doordata",core.serialize(cardoors_moving[hash]))
 		meta:set_string("doorstate","opening")
 	elseif cardoors_moving[hash].direction == "close" then
 		if cardoors_moving[hash].soundhandle then
-			minetest.sound_stop(cardoors_moving[hash].soundhandle)
+			core.sound_stop(cardoors_moving[hash].soundhandle)
 		end
-		minetest.sound_play("celevator_door_reverse",{
+		core.sound_play("celevator_door_reverse",{
 			pos = pos,
 			gain = 1,
 			max_hear_distance = 10
 		},true)
-		minetest.sound_play("celevator_door_open",{
+		core.sound_play("celevator_door_open",{
 			pos = pos,
 			gain = 0.4,
 			start_time = math.max(0,2.75-cardoors_moving[hash].time),
@@ -783,23 +783,23 @@ function celevator.doors.caropen(pos)
 		},true)
 		cardoors_moving[hash].direction = "open"
 		cardoors_moving[hash].time = math.pi-cardoors_moving[hash].time
-		celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+		celevator.storage:set_string("cardoors_moving",core.serialize(cardoors_moving))
 	end
 end
 
 function celevator.doors.carclose(pos,nudge)
 	celevator.doors.cardoor_step_enabled = true
-	local cardoors_moving = minetest.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
-	local hash = minetest.hash_node_position(pos)
+	local cardoors_moving = core.deserialize(celevator.storage:get_string("cardoors_moving")) or {}
+	local hash = core.hash_node_position(pos)
 	if cardoors_moving[hash] then
 		return
 	end
 	local meta = celevator.get_meta(pos)
 	local state = meta:get_string("doorstate")
 	if state ~= "open" then return end
-	local data = minetest.deserialize(meta:get_string("doordata"))
+	local data = core.deserialize(meta:get_string("doordata"))
 	if not data then return end
-	local dir = minetest.fourdir_to_dir(celevator.get_node(pos).param2)
+	local dir = core.fourdir_to_dir(celevator.get_node(pos).param2)
 	data.direction = "close"
 	data.time = 0
 	local doortype = meta:get_string("doortype")
@@ -815,13 +815,13 @@ function celevator.doors.carclose(pos,nudge)
 	end
 	celevator.doors.erefs[hash] = erefs
 	if nudge then
-		data.soundhandle = minetest.sound_play("celevator_nudge",{
+		data.soundhandle = core.sound_play("celevator_nudge",{
 			pos = pos,
 			gain = 0.75,
 			max_hear_distance = 10
 		})
 	else
-		data.soundhandle = minetest.sound_play("celevator_door_close",{
+		data.soundhandle = core.sound_play("celevator_door_close",{
 			pos = pos,
 			gain = 0.3,
 			max_hear_distance = 10
@@ -829,31 +829,31 @@ function celevator.doors.carclose(pos,nudge)
 	end
 	data.nudging = nudge
 	cardoors_moving[hash] = data
-	celevator.storage:set_string("cardoors_moving",minetest.serialize(cardoors_moving))
+	celevator.storage:set_string("cardoors_moving",core.serialize(cardoors_moving))
 end
 
-minetest.register_abm({
+core.register_abm({
 	label = "Respawn car doors",
 	nodenames = {"group:_celevator_car_root"},
 	interval = 1,
 	chance = 1,
 	action = function(pos)
-		if minetest.get_meta(pos):get_string("doorstate") ~= "closed" then return end
-		local entitiesnearby = minetest.get_objects_inside_radius(pos,0.5)
+		if core.get_meta(pos):get_string("doorstate") ~= "closed" then return end
+		local entitiesnearby = core.get_objects_inside_radius(pos,0.5)
 		for _,i in pairs(entitiesnearby) do
 			if i:get_luaentity() and i:get_luaentity().name == "celevator:car_door" then
 				return
 			end
 		end
-		local fdir = minetest.facedir_to_dir(minetest.get_node(pos).param2)
-		local carmeta = minetest.get_meta(pos)
+		local fdir = core.facedir_to_dir(core.get_node(pos).param2)
+		local carmeta = core.get_meta(pos)
 		local doortype = carmeta:get_string("doortype")
 		if (not doortype) or doortype == "" then doortype = "glass" end
 		celevator.doors.spawncardoors(pos,fdir,doortype)
 	end,
 })
 
-minetest.register_node("celevator:hwdoor_glass",{
+core.register_node("celevator:hwdoor_glass",{
 	description = "Glass Elevator Hoistway Door",
 	paramtype2 = "4dir",
 	buildable_to = true,
@@ -863,12 +863,12 @@ minetest.register_node("celevator:hwdoor_glass",{
 	tiles = {"celevator_transparent.png"},
 	after_place_node = function(pos,player)
 		if not player:is_player() then
-			minetest.remove_node(pos)
+			core.remove_node(pos)
 			return true
 		end
 		local name = player:get_player_name()
-		local newnode = minetest.get_node(pos)
-		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		local newnode = core.get_node(pos)
+		local facedir = core.dir_to_yaw(core.fourdir_to_dir(newnode.param2))
 		local xnames = {
 			[0] = "fast",
 			[1] = "slow",
@@ -883,16 +883,16 @@ minetest.register_node("celevator:hwdoor_glass",{
 				local offsetdesc = string.format("%dm to the right and %dm up",x,y)
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-				local replaces = minetest.get_node(placepos).name
-				if not (minetest.registered_nodes[replaces] and minetest.registered_nodes[replaces].buildable_to) then
-					minetest.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
-					minetest.remove_node(pos)
+				local replaces = core.get_node(placepos).name
+				if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
+					core.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
+					core.remove_node(pos)
 					return true
 				end
-				if minetest.is_protected(placepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-					minetest.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
-					minetest.record_protection_violation(placepos,name)
-					minetest.remove_node(pos)
+				if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+					core.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
+					core.record_protection_violation(placepos,name)
+					core.remove_node(pos)
 					return true
 				end
 			end
@@ -902,22 +902,22 @@ minetest.register_node("celevator:hwdoor_glass",{
 				local piecename = string.format("celevator:hwdoor_%s_glass_%s",xnames[x],ynames[y])
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-				minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+				core.set_node(placepos,{name=piecename,param2=newnode.param2})
 				if y==0 then
 					placesill(placepos,{name=piecename,param2=newnode.param2})
 				end
 			end
 		end
 		local carpos = vector.add(pos,vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),facedir))
-		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		local carndef = core.registered_nodes[celevator.get_node(carpos).name] or {}
 		if carndef._root then
 			celevator.get_meta(carpos):set_string("doortype","glass")
-			celevator.doors.spawncardoors(carpos,minetest.fourdir_to_dir(newnode.param2),"glass",true)
+			celevator.doors.spawncardoors(carpos,core.fourdir_to_dir(newnode.param2),"glass",true)
 		end
 	end,
 })
 
-minetest.register_node("celevator:hwdoor_steel",{
+core.register_node("celevator:hwdoor_steel",{
 	description = "Steel Elevator Hoistway Door",
 	paramtype2 = "4dir",
 	buildable_to = true,
@@ -927,12 +927,12 @@ minetest.register_node("celevator:hwdoor_steel",{
 	tiles = {"celevator_transparent.png"},
 	after_place_node = function(pos,player)
 		if not player:is_player() then
-			minetest.remove_node(pos)
+			core.remove_node(pos)
 			return true
 		end
 		local name = player:get_player_name()
-		local newnode = minetest.get_node(pos)
-		local facedir = minetest.dir_to_yaw(minetest.fourdir_to_dir(newnode.param2))
+		local newnode = core.get_node(pos)
+		local facedir = core.dir_to_yaw(core.fourdir_to_dir(newnode.param2))
 		local xnames = {
 			[0] = "fast",
 			[1] = "slow",
@@ -947,16 +947,16 @@ minetest.register_node("celevator:hwdoor_steel",{
 				local offsetdesc = string.format("%dm to the right and %dm up",x,y)
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-				local replaces = minetest.get_node(placepos).name
-				if not (minetest.registered_nodes[replaces] and minetest.registered_nodes[replaces].buildable_to) then
-					minetest.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
-					minetest.remove_node(pos)
+				local replaces = core.get_node(placepos).name
+				if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
+					core.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
+					core.remove_node(pos)
 					return true
 				end
-				if minetest.is_protected(placepos,name) and not minetest.check_player_privs(name,{protection_bypass=true}) then
-					minetest.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
-					minetest.record_protection_violation(placepos,name)
-					minetest.remove_node(pos)
+				if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+					core.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
+					core.record_protection_violation(placepos,name)
+					core.remove_node(pos)
 					return true
 				end
 			end
@@ -966,22 +966,22 @@ minetest.register_node("celevator:hwdoor_steel",{
 				local piecename = string.format("celevator:hwdoor_%s_steel_%s",xnames[x],ynames[y])
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
-				minetest.set_node(placepos,{name=piecename,param2=newnode.param2})
+				core.set_node(placepos,{name=piecename,param2=newnode.param2})
 				if y==0 then
 					placesill(placepos,{name=piecename,param2=newnode.param2})
 				end
 			end
 		end
 		local carpos = vector.add(pos,vector.rotate_around_axis(vector.new(0,0,1),vector.new(0,1,0),facedir))
-		local carndef = minetest.registered_nodes[celevator.get_node(carpos).name] or {}
+		local carndef = core.registered_nodes[celevator.get_node(carpos).name] or {}
 		if carndef._root then
 			celevator.get_meta(carpos):set_string("doortype","steel")
-			celevator.doors.spawncardoors(carpos,minetest.fourdir_to_dir(newnode.param2),"steel",true)
+			celevator.doors.spawncardoors(carpos,core.fourdir_to_dir(newnode.param2),"steel",true)
 		end
 	end,
 })
 
-minetest.register_node("celevator:door_sill_single",{
+core.register_node("celevator:door_sill_single",{
 	description = "Hoistway Door Sill, Single Track (you hacker you!)",
 	drop = "",
 	groups = {
@@ -1001,7 +1001,7 @@ minetest.register_node("celevator:door_sill_single",{
 	},
 })
 
-minetest.register_node("celevator:door_sill_double",{
+core.register_node("celevator:door_sill_double",{
 	description = "Hoistway Door Sill, Double Track (you hacker you!)",
 	drop = "",
 	groups = {
@@ -1021,18 +1021,18 @@ minetest.register_node("celevator:door_sill_double",{
 	},
 })
 
-minetest.register_entity("celevator:door_sill",{
+core.register_entity("celevator:door_sill",{
 	initial_properties = {
 		visual = "wielditem",
 		visual_size = vector.new(0.667,0.667,0.667),
 		wield_item = "celevator:door_sill_single",
 		static_save = false,
 		pointable = false,
-		glow = minetest.LIGHT_MAX,
+		glow = core.LIGHT_MAX,
 	},
 })
 
-minetest.register_lbm({
+core.register_lbm({
 	label = "Respawn hoistway door sills",
 	name = "celevator:spawn_sill",
 	nodenames = {

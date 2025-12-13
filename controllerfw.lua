@@ -327,7 +327,7 @@ elseif event.type == "ui" then
 			mem.screenstate = "oobe_groupmode"
 		end
 	elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
-		local exp = event.fields.floor and minetest.explode_textlist_event(event.fields.floor) or {}
+		local exp = event.fields.floor and core.explode_textlist_event(event.fields.floor) or {}
 		if event.fields.back then
 			mem.screenstate = "oobe_groupmode"
 		elseif event.fields.next then
@@ -534,7 +534,7 @@ elseif event.type == "ui" then
 		if event.fields.save then
 			mem.screenstate = "parameters"
 		elseif event.fields.floor then
-			local exp = minetest.explode_textlist_event(event.fields.floor) or {}
+			local exp = core.explode_textlist_event(event.fields.floor) or {}
 			if exp.type == "CHG" then
 				mem.editingfloor = #mem.params.floornames-exp.index+1
 			elseif exp.type == "DCL" then
@@ -561,7 +561,7 @@ elseif event.type == "ui" then
 			if not mem.params.secoverrideusers[mem.editingfloor] then
 				mem.params.secoverrideusers[mem.editingfloor] = {}
 			end
-			local exp = minetest.explode_textlist_event(event.fields.user) or {}
+			local exp = core.explode_textlist_event(event.fields.user) or {}
 			if exp.type == "CHG" then
 				mem.editinguser = exp.index
 			elseif exp.type == "DCL" then
@@ -1302,8 +1302,8 @@ if mem.screenstate == "oobe_welcome" then
 	fs("button[1,10;2,1;license;License Info]")
 	fs("button[13,10;2,1;next;Next >]")
 elseif mem.screenstate == "oobe_license" then
-	local licensefile = io.open(minetest.get_modpath("celevator")..DIR_DELIM.."LICENSE")
-	local license = minetest.formspec_escape(licensefile:read("*all"))
+	local licensefile = io.open(core.get_modpath("celevator")..DIR_DELIM.."LICENSE")
+	local license = core.formspec_escape(licensefile:read("*all"))
 	licensefile:close()
 	fs("textarea[1,1;14,8;license;This applies to the whole celevator mod\\, not just this controller:;"..license.."]")
 	fs("button[7,10.5;2,1;back;OK]")
@@ -1329,7 +1329,7 @@ elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" t
 	end
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(minetest.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
+		fs(core.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
 	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;New Floor]") end
@@ -1348,7 +1348,7 @@ elseif mem.screenstate == "oobe_floortable_edit" or mem.screenstate == "floortab
 	end
 	fs("label[1,1;Editing floor "..tostring(mem.editingfloor).."]")
 	fs("field[1,3;3,1;height;Floor Height;"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
-	fs("field[5,3;3,1;name;Floor Name;"..minetest.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
+	fs("field[5,3;3,1;name;Floor Name;"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
 elseif mem.screenstate == "status" then
 	fs("style_type[image_button;font=mono;font_size=*0.75]")
 	fs("box[12,2.5;0.1,9;#AAAAAAFF]")
@@ -1364,7 +1364,7 @@ elseif mem.screenstate == "status" then
 		local ypos = 11-(i*0.9)
 		local floornum = bottom+i
 		if floornum > maxfloor then break end
-		fs(string.format("label[11.25,%f;%s]",ypos,minetest.formspec_escape(mem.params.floornames[floornum])))
+		fs(string.format("label[11.25,%f;%s]",ypos,core.formspec_escape(mem.params.floornames[floornum])))
 		local ccdot = mem.carcalls[floornum] and "*" or ""
 		if getpos() == floornum then
 			local cargraphics = {
@@ -1376,25 +1376,25 @@ elseif mem.screenstate == "status" then
 			}
 			ccdot = cargraphics[mem.doorstate]
 			if mem.direction == "up" then
-				ccdot = minetest.colorize("#55FF55",ccdot)
+				ccdot = core.colorize("#55FF55",ccdot)
 			elseif mem.direction == "down" then
-				ccdot = minetest.colorize("#FF5555",ccdot)
+				ccdot = core.colorize("#FF5555",ccdot)
 			end
 		end
 		fs(string.format("image_button[13.25,%f;0.75,0.75;celevator_fs_bg.png;carcall%d;%s]",ypos-0.25,floornum,ccdot))
 		if floornum < maxfloor then
-			local arrow = mem.upcalls[floornum] and minetest.colorize("#55FF55","^") or ""
+			local arrow = mem.upcalls[floornum] and core.colorize("#55FF55","^") or ""
 			if mem.params.groupmode == "group" then
-				arrow = mem.groupupcalls[floornum] and minetest.colorize("#55FF55","^") or ""
-				arrow = (mem.swingupcalls[floornum] and minetest.colorize("#FFFF55","^") or "")..arrow
+				arrow = mem.groupupcalls[floornum] and core.colorize("#55FF55","^") or ""
+				arrow = (mem.swingupcalls[floornum] and core.colorize("#FFFF55","^") or "")..arrow
 			end
 			fs(string.format("image_button[12.25,%f;0.75,0.75;celevator_fs_bg.png;upcall%d;%s]",ypos-0.25,floornum,arrow))
 		end
 		if floornum > 1 then
-			local arrow = mem.dncalls[floornum] and minetest.colorize("#FF5555","v") or ""
+			local arrow = mem.dncalls[floornum] and core.colorize("#FF5555","v") or ""
 			if mem.params.groupmode == "group" then
-				arrow = mem.swingdncalls[floornum] and minetest.colorize("#FFFF55","v") or ""
-				arrow = (mem.groupdncalls[floornum] and minetest.colorize("#FF5555","v") or "")..arrow
+				arrow = mem.swingdncalls[floornum] and core.colorize("#FFFF55","v") or ""
+				arrow = (mem.groupdncalls[floornum] and core.colorize("#FF5555","v") or "")..arrow
 			end
 			fs(string.format("image_button[14.25,%f;0.75,0.75;celevator_fs_bg.png;downcall%d;%s]",ypos-0.25,floornum,arrow))
 		end
@@ -1411,7 +1411,7 @@ elseif mem.screenstate == "status" then
 	fs("label[1,1;CAR STATUS]")
 	fs(string.format("label[1,2;%s]",modenames[mem.carstate]))
 	fs(string.format("label[1,2.5;Doors %s]",doorstates[mem.doorstate]))
-	local currentfloor = minetest.formspec_escape(mem.params.floornames[getpos()])
+	local currentfloor = core.formspec_escape(mem.params.floornames[getpos()])
 	fs(string.format("label[1,3;Position: %0.02fm Speed: %+0.02fm/s PI: %s]",mem.drive.status.apos,mem.drive.status.vel,currentfloor))
 	if #mem.faultlog > 0 then
 		fs("label[1,3.5;Fault(s) Active]")
@@ -1512,7 +1512,7 @@ elseif mem.screenstate == "carcallsecurity" then
 		else
 			secmode = "Security Disabled"
 		end
-		fs(minetest.formspec_escape(string.format("%s - %s",mem.params.floornames[i],secmode))..(i==1 and "" or ","))
+		fs(core.formspec_escape(string.format("%s - %s",mem.params.floornames[i],secmode))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
 	fs("checkbox[1,9.5;swingcallwhennotswing;Allow Swing Calls When Not In Swing Operation;"..tostring(mem.params.swingcallwhennotswing).."]")
@@ -1532,7 +1532,7 @@ elseif mem.screenstate == "carcallsecurity" then
 			if #mem.params.secoverrideusers[mem.editingfloor] > 0 then
 				fs("textlist[8,6;4,2;user;")
 				for i=1,#mem.params.secoverrideusers[mem.editingfloor],1 do
-					fs(minetest.formspec_escape(mem.params.secoverrideusers[mem.editingfloor][i])..(i==#mem.params.secoverrideusers[mem.editingfloor] and "" or ","))
+					fs(core.formspec_escape(mem.params.secoverrideusers[mem.editingfloor][i])..(i==#mem.params.secoverrideusers[mem.editingfloor] and "" or ","))
 				end
 				fs(";"..tostring(mem.editinguser)..";false]")
 			else
@@ -1637,12 +1637,12 @@ for i=1,floorcount,1 do
 	local xp = col*1.25
 	local tex = mem.carcalls[i] and litimg or unlitimg
 	local star = (i == (mem.params.mainlanding or 1) and "*" or "")
-	local label = minetest.formspec_escape(star..mem.params.floornames[i])
+	local label = core.formspec_escape(star..mem.params.floornames[i])
 	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,label,litimg)
 end
 
 local doxp = (copcols == 1) and 0.5 or 1.25
-local openlabel = minetest.formspec_escape("<|>")
+local openlabel = core.formspec_escape("<|>")
 mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;open;%s;false;false;%s]",doxp,coprows*1.25+2.5,unlitimg,openlabel,litimg)
 
 local dcxp = 3.75
@@ -1651,7 +1651,7 @@ if copcols == 1 then
 elseif copcols == 2 then
 	dcxp = 2.5
 end
-local closelabel = minetest.formspec_escape(">|<")
+local closelabel = core.formspec_escape(">|<")
 mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,closelabel,litimg)
 
 mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;Call\nCancel;false;false;%s]",unlitimg,litimg)
