@@ -249,7 +249,7 @@ core.register_node("celevator:digilines_io",{
 		end
 		meta:set_int("dispatcher",dmode and 1 or 0)
 		meta:set_string("channel",fields.channel)
-		local infotext = "Car: "..carid
+		local infotext = S("ID: @1",carid)
 		meta:set_string("infotext",infotext)
 	end,
 })

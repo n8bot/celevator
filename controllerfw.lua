@@ -1382,9 +1382,9 @@ elseif mem.screenstate == "status" then
 	fs("box[13.12,2.5;0.05,9;#AAAAAAFF]")
 	fs("box[14.12,2.5;0.05,9;#AAAAAAFF]")
 	fs("box[15.25,2.5;0.1,9;#AAAAAAFF]")
-	fs("label[12.4,2;^]")
+	fs("image[12.5,1.9;0.2,0.4;celevator_menu_small_arrow.png]")
 	fs("label[13.38,2;"..S("CAR").."]")
-	fs("label[14.8,2;v]")
+	fs("image[14.6,1.9;0.2,0.4;celevator_menu_small_arrow.png^[transformFY]")
 	local maxfloor = #mem.params.floornames
 	local bottom = (mem.screenpage-1)*10+1
 	for i=0,9,1 do

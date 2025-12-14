@@ -80,8 +80,8 @@ laptop.register_app("celevator",{
 				fs = fs.."box[0.5,1;0.1,9;#AAAAAAFF]"
 				fs = fs.."box[14.25,1;0.1,9;#AAAAAAFF]"
 				fs = fs.."style_type[label;font_size=*0.75]"
-				fs = fs.."label[0.05,10;^]"
-				fs = fs.."label[14.35,10;v]"
+				fs = fs.."image[0.15,9.8;0.2,0.4;celevator_menu_small_arrow.png]"
+				fs = fs.."image[14.55,9.8;0.2,0.4;celevator_menu_small_arrow.png^[transformFY]"
 				fs = fs.."style_type[image_button;font=mono;font_size=*0.66]"
 				for car=1,#dmem.params.carids,1 do
 					local xp = (car-1)*0.75+1
@@ -245,14 +245,14 @@ laptop.register_app("celevator",{
 				fs = fs.."box[11.808,0.75;0.05,9;#AAAAAAFF]"
 				fs = fs.."box[12.708,0.75;0.05,9;#AAAAAAFF]"
 				fs = fs.."box[13.725,0.75;0.1,9;#AAAAAAFF]"
-				fs = fs.."label[11.25,0.3;^]"
+				fs = fs.."image[11.2,0.3;0.2,0.4;celevator_menu_small_arrow.png]"
 				fs = fs.."label[12.042,0.3;"..S("CAR").."]"
-				fs = fs.."label[12.825,0.3;v]"
+				fs = fs.."image[13.1,0.3;0.2,0.4;celevator_menu_small_arrow.png^[transformFY]"
 				if mem.scrollfollowscar then mem.screenpage = math.floor((carfloor-1)/10)+1 end
 				local maxfloor = #cmem.params.floornames
 				local bottom = (mem.screenpage-1)*10+1
 				if maxfloor > 10 then
-					fs = fs..string.format("checkbox[8.4,1.5;scrollfollowscar;"..S("Follow Car")..";%s]",tostring(mem.scrollfollowscar))
+					fs = fs..string.format("checkbox[8.4,1.7;scrollfollowscar;"..S("Follow Car")..";%s]",tostring(mem.scrollfollowscar))
 					if bottom+9 < maxfloor then
 						fs = fs.."image_button[8.5,1;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]"
 					end

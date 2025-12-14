@@ -1054,8 +1054,8 @@ elseif mem.screenstate == "status" then
 	fs("label[1,1;"..S("GROUP DISPLAY").."]")
 	fs("box[1.5,1.5;0.1,10;#AAAAAAFF]")
 	fs("box[18.5,1.5;0.1,10;#AAAAAAFF]")
-	fs("label[0.55,11.5;^]")
-	fs("label[19.2,11.5;v]")
+	fs("image[0.45,11;0.2,0.4;celevator_menu_small_arrow.png]")
+	fs("image[19.4,11;0.2,0.4;celevator_menu_small_arrow.png^[transformFY]")
 	fs("button[15,0.5;2,1;menu;"..S("Menu").."]")
 	fs("style_type[image_button;font=mono;font_size=*0.75]")
 	for car=1,#mem.params.carids,1 do
