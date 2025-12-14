@@ -1,5 +1,7 @@
 local pos,event,mem = ...
 
+local S = core.get_translator("celevator")
+
 local changedinterrupts = {}
 
 mem.messages = {}
@@ -40,44 +42,44 @@ end
 local juststarted = false
 
 local modenames = {
-	normal = "Normal Operation",
-	uninit = "Uninitialized",
-	resync = "Position Sync - Floor",
-	bfdemand = "Position Sync - Terminal",
-	fault = "Fault",
-	stop = "Emergency Stop",
-	mrinspect = "Machine Room Inspection",
-	carinspect = "Car Top Inspection",
+	normal = S("Normal Operation"),
+	uninit = S("Uninitialized"),
+	resync = S("Position Sync - Floor"),
+	bfdemand = S("Position Sync - Terminal"),
+	fault = S("Fault"),
+	stop = S("Emergency Stop"),
+	mrinspect = S("Machine Room Inspection"),
+	carinspect = S("Car Top Inspection"),
 	inspconflict = "Inspection Conflict", --No longer used but some controllers may be in it at update time
-	fs1 = "Fire Service - Phase 1",
-	fs2 = "Fire Service - Phase 2",
-	fs2hold = "Fire Service - Phase 2 Hold",
-	indep = "Independent Service",
-	capture = "Captured",
-	test = "Test Mode",
-	swing = "Swing Operation",
+	fs1 = S("Fire Service - Phase 1"),
+	fs2 = S("Fire Service - Phase 2"),
+	fs2hold = S("Fire Service - Phase 2 Hold"),
+	indep = S("Independent Service"),
+	capture = S("Captured"),
+	test = S("Test Mode"),
+	swing = S("Swing Operation"),
 }
 
 local doorstates = {
-	open = "Open",
-	opening = "Opening",
-	closing = "Closing",
-	closed = "Closed",
-	testtiming = "Closed",
+	open = S("Doors Open"),
+	opening = S("Doors Opening"),
+	closing = S("Doors Closing"),
+	closed = S("Doors Closed"),
+	testtiming = S("Doors Closed"),
 }
 
 local faultnames = {
-	opentimeout = "Door Open Timeout",
-	closetimeout = "Door Close Timeout",
-	drivecomm = "Lost Communication With Drive",
-	driveuninit = "Drive Not Configured",
-	drivemetaload = "Drive Metadata Load Failure",
-	drivebadorigin = "Drive Origin Invalid",
-	drivedoorinterlock = "Attempted to Move Doors With Car in Motion",
-	driveoutofbounds = "Target Position Out of Bounds",
-	drivenomachine = "Hoist Machine Missing",
-	drivemachinemismatch = "Drive<->Machine ID Mismatch",
-	drivecontrollermismatch = "Controller<->Drive ID Mismatch",
+	opentimeout = S("Door Open Timeout"),
+	closetimeout = S("Door Close Timeout"),
+	drivecomm = S("Lost Communication With Drive"),
+	driveuninit = S("Drive Not Configured"),
+	drivemetaload = S("Drive Metadata Load Failure"),
+	drivebadorigin = S("Drive Origin Invalid"),
+	drivedoorinterlock = S("Attempted to Move Doors With Car in Motion"),
+	driveoutofbounds = S("Target Position Out of Bounds"),
+	drivenomachine = S("Hoist Machine Missing"),
+	drivemachinemismatch = S("Drive<->Machine ID Mismatch"),
+	drivecontrollermismatch = S("Controller<->Drive ID Mismatch"),
 }
 
 local function drivecmd(command)
@@ -1296,68 +1298,93 @@ fs("no_prepend[]")
 fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
 if mem.screenstate == "oobe_welcome" then
 	fs("image[6,1;4,2;celevator_logo.png]")
-	fs("label[1,4;Welcome to your new MTronic XT elevator controller!]")
-	fs("label[1,4.5;This setup wizard is designed to get your elevator up and running as quickly as possible.]")
-	fs("label[1,5.5;Press Next to begin.]")
-	fs("button[1,10;2,1;license;License Info]")
-	fs("button[13,10;2,1;next;Next >]")
+	local welcomemsg = S("Welcome to your new MTronic XT elevator controller!")
+	local wizardmsg = S("This setup wizard is designed to get your elevator up and running as quickly as possible.")
+	local pressnextmsg = S("Press Next to begin.")
+	local licensemsg = S("License Info")
+	local nextbuttonmsg = S("Next >")
+	fs("label[1,4;"..welcomemsg.."]")
+	fs("label[1,4.5;"..wizardmsg.."]")
+	fs("label[1,5.5;"..pressnextmsg.."]")
+	fs("button[1,10;3,1;license;"..licensemsg.."]")
+	fs("button[13,10;2,1;next;"..nextbuttonmsg.."]")
 elseif mem.screenstate == "oobe_license" then
 	local licensefile = io.open(core.get_modpath("celevator").."/LICENSE")
 	local license = core.formspec_escape(licensefile:read("*all"))
 	licensefile:close()
-	fs("textarea[1,1;14,8;license;This applies to the whole celevator mod\\, not just this controller:;"..license.."]")
-	fs("button[7,10.5;2,1;back;OK]")
+	local licenseinfo = core.formspec_escape(S("This applies to the whole celevator mod, not just this controller:"))
+	fs("textarea[1,1;14,8;license;"..licenseinfo..";"..license.."]")
+	local okmsg = S("OK")
+	fs("button[7,10.5;2,1;back;"..okmsg.."]")
 elseif mem.screenstate == "oobe_groupmode" then
-	fs("button[1,10;2,1;back;< Back]")
-	fs("label[1,1;Select a group operation mode:]")
-	fs("button[1,3;2,1;simplex;Simplex]")
-	fs("label[1,4.5;This will be the only elevator in the group. Hall calls will be handled by this controller.]")
-	fs("button[1,6;2,1;group;Group]")
-	fs("label[1,7.5;This elevator will participate in a group with others. Hall calls will be handled by a dispatcher.]")
+	local backmsg = S("< Back")
+	fs("button[1,10;2,1;back;"..backmsg.."]")
+	local modeselectmsg = S("Select a group operation mode:")
+	fs("label[1,1;"..modeselectmsg.."]")
+	local simplexmsg = S("Simplex")
+	fs("button[1,3;2,1;simplex;"..simplexmsg.."]")
+	local simplexlongmsg = S("This will be the only elevator in the group. Hall calls will be handled by this controller.")
+	fs("label[1,4.5;"..simplexlongmsg.."]")
+	local groupmsg = S("Group")
+	fs("button[1,6;2,1;group;"..groupmsg.."]")
+	local grouplongmsg = S("This elevator will participate in a group with others. Hall calls will be handled by a dispatcher.")
+	fs("label[1,7.5;"..grouplongmsg.."]")
 elseif mem.screenstate == "oobe_dispatcherconnect" then
-	fs("button[1,10;2,1;back;< Cancel]")
-	fs("label[1,1;Waiting for connection from dispatcher...]")
-	fs(string.format("label[1,1.5;This controller's car ID is: %d]",mem.carid))
+	local cancelmsg = S("Cancel")
+	fs("button[1,10;2,1;back;"..cancelmsg.."]")
+	local waitingmsg = S("Waiting for connection from dispatcher...")
+	fs("label[1,1;"..waitingmsg.."]")
+	local idmsg = S("This controller's car ID is: @1",mem.carid)
+	fs("label[1,1.5;"..idmsg.."]")
 elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
 	if mem.screenstate == "oobe_floortable" then
-		fs("label[1,1;Enter details of all floors this elevator will serve, then press Done.]")
-		fs("button[1,10;2,1;back;< Back]")
-		fs("button[13,10;2,1;next;Done >]")
+		local helpmsg = S("Enter details of all floors this elevator will serve, then press Done.")
+		fs("label[1,1;"..helpmsg.."]")
+		local backmsg = S("< Back")
+		fs("button[1,10;2,1;back;"..backmsg.."]")
+		local donemsg = S("Done")
+		fs("button[13,10;2,1;next;"..donemsg.."]")
 	else
-		fs("label[1,1;EDIT FLOOR TABLE]")
-		fs("button[1,10;2,1;next;Done]")
+		local titlemsg = S("EDIT FLOOR TABLE")
+		fs("label[1,1;"..titlemsg.."]")
+		local donemsg = S("Done")
+		fs("button[1,10;2,1;next;"..donemsg.."]")
 	end
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(core.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
+		local floortext = S("@1 - Height: @2 - PI: @3",i,mem.params.floorheights[i],mem.params.floornames[i])
+		fs(core.formspec_escape(floortext)..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
-	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;New Floor]") end
-	fs("button[8,3.5;2,1;edit;Edit Floor]")
-	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;Remove Floor]") end
-	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;Move Up]") end
-	if mem.editingfloor > 1 then fs("button[8,8;2,1;movedown;Move Down") end
+	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;"..S("New Floor").."]") end
+	fs("button[8,3.5;2,1;edit;"..S("Edit Floor").."]")
+	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;"..S("Remove Floor").."]") end
+	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;"..S("Move Up").."]") end
+	if mem.editingfloor > 1 then fs("button[8,8;2,1;movedown;"..S("Move Down").."]") end
 elseif mem.screenstate == "oobe_floortable_edit" or mem.screenstate == "floortable_edit" then
 	if mem.screenstate == "oobe_floortable_edit" then
-		fs("button[7,10.5;2,1;back;OK]")
-		fs("label[1,5;The Floor Height is the distance (in meters/nodes) from the floor level of this floor to the floor level of the next floor.]")
-		fs("label[1,5.5;(not used at the highest floor)]")
-		fs("label[1,6.5;The Floor Name is how the floor will be displayed on the position indicators.]")
+		fs("button[7,10.5;2,1;back;"..S("OK").."]")
+		local help1 = S("The Floor Height is the distance (in meters/nodes) from the floor level of this floor to the floor level of the next floor.")
+		local help2 = S("(not used at the highest floor)")
+		local help3 = S("The Floor Name is how the floor will be displayed on the position indicators.")
+		fs("label[1,5;"..help1.."]")
+		fs("label[1,5.5;"..help2.."]")
+		fs("label[1,6.5;"..help3.."]")
 	else
-		fs("button[7,10.5;2,1;save;Save]")
+		fs("button[7,10.5;2,1;save;"..S("Save").."]")
 	end
-	fs("label[1,1;Editing floor "..tostring(mem.editingfloor).."]")
-	fs("field[1,3;3,1;height;Floor Height;"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
-	fs("field[5,3;3,1;name;Floor Name;"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
+	fs("label[1,1;"..S("Editing Floor @1",tostring(mem.editingfloor)).."]")
+	fs("field[1,3;3,1;height;"..S("Floor Height")..";"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
+	fs("field[5,3;3,1;name;"..S("Floor Name")..";"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
 elseif mem.screenstate == "status" then
 	fs("style_type[image_button;font=mono;font_size=*0.75]")
 	fs("box[12,2.5;0.1,9;#AAAAAAFF]")
 	fs("box[13.12,2.5;0.05,9;#AAAAAAFF]")
 	fs("box[14.12,2.5;0.05,9;#AAAAAAFF]")
 	fs("box[15.25,2.5;0.1,9;#AAAAAAFF]")
-	fs("label[12.5,2;UP]")
-	fs("label[13.38,2;CAR]")
-	fs("label[14.25,2;DOWN]")
+	fs("label[12.4,2;^]")
+	fs("label[13.38,2;"..S("CAR").."]")
+	fs("label[14.8,2;v]")
 	local maxfloor = #mem.params.floornames
 	local bottom = (mem.screenpage-1)*10+1
 	for i=0,9,1 do
@@ -1400,7 +1427,7 @@ elseif mem.screenstate == "status" then
 		end
 	end
 	if maxfloor > 10 then
-		fs(string.format("checkbox[13,1.25;scrollfollowscar;Follow Car;%s]",tostring(mem.scrollfollowscar)))
+		fs(string.format("checkbox[13,1.25;scrollfollowscar;"..S("Follow Car")..";%s]",tostring(mem.scrollfollowscar)))
 		if bottom+9 < maxfloor then
 			fs("image_button[12.75,0.25;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]")
 		end
@@ -1408,18 +1435,21 @@ elseif mem.screenstate == "status" then
 			fs("image_button[13.87,0.25;0.75,0.75;celevator_menu_arrow.png^\\[transformFY;scrolldown;;false;false;celevator_menu_arrow.png^\\[transformFY]")
 		end
 	end
-	fs("label[1,1;CAR STATUS]")
+	fs("label[1,1;"..S("CAR STATUS").."]")
 	fs(string.format("label[1,2;%s]",modenames[mem.carstate]))
-	fs(string.format("label[1,2.5;Doors %s]",doorstates[mem.doorstate]))
+	fs(string.format("label[1,2.5;%s]",doorstates[mem.doorstate]))
 	local currentfloor = core.formspec_escape(mem.params.floornames[getpos()])
-	fs(string.format("label[1,3;Position: %0.02fm Speed: %+0.02fm/s PI: %s]",mem.drive.status.apos,mem.drive.status.vel,currentfloor))
+	local posfmt = string.format("%0.02f",mem.drive.status.apos)
+	local speedfmt = string.format("%+0.02f",mem.drive.status.vel)
+	local posmsg = S("Position: @1m Speed: @2m/s PI: @3",posfmt,speedfmt,currentfloor)
+	fs("label[1,3;"..posmsg.."]")
 	if #mem.faultlog > 0 then
-		fs("label[1,3.5;Fault(s) Active]")
+		fs("label[1,3.5;"..S("Fault(s) Active").."]")
 	else
-		fs("label[1,3.5;No Current Faults]")
+		fs("label[1,3.5;"..S("No Current Faults").."]")
 	end
-	fs("button[1,10;3,1;faults;Fault History]")
-	fs("button[4.5,10;3,1;parameters;Edit Parameters]")
+	fs("button[1,10;3,1;faults;"..S("Fault History").."]")
+	fs("button[4.5,10;3,1;parameters;"..S("Edit Parameters").."]")
 	local redon = "celevator_led_red_on.png"
 	local redoff = "celevator_led_red_off.png"
 	local yellowon = "celevator_led_yellow_on.png"
@@ -1427,64 +1457,64 @@ elseif mem.screenstate == "status" then
 	local greenon = "celevator_led_green_on.png"
 	local greenoff = "celevator_led_green_off.png"
 	fs(string.format("image[7,1;0.7,0.7;%s]",mem.carstate == "fault" and redon or redoff))
-	fs("label[8,1.35;FAULT]")
+	fs("label[8,1.35;"..S("FAULT").."]")
 	local inspectionstates = {
 		mrinspect = true,
 		carinspect = true,
 		inspconflict = true,
 	}
 	fs(string.format("image[7,1.9;0.7,0.7;%s]",inspectionstates[mem.carstate] and yellowon or yellowoff))
-	fs("label[8,2.25;INSP/ACCESS]")
+	fs("label[8,2.25;"..S("INSP/ACCESS").."]")
 	fs(string.format("image[7,2.8;0.7,0.7;%s]",mem.carstate == "normal" and greenon or greenoff))
-	fs("label[8,3.15;NORMAL OPERATION]")
+	fs("label[8,3.15;"..S("NORMAL OPERATION").."]")
 	fs(string.format("image[7,3.7;0.7,0.7;%s]",mem.drive.status.vel > 0.01 and yellowon or yellowoff))
-	fs("label[8,4.05;UP]")
+	fs("label[8,4.05;"..S("UP").."]")
 	fs(string.format("image[7,4.6;0.7,0.7;%s]",math.abs(mem.drive.status.vel) > 0.01 and yellowon or yellowoff))
-	fs("label[8,4.95;DRIVE CMD]")
+	fs("label[8,4.95;"..S("DRIVE CMD").."]")
 	fs(string.format("image[7,5.5;0.7,0.7;%s]",mem.drive.status.vel < -0.01 and yellowon or yellowoff))
-	fs("label[8,5.85;DOWN]")
+	fs("label[8,5.85;"..S("DOWN").."]")
 	fs(string.format("image[7,6.4;0.7,0.7;%s]",math.abs(mem.drive.status.vel) > math.min(0.4,mem.params.contractspeed/2) and yellowon or yellowoff))
-	fs("label[8,6.75;HIGH SPEED]")
+	fs("label[8,6.75;"..S("HIGH SPEED").."]")
 	fs(string.format("image[7,7.3;0.7,0.7;%s]",math.abs(gettarget(getpos(true))-mem.drive.status.apos) < 0.5 and greenon or greenoff))
-	fs("label[8,7.65;DOOR ZONE]")
+	fs("label[8,7.65;"..S("DOOR ZONE").."]")
 	fs(string.format("image[7,8.2;0.7,0.7;%s]",mem.doorstate == "closed" and greenon or greenoff))
-	fs("label[8,8.55;DOORS LOCKED]")
+	fs("label[8,8.55;"..S("DOORS LOCKED").."]")
 	fs("style[*;font=mono]")
 	local stopswimg = "celevator_toggle_switch.png"..(mem.controllerstopsw and "^\\[transformFY" or "")
 	fs(string.format("image_button[1,5;1,1.33;%s;stopsw;;false;false;%s]",stopswimg,stopswimg))
-	fs("label[1.3,4.75;RUN]")
-	fs("label[1.2,6.6;STOP]")
+	fs("label[1.3,4.75;"..S("RUN").."]")
+	fs("label[1.2,6.6;"..S("STOP").."]")
 	local captureswimg = "celevator_toggle_switch.png"..(mem.capturesw and "" or "^\\[transformFY")
 	fs(string.format("image_button[3,5;1,1.33;%s;capturesw;;false;false;%s]",captureswimg,captureswimg))
-	fs("label[3,4.75;CAPTURE]")
+	fs("label[3,4.75;"..S("CAPTURE").."]")
 	local testswimg = "celevator_toggle_switch.png"..(mem.testsw and "" or "^\\[transformFY")
 	fs(string.format("image_button[5,5;1,1.33;%s;testsw;;false;false;%s]",testswimg,testswimg))
-	fs("label[5.23,4.75;TEST]")
+	fs("label[5.23,4.75;"..S("TEST").."]")
 	local inspectswimg = "celevator_toggle_switch.png"..(mem.controllerinspectsw and "" or "^\\[transformFY")
 	fs(string.format("image_button[1,8;1,1.33;%s;inspectsw;;false;false;%s]",inspectswimg,inspectswimg))
-	fs("label[1.05,7.75;INSPECT]")
-	fs("label[1.1,9.6;NORMAL]")
+	fs("label[1.05,7.75;"..S("INSPECT").."]")
+	fs("label[1.1,9.6;"..S("NORMAL").."]")
 	fs(string.format("image_button[3,8.25;1,1;%s;inspectup;;false;false;%s]","celevator_button_black.png","celevator_button_black.png"))
-	fs("label[3.4,7.75;UP]")
+	fs("label[3.4,7.75;"..S("UP ").."]")
 	fs(string.format("image_button[5,8.25;1,1;%s;inspectdown;;false;false;%s]","celevator_button_black.png","celevator_button_black.png"))
-	fs("label[5.25,7.75;DOWN]")
+	fs("label[5.25,7.75;"..S("DOWN ").."]")
 elseif mem.screenstate == "parameters" then
-	fs("label[1,1;EDIT PARAMETERS]")
-	fs("button[1,10;3,1;save;Save]")
-	fs("button[4.5,10;3,1;cancel;Cancel]")
-	if mem.params.groupmode == "simplex" then fs("button[8,10;3,1;floortable;Edit Floor Table]") end
-	fs(string.format("field[1,3;3,1;doortimer;Door Dwell Timer;%0.1f]",mem.params.doortimer))
-	fs(string.format("field[1,5;3,1;contractspeed;Contract Speed (m/s);%0.1f]",mem.params.contractspeed))
-	fs(string.format("field[4.5,5;3,1;inspectionspeed;Inspection Speed (m/s);%0.1f]",mem.params.inspectionspeed))
-	fs(string.format("field[1,7;3,1;mainlanding;Main Egress Landing;%d]",mem.params.mainlanding or 1))
-	fs(string.format("field[4.5,3;3,1;nudgetimer;Nudging Timer (0 = None);%0.1f]",mem.params.nudgetimer))
-	fs(string.format("field[4.5,7;3,1;altrecalllanding;Alternate Recall Landing;%d]",mem.params.altrecalllanding))
+	fs("label[1,1;"..S("EDIT PARAMETERS").."]")
+	fs("button[1,10;3,1;save;"..S("Save").."]")
+	fs("button[4.5,10;3,1;cancel;"..S("Cancel").."]")
+	if mem.params.groupmode == "simplex" then fs("button[8,10;3,1;floortable;"..S("Edit Floor Table").."]") end
+	fs(string.format("field[1,3;3,1;doortimer;"..S("Door Dwell Timer")..";%0.1f]",mem.params.doortimer))
+	fs(string.format("field[1,5;3,1;contractspeed;"..S("Contract Speed (m/s)")..";%0.1f]",mem.params.contractspeed))
+	fs(string.format("field[4.5,5;3,1;inspectionspeed;"..S("Inspection Speed (m/s)")..";%0.1f]",mem.params.inspectionspeed))
+	fs(string.format("field[1,7;3,1;mainlanding;"..S("Main Egress Landing")..";%d]",mem.params.mainlanding or 1))
+	fs(string.format("field[4.5,3;3,1;nudgetimer;"..S("Nudging Timer")..";%0.1f]",mem.params.nudgetimer))
+	fs(string.format("field[4.5,7;3,1;altrecalllanding;"..S("Alternate Recall Landing")..";%d]",mem.params.altrecalllanding))
 	fs("style[resetdoors,resetcontroller;bgcolor=#DD3333]")
-	fs("button[12,1;3,1;resetdoors;Reset Doors]")
-	fs("button[12,2.5;3,1;resetcontroller;Reset Controller]")
-	fs("button[1,8.5;3,1;carcallsecurity;Car Call Security]")
+	fs("button[12,1;3,1;resetdoors;"..S("Reset Doors").."]")
+	fs("button[12,2.5;3,1;resetcontroller;"..S("Reset Controller").."]")
+	fs("button[1,8.5;3,1;carcallsecurity;"..S("Car Call Security").."]")
 elseif mem.screenstate == "faults" then
-	fs("label[1,1;FAULT HISTORY]")
+	fs("label[1,1;"..S("FAULT HISTORY").."]")
 	if #mem.faultlog > 0 then
 		for i=0,9,1 do
 			if #mem.faultlog-i >= 1 then
@@ -1495,29 +1525,30 @@ elseif mem.screenstate == "faults" then
 			end
 		end
 	else
-		fs("label[1,2;No Current Faults]")
+		fs("label[1,2;"..S("No Current Faults").."]")
 	end
-	fs("button[1,10;3,1;back;Back]")
-	fs("button[4.5,10;3,1;clear;Clear]")
+	fs("button[1,10;3,1;back;"..S("Back").."]")
+	fs("button[4.5,10;3,1;clear;"..S("Clear").."]")
 elseif mem.screenstate == "carcallsecurity" then
-	fs("label[1,1;CAR CALL SECURITY]")
-	fs("button[1,10;3,1;save;Done]")
+	fs("label[1,1;"..S("CAR CALL SECURITY").."]")
+	fs("button[1,10;3,1;save;"..S("Done").."]")
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
 		local secmode = mem.params.carcallsecurity[i]
 		if secmode == "auth" then
-			secmode = "Authorized Users Only"
+			secmode = S("Authorized Users Only")
 		elseif secmode == "deny" then
-			secmode = "Locked"
+			secmode = S("Locked")
 		else
-			secmode = "Security Disabled"
+			secmode = S("Security Disabled")
 		end
 		fs(core.formspec_escape(string.format("%s - %s",mem.params.floornames[i],secmode))..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
-	fs("checkbox[1,9.5;swingcallwhennotswing;Allow Swing Calls When Not In Swing Operation;"..tostring(mem.params.swingcallwhennotswing).."]")
+	local swingmsg = S("Allow Swing Calls When Not In Swing Operation")
+	fs("checkbox[1,9.5;swingcallwhennotswing;"..swingmsg..";"..tostring(mem.params.swingcallwhennotswing).."]")
 	if mem.editingfloor ~= (mem.params.mainlanding or 1) then
-		fs("dropdown[8,2;4,1;secmode;Security Disabled,Authorized Users Only,Locked;")
+		fs("dropdown[8,2;4,1;secmode;"..S("Security Disabled")..","..S("Authorized Users Only")..","..S("Locked")..";")
 		if mem.params.carcallsecurity[mem.editingfloor] == "auth" then
 			fs("2;true]")
 		elseif mem.params.carcallsecurity[mem.editingfloor] == "deny" then
@@ -1526,8 +1557,8 @@ elseif mem.screenstate == "carcallsecurity" then
 			fs("1;true]")
 		end
 		if mem.params.carcallsecurity[mem.editingfloor] then
-			fs(string.format("checkbox[8,3.5;indepunlock;Unlock in Independent;%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
-			fs("label[8,4.7;Extra Allowed Users]")
+			fs(string.format("checkbox[8,3.5;indepunlock;"..S("Unlock in Independent")..";%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
+			fs("label[8,4.7;"..S("Extra Allowed Users").."]")
 			if not mem.params.secoverrideusers[mem.editingfloor] then mem.params.secoverrideusers[mem.editingfloor] = {} end
 			if #mem.params.secoverrideusers[mem.editingfloor] > 0 then
 				fs("textlist[8,6;4,2;user;")
@@ -1536,14 +1567,14 @@ elseif mem.screenstate == "carcallsecurity" then
 				end
 				fs(";"..tostring(mem.editinguser)..";false]")
 			else
-				fs("label[8,6.25;(none)]")
+				fs("label[8,6.25;"..S("(none)").."]")
 			end
 			fs("field[8,5;3,1;username;;]")
 			fs("button[11.25,5;0.5,1;adduser;+]")
 			fs("button[12,5;0.5,1;deluser;-]")
 		end
 	else
-		fs("label[8,2;Main landing cannot be locked]")
+		fs("label[8,2;"..S("Main landing cannot be locked").."]")
 	end
 end
 
@@ -1556,7 +1587,7 @@ end
 local floorname = mem.params.floornames[getpos()]
 local modename = modenames[mem.carstate]
 local doorstate = doorstates[mem.doorstate]
-mem.infotext = string.format("ID %d: Floor %s %s - %s - Doors %s",mem.carid,floorname,arrow,modename,doorstate)
+mem.infotext = S("ID @1: Floor @2 - @3 - @4",mem.carid,(floorname.." "..arrow),modename,doorstate)
 
 if mem.drive.type then
 	mem.showrunning = mem.drive.status.vel ~= 0
@@ -1654,7 +1685,8 @@ end
 local closelabel = core.formspec_escape(">|<")
 mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,closelabel,litimg)
 
-mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;Call\nCancel;false;false;%s]",unlitimg,litimg)
+local callcancellabel = S("Call\nCancel")
+mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;"..callcancellabel..";false;false;%s]",unlitimg,litimg)
 
 if mem.flashfirehat then
 	mem.copformspec = mem.copformspec.."animated_image[2.2,0.5;1.4,1.4;firehat;celevator_fire_hat_flashing.png;2;750]"
@@ -1663,31 +1695,33 @@ else
 	mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
 end
 
+local switchboilerplate = ";false;false;celevator_button_rect_active.png"
+
 mem.switchformspec = "formspec_version[7]size[8,10]no_prepend[]background9[0,0;16,12;celevator_fs_bg.png;true;3]"
 local fs2ontex = (mem.fs2sw == "on") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local fs2holdtex = (mem.fs2sw == "hold") and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local fs2offtex = (mem.fs2sw == "off" or not mem.fs2sw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
-mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,1.5;1.5,1;%s;fs2on;ON;false;false;celevator_button_rect_active.png]",fs2ontex)
-mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,2.5;1.5,1;%s;fs2hold;HOLD;false;false;celevator_button_rect_active.png]",fs2holdtex)
-mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,3.5;1.5,1;%s;fs2off;OFF;false;false;celevator_button_rect_active.png]",fs2offtex)
-mem.switchformspec = mem.switchformspec.."label[1.6,4.75;FIRE SVC]"
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,1.5;1.5,1;%s;fs2on;"..S("ON")..switchboilerplate.."]",fs2ontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,2.5;1.5,1;%s;fs2hold;"..S("HOLD")..switchboilerplate.."]",fs2holdtex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,3.5;1.5,1;%s;fs2off;"..S("OFF")..switchboilerplate.."]",fs2offtex)
+mem.switchformspec = mem.switchformspec.."label[1.6,4.75;"..S("FIRE SVC").."]"
 
 local indontex = mem.indsw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local indofftex = (not mem.indsw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
-mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,1.5;1.5,1;%s;indon;ON;false;false;celevator_button_rect_active.png]",indontex)
-mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,3.5;1.5,1;%s;indoff;OFF;false;false;celevator_button_rect_active.png]",indofftex)
-mem.switchformspec = mem.switchformspec.."label[4.6,4.75;IND SVC]"
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,1.5;1.5,1;%s;indon;"..S("ON")..switchboilerplate.."]",indontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,3.5;1.5,1;%s;indoff;"..S("OFF")..switchboilerplate.."]",indofftex)
+mem.switchformspec = mem.switchformspec.."label[4.6,4.75;"..S("IND SVC").."]"
 
 local lightontex = mem.lightsw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local lightofftex = (not mem.lightsw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
-mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,5.5;1.5,1;%s;lighton;ON;false;false;celevator_button_rect_active.png]",lightontex)
-mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,7.5;1.5,1;%s;lightoff;OFF;false;false;celevator_button_rect_active.png]",lightofftex)
-mem.switchformspec = mem.switchformspec.."label[1.6,8.75;CAR LIGHT]"
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,5.5;1.5,1;%s;lighton;"..S("ON")..switchboilerplate.."]",lightontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[1.5,7.5;1.5,1;%s;lightoff;"..S("OFF")..switchboilerplate.."]",lightofftex)
+mem.switchformspec = mem.switchformspec.."label[1.6,8.75;"..S("CAR LIGHT").."]"
 
 local fanontex = mem.fansw and "celevator_button_rect_active.png" or "celevator_button_rect.png"
 local fanofftex = (not mem.fansw) and "celevator_button_rect_active.png" or "celevator_button_rect.png"
-mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,5.5;1.5,1;%s;fanon;ON;false;false;celevator_button_rect_active.png]",fanontex)
-mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,7.5;1.5,1;%s;fanoff;OFF;false;false;celevator_button_rect_active.png]",fanofftex)
-mem.switchformspec = mem.switchformspec.."label[4.6,8.75;CAR FAN]"
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,5.5;1.5,1;%s;fanon;"..S("ON")..switchboilerplate.."]",fanontex)
+mem.switchformspec = mem.switchformspec..string.format("image_button[4.5,7.5;1.5,1;%s;fanoff;"..S("OFF")..switchboilerplate.."]",fanofftex)
+mem.switchformspec = mem.switchformspec.."label[4.6,8.75;"..S("CAR FAN").."]"
 
 return pos,mem,changedinterrupts

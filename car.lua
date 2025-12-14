@@ -1,5 +1,7 @@
 celevator.car = {}
 
+local S = core.get_translator("celevator")
+
 local function disambiguatecartopbutton(pos,facedir,player)
 	if player and not player.is_fake_player then
 		local eyepos = vector.add(player:get_pos(),vector.add(player:get_eye_offset(),vector.new(0,1.5,0)))
@@ -105,7 +107,7 @@ function celevator.car.register(name,defs,size)
 		def.paramtype = "light"
 		def.paramtype2 = "4dir"
 		def.drawtype = "nodebox"
-		def.description = "Car "..def._position.." (you hacker you!)"
+		def.description = S("Car (part @1 - you hacker you!)",def._position)
 		def.light_source = 9
 		def.drop = ""
 		if def._cop then
@@ -135,7 +137,7 @@ function celevator.car.register(name,defs,size)
 				if not carinfo then return end
 				local playername = player:get_player_name()
 				if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
-					core.chat_send_player(playername,"You don't have access to these switches.")
+					core.chat_send_player(playername,S("You don't have access to these switches."))
 					core.record_protection_violation(pos,playername)
 					return
 				end
@@ -218,9 +220,9 @@ function celevator.car.register(name,defs,size)
 				end
 				local hash = core.hash_node_position(pos)
 				local fs = "formspec_version[7]size[6,4]"
-				fs = fs.."label[0.5,1;Really remove this car?]"
-				fs = fs.."button_exit[0.5,2;2,1;yes;Yes]"
-				fs = fs.."button_exit[3,2;2,1;no;No]"
+				fs = fs.."label[0.5,1;"..S("Really remove this car?").."]"
+				fs = fs.."button_exit[0.5,2;2,1;yes;"..S("Yes").."]"
+				fs = fs.."button_exit[3,2;2,1;no;"..S("No").."]"
 				core.show_formspec(playername,string.format("celevator:remove_car_%d",hash),fs)
 			end
 			def.on_timer = function(pos)
@@ -308,7 +310,7 @@ core.register_abm({
 })
 
 core.register_node("celevator:car_top_box_off",{
-	description = "Car-top Inspection Box, Off State (you hacker you!)",
+	description = S("Car-top Inspection Box, Off State (you hacker you!)"),
 	drop = "",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -328,7 +330,7 @@ core.register_node("celevator:car_top_box_off",{
 })
 
 core.register_node("celevator:car_top_box_on",{
-	description = "Car-top Inspection Box, On State (you hacker you!)",
+	description = S("Car-top Inspection Box, On State (you hacker you!)"),
 	drop = "",
 	groups = {
 		not_in_creative_inventory = 1,

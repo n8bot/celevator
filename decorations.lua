@@ -1,5 +1,7 @@
+local S = core.get_translator("celevator")
+
 core.register_node("celevator:buffer_rubber",{
-	description = "Elevator Elastomeric Buffer",
+	description = S("Elevator Elastomeric Buffer"),
 	groups = {
 		choppy = 1,
 		bouncy = 60,
@@ -40,7 +42,7 @@ core.register_node("celevator:buffer_rubber",{
 })
 
 core.register_node("celevator:buffer_oil",{
-	description = "Elevator Oil-Filled Buffer",
+	description = S("Elevator Oil-Filled Buffer"),
 	groups = {
 		choppy = 1,
 	},
@@ -97,7 +99,7 @@ core.register_node("celevator:buffer_oil",{
 })
 
 core.register_node("celevator:buffer_oil_top",{
-	description = "Elevator Oil-Filled Buffer (top half - you hacker you!)",
+	description = S("Elevator Oil-Filled Buffer (top half - you hacker you!)"),
 	groups = {
 		choppy = 1,
 		not_in_creative_inventory = 1,
@@ -117,7 +119,7 @@ core.register_node("celevator:buffer_oil_top",{
 })
 
 core.register_node("celevator:guide_rail",{
-	description = "Elevator Guide Rail",
+	description = S("Elevator Guide Rail"),
 	groups = {
 		choppy = 1,
 	},
@@ -141,7 +143,7 @@ core.register_node("celevator:guide_rail",{
 })
 
 core.register_node("celevator:guide_rail_bracket",{
-	description = "Elevator Guide Rail with Bracket",
+	description = S("Elevator Guide Rail with Bracket"),
 	groups = {
 		choppy = 1,
 	},
@@ -170,7 +172,7 @@ core.register_node("celevator:guide_rail_bracket",{
 })
 
 core.register_node("celevator:tape",{
-	description = "Elevator Positioning System Tape",
+	description = S("Elevator Positioning System Tape"),
 	groups = {
 		choppy = 1,
 	},
@@ -195,7 +197,7 @@ core.register_node("celevator:tape",{
 })
 
 core.register_node("celevator:tape_magnets",{
-	description = "Elevator Positioning System Tape with Magnets",
+	description = S("Elevator Positioning System Tape with Magnets"),
 	groups = {
 		choppy = 1,
 	},
@@ -220,7 +222,7 @@ core.register_node("celevator:tape_magnets",{
 })
 
 core.register_node("celevator:tape_bracket",{
-	description = "Elevator Positioning System Tape with Bracket",
+	description = S("Elevator Positioning System Tape with Bracket"),
 	groups = {
 		choppy = 1,
 	},
@@ -312,7 +314,7 @@ core.register_abm({
 })
 
 core.register_node("celevator:tapehead",{
-	description = "Elevator Positioning System Tapehead (off, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (off, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -339,7 +341,7 @@ core.register_node("celevator:tapehead",{
 })
 
 core.register_node("celevator:tapehead_ulm",{
-	description = "Elevator Positioning System Tapehead (ULM on, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (ULM on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -366,7 +368,7 @@ core.register_node("celevator:tapehead_ulm",{
 })
 
 core.register_node("celevator:tapehead_ulm_dz",{
-	description = "Elevator Positioning System Tapehead (ULM and DZ on, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (ULM and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -393,7 +395,7 @@ core.register_node("celevator:tapehead_ulm_dz",{
 })
 
 core.register_node("celevator:tapehead_ulm_dlm_dz",{
-	description = "Elevator Positioning System Tapehead (ULM, DLM, and DZ on, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (ULM, DLM, and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -420,7 +422,7 @@ core.register_node("celevator:tapehead_ulm_dlm_dz",{
 })
 
 core.register_node("celevator:tapehead_dlm_dz",{
-	description = "Elevator Positioning System Tapehead (DLM and DZ on, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (DLM and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -447,7 +449,7 @@ core.register_node("celevator:tapehead_dlm_dz",{
 })
 
 core.register_node("celevator:tapehead_dlm",{
-	description = "Elevator Positioning System Tapehead (DLM on, you hacker you!)",
+	description = S("Elevator Positioning System Tapehead (DLM on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},

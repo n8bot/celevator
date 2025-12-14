@@ -1,3 +1,5 @@
+local S = core.get_translator("celevator")
+
 local function handledigilines(pos,node,channel,msg)
 	local multi = node.name == "celevator:digilines_multi_io"
 	if msg == "GET" then msg = {command = "GET"} end
@@ -175,7 +177,7 @@ local function handledigilines(pos,node,channel,msg)
 end
 
 core.register_node("celevator:digilines_io",{
-	description = "Elevator Digilines Input/Output",
+	description = S("Elevator Digilines Input/Output"),
 	tiles = {
 		"celevator_digilinesio_top.png",
 		"celevator_cabinet_sides.png",
@@ -201,9 +203,9 @@ core.register_node("celevator:digilines_io",{
 	after_place_node = function(pos)
 		local meta = core.get_meta(pos)
 		local fs = "formspec_version[7]size[8,4.5]"
-		fs = fs.."field[0.5,0.5;3,1;channel;Channel;${channel}]"
-		fs = fs.."field[4.5,0.5;3,1;carid;Car ID;${carid}]"
-		fs = fs.."button_exit[2.5,2;3,1;save;Save]"
+		fs = fs.."field[0.5,0.5;3,1;channel;"..S("Channel")..";${channel}]"
+		fs = fs.."field[4.5,0.5;3,1;carid;"..S("Car ID")..";${carid}]"
+		fs = fs.."button_exit[2.5,2;3,1;save;"..S("Save").."]"
 		meta:set_string("formspec",fs)
 	end,
 	on_receive_fields = function(pos,_,fields,player)
@@ -231,7 +233,7 @@ core.register_node("celevator:digilines_io",{
 		if dmode then
 			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a dispatcher you don't have access to."))
 					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
@@ -239,7 +241,7 @@ core.register_node("celevator:digilines_io",{
 		else
 			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a controller you don't have access to."))
 					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
@@ -253,7 +255,7 @@ core.register_node("celevator:digilines_io",{
 })
 
 core.register_node("celevator:digilines_multi_io",{
-	description = "Elevator Digilines Multi-Car Input/Output",
+	description = S("Elevator Digilines Multi-Car Input/Output"),
 	tiles = {
 		"celevator_digilinesio_multi_top.png",
 		"celevator_cabinet_sides.png",
@@ -281,7 +283,7 @@ core.register_node("celevator:digilines_multi_io",{
 		local name = player:get_player_name()
 		if not (core.check_player_privs(name,{protection_bypass=true}) or core.check_player_privs(name,{server=true})) then
 			if player:is_player() then
-				core.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
+				core.chat_send_player(name,S("You need either the 'protection_bypass' or 'server' privilege to use this."))
 				core.record_protection_violation(pos,name)
 			end
 			core.remove_node(pos)
@@ -289,8 +291,8 @@ core.register_node("celevator:digilines_multi_io",{
 		end
 		local meta = core.get_meta(pos)
 		local fs = "formspec_version[7]size[8,4.5]"
-		fs = fs.."field[0.5,0.5;7,1;channel;Channel;${channel}]"
-		fs = fs.."button_exit[2.5,2;3,1;save;Save]"
+		fs = fs.."field[0.5,0.5;7,1;channel;"..S("Channel")..";${channel}]"
+		fs = fs.."button_exit[2.5,2;3,1;save;"..S("Save").."]"
 		meta:set_string("formspec",fs)
 	end,
 	on_receive_fields = function(pos,_,fields,player)
@@ -299,7 +301,7 @@ core.register_node("celevator:digilines_multi_io",{
 		local name = player:get_player_name()
 		if not (core.check_player_privs(name,{protection_bypass=true}) or core.check_player_privs(name,{server=true})) then
 			if player:is_player() then
-				core.chat_send_player(name,"You need either the 'protection_bypass' or 'server' privilege to use this.")
+				core.chat_send_player(name,S("You need either the 'protection_bypass' or 'server' privilege to use this."))
 				core.record_protection_violation(pos,name)
 			end
 			return

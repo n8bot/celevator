@@ -1,5 +1,7 @@
 celevator.dispatcher = {}
 
+local S = core.get_translator("celevator")
+
 celevator.dispatcher.iqueue = core.deserialize(celevator.storage:get_string("dispatcher_iqueue")) or {}
 
 celevator.dispatcher.equeue = core.deserialize(celevator.storage:get_string("dispatcher_equeue")) or {}
@@ -17,7 +19,7 @@ core.register_chatcommand("celevator_reloaddispatcher",{
 		local newfw,loaderr = loadfile(core.get_modpath("celevator").."/dispatcherfw.lua")
 		if newfw then
 			fw = newfw
-			return true,"Firmware reloaded successfully"
+			return true,S("Firmware reloaded successfully")
 		else
 			return false,loaderr
 		end
@@ -31,14 +33,14 @@ local function after_place(pos,placer)
 	local placername = placer:get_player_name()
 	if topnode.name ~= "air" then
 		if placer:is_player() then
-			core.chat_send_player(placername,"Can't place cabinet - no room for the top half!")
+			core.chat_send_player(placername,S("Can't place cabinet - no room for the top half!"))
 		end
 		core.set_node(pos,{name="air"})
 		return true
 	end
 	if core.is_protected(toppos,placername) and not core.check_player_privs(placername,{protection_bypass=true}) then
 		if placer:is_player() then
-			core.chat_send_player(placername,"Can't place cabinet - top half is protected!")
+			core.chat_send_player(placername,S("Can't place cabinet - top half is protected!"))
 			core.record_protection_violation(toppos,placername)
 		end
 		core.set_node(pos,{name="air"})
@@ -94,13 +96,13 @@ local function candig(_,player)
 	if controls.sneak then
 		return true
 	else
-		core.chat_send_player(player:get_player_name(),"Hold the sneak button while digging to remove.")
+		core.chat_send_player(player:get_player_name(),S("Hold the sneak button while digging to remove."))
 		return false
 	end
 end
 
 core.register_node("celevator:dispatcher",{
-	description = "Elevator Dispatcher",
+	description = S("Elevator Dispatcher"),
 	groups = {
 		cracky = 1,
 	},
@@ -150,7 +152,7 @@ core.register_node("celevator:dispatcher",{
 		end
 		local name = puncher:get_player_name()
 		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
+			core.chat_send_player(name,S("Can't open cabinet - cabinet is locked."))
 			core.record_protection_violation(pos,name)
 			return
 		end
@@ -171,7 +173,7 @@ core.register_node("celevator:dispatcher",{
 })
 
 core.register_node("celevator:dispatcher_open",{
-	description = "Dispatcher (door open - you hacker you!)",
+	description = S("Dispatcher (door open - you hacker you!)"),
 	groups = {
 		cracky = 1,
 		not_in_creative_inventory = 1,
@@ -231,7 +233,7 @@ core.register_node("celevator:dispatcher_open",{
 })
 
 core.register_node("celevator:dispatcher_top",{
-	description = "Dispatcher (top section - you hacker you!)",
+	description = S("Dispatcher (top section - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -262,7 +264,7 @@ core.register_node("celevator:dispatcher_top",{
 })
 
 core.register_node("celevator:dispatcher_top_open",{
-	description = "Dispatcher (top section, open - you hacker you!)",
+	description = S("Dispatcher (top section, open - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -308,7 +310,7 @@ function celevator.dispatcher.finish(pos,mem,changedinterrupts)
 		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 		local carinfodirty = false
 		if not carinfo then
-			core.log("error","[celevator] [controller] Bad car info for dispatcher at "..core.pos_to_string(pos))
+			core.log("error",string.format("[celevator] [dispatcher] Bad car info for dispatcher at %s",core.pos_to_string(pos)))
 			return
 		end
 		local node = celevator.get_node(pos)
@@ -384,8 +386,10 @@ function celevator.dispatcher.run(pos,event)
 			table.insert(celevator.dispatcher.equeue[hash],event)
 			celevator.storage:set_string("dispatcher_equeue",core.serialize(celevator.dispatcher.equeue))
 			if #celevator.dispatcher.equeue[hash] > 20 then
-				local message = "[celevator] [dispatcher] Async process for dispatcher at %s is falling behind, %d events in queue"
-				core.log("warning",string.format(message,core.pos_to_string(pos),#celevator.dispatcher.equeue[hash]))
+				local pstring = core.pos_to_string(pos)
+				local queuelen = #celevator.dispatcher.equeue[hash]
+				local message = string.format("[celevator] [dispatcher] Async process for dispatcher at %s is falling behind, %d events in queue",pstring,queuelen)
+				core.log("warning",message)
 			end
 			return
 		end
@@ -393,7 +397,7 @@ function celevator.dispatcher.run(pos,event)
 		local meta = core.get_meta(pos)
 		local mem = core.deserialize(meta:get_string("mem"))
 		if not mem then
-			core.log("error","[celevator] [controller] Failed to load dispatcher memory at "..core.pos_to_string(pos))
+			core.log("error",string.format("[celevator] [dispatcher] Failed to load dispatcher memory at %s",core.pos_to_string(pos)))
 			return
 		end
 		mem.interrupts = celevator.dispatcher.iqueue[core.hash_node_position(pos)] or {}

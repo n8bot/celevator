@@ -1,5 +1,7 @@
 celevator.callbutton = {}
 
+local S = core.get_translator("celevator")
+
 local function makebuttontex(dir,upon,downon,inventory)
 	local tex = "[combine:64x64"..
 	            ":0,0=celevator_cabinet_sides.png"..
@@ -42,15 +44,20 @@ local function makebuttontex(dir,upon,downon,inventory)
 	return(tex)
 end
 
+local upname = S("Elevator Up Call Button")
+local dnname = S("Elevator Down Call Button")
+local bothname = S("Elevator Up and Down Call Buttons")
+local onname = S("Elevator Call Button (on state - you hacker you!)")
+
 local validstates = {
-	{"up",false,false,"Up"},
-	{"up",true,false,"Up"},
-	{"down",false,false,"Down"},
-	{"down",false,true,"Down"},
-	{"both",false,false,"Up and Down"},
-	{"both",true,false,"Up and Down"},
-	{"both",false,true,"Up and Down"},
-	{"both",true,true,"Up and Down"},
+	{"up",false,false,upname},
+	{"up",true,false,onname},
+	{"down",false,false,dnname},
+	{"down",false,true,onname},
+	{"both",false,false,bothname},
+	{"both",true,false,onname},
+	{"both",false,true,onname},
+	{"both",true,true,onname},
 }
 
 function celevator.callbutton.setlight(pos,dir,newstate)
@@ -134,7 +141,7 @@ for _,state in ipairs(validstates) do
 		light = light + 5
 	end
 	local idle = not (state[2] or state[3])
-	local description = string.format("Elevator %s Call Button%s%s",state[4],(state[1] == "both" and "s" or ""),(idle and "" or " (on state, you hacker you!)"))
+	local description = state[4]
 	core.register_node(nname,{
 		description = description,
 		groups = {
@@ -168,7 +175,14 @@ for _,state in ipairs(validstates) do
 		},
 		after_place_node = function(pos)
 			local meta = core.get_meta(pos)
-			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+			local idmsg = S("Car ID")
+			local landingmsg = S("Landing Number")
+			local savemsg = S("Save")
+			local fs = "formspec_version[7]size[8,5]"
+			fs = fs.."field[0.5,0.5;7,1;carid;"..idmsg..";]"
+			fs = fs.."field[0.5,2;7,1;landing;"..landingmsg..";]"
+			fs = fs.."button[3,3.5;2,1;save;"..savemsg.."]"
+			meta:set_string("formspec",fs)
 		end,
 		on_receive_fields = function(pos,_,fields)
 			if tonumber(fields.carid) and tonumber(fields.landing) then
@@ -251,13 +265,13 @@ core.register_abm({
 		if not (carid and carid > 0) then return end --Not set up yet
 		local carinfo = core.deserialize(celevator.storage:get_string("car"..carid))
 		if not carinfo then
-			meta:set_string("infotext","Error reading car information!\nPlease remove and replace this node.")
+			meta:set_string("infotext",S("Error reading car information!\nPlease remove and replace this node."))
 			return
 		end
 		local iscontroller = (carinfo.controllerpos and celevator.controller.iscontroller(carinfo.controllerpos))
 		local isdispatcher = (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos))
 		if not (iscontroller or isdispatcher) then
-			meta:set_string("infotext","Controller/dispatcher is missing!\nPlease remove and replace this node.")
+			meta:set_string("infotext",S("Controller/dispatcher is missing!\nPlease remove and replace this node."))
 			return
 		end
 		local metacarid = 0
@@ -267,7 +281,7 @@ core.register_abm({
 			metacarid = celevator.get_meta(carinfo.dispatcherpos):get_int("carid")
 		end
 		if metacarid ~= carid then
-			meta:set_string("infotext","Controller/dispatcher found but with incorrect ID!\nPlease remove and replace this node.")
+			meta:set_string("infotext",S("Controller/dispatcher found but with incorrect ID!\nPlease remove and replace this node."))
 		end
 	end,
 })

@@ -1,5 +1,7 @@
 celevator.controller = {}
 
+local S = core.get_translator("celevator")
+
 celevator.controller.iqueue = core.deserialize(celevator.storage:get_string("controller_iqueue")) or {}
 
 celevator.controller.equeue = core.deserialize(celevator.storage:get_string("controller_equeue")) or {}
@@ -11,13 +13,13 @@ if not fw then error(err) end
 
 core.register_chatcommand("celevator_reloadcontroller",{
 	params = "",
-	description = "Reload celevator controller firmware from disk",
+	description = S("Reload celevator controller firmware from disk"),
 	privs = {server = true},
 	func = function()
 		local newfw,loaderr = loadfile(core.get_modpath("celevator").."/controllerfw.lua")
 		if newfw then
 			fw = newfw
-			return true,"Firmware reloaded successfully"
+			return true,S("Firmware reloaded successfully")
 		else
 			return false,loaderr
 		end
@@ -31,14 +33,14 @@ local function after_place(pos,placer)
 	local placername = placer:get_player_name()
 	if topnode.name ~= "air" then
 		if placer:is_player() then
-			core.chat_send_player(placername,"Can't place cabinet - no room for the top half!")
+			core.chat_send_player(placername,S("Can't place cabinet - no room for the top half!"))
 		end
 		core.set_node(pos,{name="air"})
 		return true
 	end
 	if core.is_protected(toppos,placername) and not core.check_player_privs(placername,{protection_bypass=true}) then
 		if placer:is_player() then
-			core.chat_send_player(placername,"Can't place cabinet - top half is protected!")
+			core.chat_send_player(placername,S("Can't place cabinet - top half is protected!"))
 			core.record_protection_violation(toppos,placername)
 		end
 		core.set_node(pos,{name="air"})
@@ -121,13 +123,13 @@ local function candig(_,player)
 	if controls.sneak then
 		return true
 	else
-		core.chat_send_player(player:get_player_name(),"Hold the sneak button while digging to remove.")
+		core.chat_send_player(player:get_player_name(),S("Hold the sneak button while digging to remove."))
 		return false
 	end
 end
 
 core.register_node("celevator:controller",{
-	description = "Elevator Controller",
+	description = S("Elevator Controller"),
 	groups = {
 		cracky = 1,
 	},
@@ -177,7 +179,7 @@ core.register_node("celevator:controller",{
 		end
 		local name = puncher:get_player_name()
 		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
+			core.chat_send_player(name,S("Can't open cabinet - cabinet is locked."))
 			core.record_protection_violation(pos,name)
 			return
 		end
@@ -202,7 +204,7 @@ core.register_node("celevator:controller",{
 })
 
 core.register_node("celevator:controller_open",{
-	description = "Controller (door open - you hacker you!)",
+	description = S("Controller (door open - you hacker you!)"),
 	groups = {
 		cracky = 1,
 		not_in_creative_inventory = 1,
@@ -263,7 +265,7 @@ core.register_node("celevator:controller_open",{
 })
 
 core.register_node("celevator:controller_top",{
-	description = "Controller (top section - you hacker you!)",
+	description = S("Controller (top section - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -294,7 +296,7 @@ core.register_node("celevator:controller_top",{
 })
 
 core.register_node("celevator:controller_top_running",{
-	description = "Controller (top section, car in motion - you hacker you!)",
+	description = S("Controller (top section, car in motion - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -325,7 +327,7 @@ core.register_node("celevator:controller_top_running",{
 })
 
 core.register_node("celevator:controller_top_open",{
-	description = "Controller (top section, open - you hacker you!)",
+	description = S("Controller (top section, open - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -361,7 +363,7 @@ core.register_node("celevator:controller_top_open",{
 })
 
 core.register_node("celevator:controller_top_open_running",{
-	description = "Controller (top section, open, car in motion - you hacker you!)",
+	description = S("Controller (top section, open, car in motion - you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -420,7 +422,7 @@ function celevator.controller.finish(pos,mem,changedinterrupts)
 		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 		local carinfodirty = false
 		if not carinfo then
-			core.log("error","[celevator] [controller] Bad car info for controller at "..core.pos_to_string(pos))
+			core.log("error",string.format("[celevator] [controller] Bad car info for controller at %s",core.pos_to_string(pos)))
 			return
 		end
 		local drivepos,drivetype = celevator.controller.finddrive(pos)
@@ -592,8 +594,10 @@ function celevator.controller.run(pos,event)
 			table.insert(celevator.controller.equeue[hash],event)
 			celevator.storage:set_string("controller_equeue",core.serialize(celevator.controller.equeue))
 			if #celevator.controller.equeue[hash] > 5 then
-				local message = "[celevator] [controller] Async process for controller at %s is falling behind, %d events in queue"
-				core.log("warning",string.format(message,core.pos_to_string(pos),#celevator.controller.equeue[hash]))
+				local pstring = core.pos_to_string(pos)
+				local queuelen = #celevator.controller.queue[hash]
+				local message = string.format("[celevator] [controller] Async process for controller at %s is falling behind, %d events in queue",pstring,queuelen)
+				core.log("warning",message)
 			end
 			return
 		end
@@ -601,7 +605,7 @@ function celevator.controller.run(pos,event)
 		local meta = core.get_meta(pos)
 		local mem = core.deserialize(meta:get_string("mem"))
 		if not mem then
-			core.log("error","[celevator] [controller] Failed to load controller memory at "..core.pos_to_string(pos))
+			core.log("error",string.format("[celevator] [controller] Failed to load controller memory at %s",core.pos_to_string(pos)))
 			return
 		end
 		mem.drive = {}

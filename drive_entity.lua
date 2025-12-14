@@ -1,6 +1,8 @@
+local S = core.get_translator("celevator")
+
 celevator.drives.entity = {
-	name = "Drive",
-	description = "Normal entity-based drive",
+	name = S("Elevator Drive"),
+	description = S("Normal entity-based drive"),
 	nname = "celevator:drive",
 	buzzsoundhandles = {},
 	movementsoundhandles = {},
@@ -17,19 +19,23 @@ local playerposlimits = {}
 local function update_ui(pos)
 	local meta = core.get_meta(pos)
 	local apos = tonumber(meta:get_string("apos")) or 0
-	local status = "Idle"
+	local status
 	local vel = tonumber(meta:get_string("vel")) or 0
 	local state = meta:get_string("state")
+	local velstr = string.format("%0.02f",math.abs(vel))
+	local aposstr = string.format("%0.02f",apos)
 	if state == "running" and vel > 0 then
-		status = string.format("Running: Up, %0.02f m/s",vel)
+		status = S("Drive - Running: Up, @1m/s - Position: @2m",velstr,aposstr)
 	elseif state == "running" and vel < 0 then
-		status = string.format("Running: Down, %0.02f m/s",math.abs(vel))
+		status = S("Drive - Running: Down, @1m/s - Position: @2m",velstr,aposstr)
 	elseif state == "fakerunning" and vel > 0 then
-		status = string.format("Running (simulated): Up, %0.02f m/s",vel)
+		status = S("Drive - Running (simulated): Up, @1m/s - Position: @2m",velstr,aposstr)
 	elseif state == "fakerunning" and vel < 0 then
-		status = string.format("Running (simulated): Down, %0.02f m/s",math.abs(vel))
+		status = S("Drive - Running (simulated): Down, @1m/s - Position: @2m",velstr,aposstr)
+	else
+		status = S("Drive - Idle")
 	end
-	meta:set_string("infotext",string.format("Drive - %s - Position: %0.02f m",status,apos))
+	meta:set_string("infotext",status)
 end
 
 local function playbuzz(pos)
@@ -183,7 +189,7 @@ local function decelsound(pos)
 end
 
 core.register_node("celevator:drive",{
-	description = "Elevator "..celevator.drives.entity.name,
+	description = celevator.drives.entity.name,
 	groups = {
 		cracky = 1,
 		_celevator_drive = 1,
@@ -854,7 +860,7 @@ local function updatecarpos(pos)
 	if carpos then
 		meta:set_string("origin",core.pos_to_string(carpos))
 		celevator.get_meta(carpos):set_string("machinepos",core.pos_to_string(pos))
-		meta:set_string("infotext",string.format("Using car with origin %s",core.pos_to_string(carpos)))
+		meta:set_string("infotext",S("Using car with origin @1",core.pos_to_string(carpos)))
 		local carid = meta:get_int("carid")
 		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 		if not (carinfo and carinfo.controllerpos) then return end
@@ -876,12 +882,12 @@ local function updatecarpos(pos)
 			carmeta:set_int("carid",carid)
 		end
 	else
-		meta:set_string("infotext","No car found! Punch to try again")
+		meta:set_string("infotext",S("No car found! Punch to try again"))
 	end
 end
 
 core.register_node("celevator:machine",{
-	description = "Elevator Hoist Machine",
+	description = S("Elevator Hoist Machine"),
 	groups = {
 		dig_immediate = 2,
 		_celevator_machine = 1,
@@ -936,29 +942,29 @@ core.register_node("celevator:machine",{
 		local sheavereplaces = core.get_node(sheavepos).name
 		local name = player:get_player_name()
 		if not (core.registered_nodes[motorreplaces] and core.registered_nodes[motorreplaces].buildable_to) then
-			core.chat_send_player(name,"Can't place machine here - no room for the motor (to the left)!")
+			core.chat_send_player(name,S("Can't place machine here - no room for the motor (to the left)!"))
 			core.remove_node(pos)
 			return true
 		end
 		if core.is_protected(motorpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"Can't place machine here - space for the motor (to the left) is protected!")
+			core.chat_send_player(name,S("Can't place machine here - space for the motor (to the left) is protected!"))
 			core.record_protection_violation(motorpos,name)
 			core.remove_node(pos)
 			return true
 		end
 		if not (core.registered_nodes[sheavereplaces] and core.registered_nodes[sheavereplaces].buildable_to) then
-			core.chat_send_player(name,"Can't place machine here - no room for the sheave (in front)!")
+			core.chat_send_player(name,S("Can't place machine here - no room for the sheave (in front)!"))
 			core.remove_node(pos)
 			return true
 		end
 		if core.is_protected(sheavepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"Can't place machine here - space for the sheave (in front) is protected!")
+			core.chat_send_player(name,S("Can't place machine here - space for the sheave (in front) is protected!"))
 			core.record_protection_violation(sheavepos,name)
 			core.remove_node(pos)
 			return true
 		end
 		local meta = core.get_meta(pos)
-		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;"..S("Car ID")..";]button[3,3.5;2,1;save;"..S("Save").."]")
 		core.set_node(motorpos,{name="celevator:motor",param2=newnode.param2})
 		core.set_node(sheavepos,{name="celevator:sheave",param2=newnode.param2})
 	end,
@@ -1008,7 +1014,7 @@ core.register_node("celevator:machine",{
 })
 
 core.register_node("celevator:motor",{
-	description = "Hoist Motor (you hacker you!)",
+	description = S("Hoist Motor (you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -1042,7 +1048,7 @@ core.register_node("celevator:motor",{
 })
 
 core.register_node("celevator:sheave",{
-	description = "Sheave (you hacker you!)",
+	description = S("Sheave (you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -1075,7 +1081,7 @@ core.register_node("celevator:sheave",{
 })
 
 core.register_node("celevator:sheave_centered",{
-	description = "Centered Sheave (you hacker you!)",
+	description = S("Centered Sheave (you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},

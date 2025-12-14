@@ -1,3 +1,5 @@
+local S = core.get_translator("celevator")
+
 local function spawngovsheave(pos)
 	local entitiesnearby = core.get_objects_inside_radius(pos,0.5)
 	for _,i in pairs(entitiesnearby) do
@@ -14,7 +16,7 @@ local function spawngovsheave(pos)
 end
 
 core.register_node("celevator:governor",{
-	description = "Elevator Governor",
+	description = S("Elevator Governor"),
 	groups = {
 		cracky = 1,
 	},
@@ -39,7 +41,7 @@ core.register_node("celevator:governor",{
 		},
 	},
 	on_construct = function(pos)
-		core.get_meta(pos):set_string("formspec","field[carid;Car ID;]")
+		core.get_meta(pos):set_string("formspec","field[carid;"..S("Car ID")..";]")
 		spawngovsheave(pos)
 	end,
 	after_dig_node = function(pos)
@@ -63,7 +65,7 @@ core.register_node("celevator:governor",{
 })
 
 core.register_node("celevator:governor_sheave",{
-	description = "Governor Sheave (you hacker you!)",
+	description = S("Governor Sheave (you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},

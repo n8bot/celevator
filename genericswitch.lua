@@ -1,13 +1,15 @@
+local S = core.get_translator("celevator")
+
 local inputoptions = {
 	{
 		id = "none",
-		desc = "(none)",
+		desc = S("(none)"),
 		func_on = function() end,
 		needsfloor = false,
 	},
 	{
 		id = "carcall",
-		desc = "Car Call at Landing:",
+		desc = S("Car Call at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -19,7 +21,7 @@ local inputoptions = {
 	},
 	{
 		id = "upcall",
-		desc = "Up Call (simplex car) at Landing:",
+		desc = S("Up Call (simplex car) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -31,7 +33,7 @@ local inputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call (simplex car) at Landing:",
+		desc = S("Down Call (simplex car) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -43,7 +45,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingupcall",
-		desc = "Up Call (swing) at Landing:",
+		desc = S("Up Call (swing) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -55,7 +57,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingdowncall",
-		desc = "Down Call (swing) at Landing:",
+		desc = S("Down Call (swing) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -67,7 +69,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1off",
-		desc = "Deactivate Fire Service Phase 1",
+		desc = S("Deactivate Fire Service Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -78,7 +80,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1on",
-		desc = "Activate Fire Service (main landing) Phase 1",
+		desc = S("Activate Fire Service (main landing) Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -89,7 +91,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1onalt",
-		desc = "Activate Fire Service (alternate landing) Phase 1",
+		desc = S("Activate Fire Service (alternate landing) Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -101,7 +103,7 @@ local inputoptions = {
 	},
 	{
 		id = "mrsmoke",
-		desc = "Machine Room or Hoistway Smoke Detector",
+		desc = S("Machine Room or Hoistway Smoke Detector"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "mrsmoke",
@@ -111,7 +113,7 @@ local inputoptions = {
 	},
 	{
 		id = "secdeny",
-		desc = "Lock Car Calls at Landing:",
+		desc = S("Lock Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -126,7 +128,7 @@ local inputoptions = {
 	},
 	{
 		id = "secauth",
-		desc = "Require Auth for Car Calls at Landing:",
+		desc = S("Require Auth for Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -141,7 +143,7 @@ local inputoptions = {
 	},
 	{
 		id = "secallow",
-		desc = "Unlock Car Calls at Landing:",
+		desc = S("Unlock Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -156,7 +158,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingon",
-		desc = "Activate Swing Operation",
+		desc = S("Activate Swing Operation"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -168,7 +170,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingoff",
-		desc = "Deactivate Swing Operation",
+		desc = S("Deactivate Swing Operation"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -183,13 +185,13 @@ local inputoptions = {
 local dinputoptions = {
 	{
 		id = "none",
-		desc = "(none)",
+		desc = S("(none)"),
 		func_on = function() end,
 		needsfloor = false,
 	},
 	{
 		id = "upcall",
-		desc = "Up Call at Landing:",
+		desc = S("Up Call at Landing:"),
 		func_on = function(dispatcherpos,floor)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "remotemsg",
@@ -201,7 +203,7 @@ local dinputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call at Landing:",
+		desc = S("Down Call at Landing:"),
 		func_on = function(dispatcherpos,floor)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "remotemsg",
@@ -213,7 +215,7 @@ local dinputoptions = {
 	},
 	{
 		id = "fs1off",
-		desc = "Deactivate Fire Service Phase 1",
+		desc = S("Deactivate Fire Service Phase 1"),
 		func_on = function(dispatcherpos)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "fs1switch",
@@ -224,7 +226,7 @@ local dinputoptions = {
 	},
 	{
 		id = "fs1on",
-		desc = "Activate Fire Service Phase 1",
+		desc = S("Activate Fire Service Phase 1"),
 		func_on = function(dispatcherpos)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "fs1switch",
@@ -238,10 +240,10 @@ local dinputoptions = {
 local function updateinputform(pos)
 	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
-	local fs = "formspec_version[7]size[8,8.5]"
-	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
-	fs = fs.."vertlabel[0.33,1;ON]"
-	fs = fs.."dropdown[1,0.5;6,1;signal_on;"
+	local fs = "formspec_version[7]size[9,8.5]"
+	fs = fs.."tabheader[0,0;1;tab;"..S("Controller")..","..S("Dispatcher")..";"..(dmode and "2" or "1")..";true;true]"
+	fs = fs.."vertlabel[0.33,1;"..S("ON").."]"
+	fs = fs.."dropdown[1,0.5;7,1;signal_on;"
 	local selected_on = 1
 	local currentid_on = meta:get_string("signal_on")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
@@ -250,11 +252,11 @@ local function updateinputform(pos)
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected_on..";false]"
-	fs = fs.."field[0.5,2;3,1;carid;"..(dmode and "Dispatcher ID" or "Car ID")..";${carid}]"
-	fs = fs.."field[4.5,2;3,1;floor_on;Landing Number;${floor_on}]"
-	fs = fs.."box[0,3.25;8,0.1;#CCCCCC]"
-	fs = fs.."vertlabel[0.33,4;OFF]"
-	fs = fs.."dropdown[1,3.5;6,1;signal_off;"
+	fs = fs.."field[0.5,2;3,1;carid;"..(dmode and S("Dispatcher ID") or S("Car ID"))..";${carid}]"
+	fs = fs.."field[4.5,2;3,1;floor_on;"..S("Landing Number")..";${floor_on}]"
+	fs = fs.."box[0,3.25;9,0.1;#CCCCCC]"
+	fs = fs.."vertlabel[0.33,4;"..S("OFF").."]"
+	fs = fs.."dropdown[1,3.5;7,1;signal_off;"
 	local selected_off = 1
 	local currentid_off = meta:get_string("signal_off")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
@@ -263,9 +265,9 @@ local function updateinputform(pos)
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected_off..";false]"
-	fs = fs.."field[4.5,5;3,1;floor_off;Landing Number;${floor_off}]"
-	fs = fs.."label[1.5,6.5;Not all signal options require a landing number.]"
-	fs = fs.."button_exit[2.5,7;3,1;save;Save]"
+	fs = fs.."field[4.5,5;3,1;floor_off;"..S("Landing Number")..";${floor_off}]"
+	fs = fs.."label[1.5,6.5;"..S("Not all signal options require a landing number.").."]"
+	fs = fs.."button_exit[2.5,7;3,1;save;"..S("Save").."]"
 	meta:set_string("formspec",fs)
 end
 
@@ -290,7 +292,7 @@ local function handleinputfields(pos,_,fields,player)
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
 			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a dispatcher you don't have access to."))
 					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
@@ -300,7 +302,7 @@ local function handleinputfields(pos,_,fields,player)
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a controller you don't have access to."))
 					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
@@ -329,14 +331,14 @@ local function handleinputfields(pos,_,fields,player)
 		meta:set_string("signal_on",def_on.id)
 		meta:set_string("signal_off",def_off.id)
 		updateinputform(pos)
-		local infotext = carid.." - "..def_on.desc..(def_on.needsfloor and " "..floor_on or "")
+		local infotext = " - "..def_on.desc..(def_on.needsfloor and " "..floor_on or "")
 		if def_on.id == "none" or def_off.id ~= "none" then
 			infotext = infotext.." / "..def_off.desc..(def_off.needsfloor and " "..floor_off or "")
 		end
 		if dmode then
-			infotext = "Dispatcher: "..infotext
+			infotext = S("Dispatcher: @1",carid)..infotext
 		else
-			infotext = "Car: "..infotext
+			infotext = S("Car: @1",carid)..infotext
 		end
 		meta:set_string("infotext",infotext)
 		if def_on.id ~= "none" or def_off.id ~= "none" then
@@ -383,7 +385,7 @@ local function handleinput(pos,on)
 end
 
 core.register_node("celevator:genericswitch",{
-	description = "Elevator Keyswitch",
+	description = S("Elevator Keyswitch"),
 	tiles = {
 		"celevator_cabinet_sides.png",
 		"celevator_cabinet_sides.png",
@@ -413,7 +415,7 @@ core.register_node("celevator:genericswitch",{
 })
 
 core.register_node("celevator:genericswitch_maintained_off",{
-	description = "Elevator Keyswitch (maintained, off state - you hacker you!)",
+	description = S("Elevator Keyswitch (maintained, off state - you hacker you!)"),
 	tiles = {
 		"celevator_cabinet_sides.png",
 		"celevator_cabinet_sides.png",
@@ -439,7 +441,7 @@ core.register_node("celevator:genericswitch_maintained_off",{
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
 		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.chat_send_player(name,S("You don't have a key for this switch."))
 			core.record_protection_violation(pos,name)
 			return
 		end
@@ -450,7 +452,7 @@ core.register_node("celevator:genericswitch_maintained_off",{
 })
 
 core.register_node("celevator:genericswitch_maintained_on",{
-	description = "Elevator Keyswitch (maintained, on state - you hacker you!)",
+	description = S("Elevator Keyswitch (maintained, on state - you hacker you!)"),
 	tiles = {
 		"celevator_cabinet_sides.png",
 		"celevator_cabinet_sides.png",
@@ -476,7 +478,7 @@ core.register_node("celevator:genericswitch_maintained_on",{
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
 		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.chat_send_player(name,S("You don't have a key for this switch."))
 			core.record_protection_violation(pos,name)
 			return
 		end
@@ -487,7 +489,7 @@ core.register_node("celevator:genericswitch_maintained_on",{
 })
 
 core.register_node("celevator:genericswitch_momentary_off",{
-	description = "Elevator Keyswitch (momentary, off state - you hacker you!)",
+	description = S("Elevator Keyswitch (momentary, off state - you hacker you!)"),
 	tiles = {
 		"celevator_cabinet_sides.png",
 		"celevator_cabinet_sides.png",
@@ -513,7 +515,7 @@ core.register_node("celevator:genericswitch_momentary_off",{
 	on_rightclick = function(pos,node,player)
 		local name = player:get_player_name()
 		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,"You don't have a key for this switch.")
+			core.chat_send_player(name,S("You don't have a key for this switch."))
 			core.record_protection_violation(pos,name)
 			return
 		end
@@ -531,7 +533,7 @@ core.register_node("celevator:genericswitch_momentary_off",{
 })
 
 core.register_node("celevator:genericswitch_momentary_on",{
-	description = "Elevator Keyswitch (momentary, on state - you hacker you!)",
+	description = S("Elevator Keyswitch (momentary, on state - you hacker you!)"),
 	tiles = {
 		"celevator_cabinet_sides.png",
 		"celevator_cabinet_sides.png",

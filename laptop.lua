@@ -1,11 +1,13 @@
+local S = core.get_translator("celevator")
+
 laptop.register_app("celevator",{
 	app_name = "mView",
-	app_info = "Remote interface for MTronic XT elevator controllers",
+	app_info = S("Remote interface for MTronic XT elevator controllers"),
 	app_icon = "celevator_laptop_icon.png",
 	formspec_func = function(_,mtos)
 		local ram = mtos.bdev:get_app_storage("ram","celevator")
 		local mem = mtos.bdev:get_app_storage("hdd","celevator")
-		if not mem then return mtos.theme:get_label("0.5,0.5","This application requires a hard disk drive.") end
+		if not mem then return mtos.theme:get_label("0.5,0.5",S("This application requires a hard disk drive.")) end
 		if not mem.connections then mem.connections = {} end
 		if not ram.screenstate then ram.screenstate = (#mem.connections > 0 and "connections" or "welcome") end
 		if not mem.selectedconnection then mem.selectedconnection = 1 end
@@ -16,55 +18,55 @@ laptop.register_app("celevator",{
 		if ram.screenstate == "welcome" then
 			fs = fs.."background9[5.5,1;4,2;celevator_fs_bg.png;false;3]"
 			fs = fs.."image[5.75,1;4,2;celevator_logo.png]"
-			fs = fs..mtos.theme:get_label("2,4","Welcome to the mView remote interface for MTronic XT elevator controllers!")
-			fs = fs..mtos.theme:get_label("2,6","Add a connection to get started.")
-			fs = fs..mtos.theme:get_button("5.5,7;4,1","major","connections","Add/Edit Connections")
+			fs = fs..mtos.theme:get_label("2,4",S("Welcome to the mView remote interface for MTronic XT elevator controllers!"))
+			fs = fs..mtos.theme:get_label("2,6",S("Add a connection to get started."))
+			fs = fs..mtos.theme:get_button("5.5,7;4,1","major","connections",S("Add/Edit Connections"))
 		elseif ram.screenstate == "connections" then
-			fs = fs..mtos.theme:get_label("0.5,0.5","MANAGE CONNECTIONS")
+			fs = fs..mtos.theme:get_label("0.5,0.5",S("MANAGE CONNECTIONS"))
 			if #mem.connections > 0 then
 				fs = fs.."textlist[1,2;6,7;connection;"
 				for i=#mem.connections,1,-1 do
-					local text = string.format("ID %d - %s",mem.connections[i].carid,mem.connections[i].name)
+					local text = S("ID @1 - @2",mem.connections[i].carid,mem.connections[i].name)
 					fs = fs..core.formspec_escape(text)
 					fs = fs..(i==1 and "" or ",")
 				end
 				fs = fs..";"..tostring(#mem.connections-mem.selectedconnection+1)..";false]"
 			else
-				fs = fs..mtos.theme:get_label("1,2","No Connections")
+				fs = fs..mtos.theme:get_label("1,2",S("No Connections"))
 			end
-			fs = fs..mtos.theme:get_button("8,2;3,1","major","new","New Connection")
+			fs = fs..mtos.theme:get_button("8,2;3,1","major","new",S("New Connection"))
 			if mem.connections[mem.selectedconnection] then
-				fs = fs..mtos.theme:get_button("8,3;3,1","major","edit","Edit Connection")
-				fs = fs..mtos.theme:get_button("8,4;3,1","major","delete","Delete Connection")
-				fs = fs..mtos.theme:get_button("8,7;3,1","major","connect","Connect >")
-				if #mem.connections > mem.selectedconnection then fs = fs..mtos.theme:get_button("8,5;3,1","major","moveup","Move Up") end
-				if mem.selectedconnection > 1 then fs = fs..mtos.theme:get_button("8,6;3,1","major","movedown","Move Down") end
+				fs = fs..mtos.theme:get_button("8,3;3,1","major","edit",S("Edit Connection"))
+				fs = fs..mtos.theme:get_button("8,4;3,1","major","delete",S("Delete Connection"))
+				fs = fs..mtos.theme:get_button("8,7;3,1","major","connect",S("Connect >"))
+				if #mem.connections > mem.selectedconnection then fs = fs..mtos.theme:get_button("8,5;3,1","major","moveup",S("Move Up")) end
+				if mem.selectedconnection > 1 then fs = fs..mtos.theme:get_button("8,6;3,1","major","movedown",S("Move Down")) end
 			end
 		elseif ram.screenstate == "newconnection" then
-			fs = fs..mtos.theme:get_label("0.5,0.5","NEW CONNECTION")
-			fs = fs..mtos.theme:get_label("0.5,1","Please enter the ID you would like to connect to and a name for the connection.")
-			fs = fs..mtos.theme:get_label("0.7,1.8","ID")
-			fs = fs..mtos.theme:get_label("3.7,1.8","Name")
+			fs = fs..mtos.theme:get_label("0.5,0.5",S("NEW CONNECTION"))
+			fs = fs..mtos.theme:get_label("0.5,1",S("Please enter the ID you would like to connect to and a name for the connection."))
+			fs = fs..mtos.theme:get_label("0.7,1.8",S("ID"))
+			fs = fs..mtos.theme:get_label("3.7,1.8",S("Name"))
 			fs = fs..string.format("field[1,2.5;2,1;carid;;%s]",core.formspec_escape(mem.newconnection.carid))
 			fs = fs..string.format("field[4,2.5;4,1;name;;%s]",core.formspec_escape(mem.newconnection.name))
-			fs = fs..mtos.theme:get_button("3,4;3,1","major","save","Save")
-			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel","Cancel")
+			fs = fs..mtos.theme:get_button("3,4;3,1","major","save",S("Save"))
+			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel",S("Cancel"))
 		elseif ram.screenstate == "editconnection" then
-			fs = fs..mtos.theme:get_label("0.5,0.5","EDIT CONNECTION")
-			fs = fs..mtos.theme:get_label("0.7,1.8","ID: "..mem.connections[mem.selectedconnection].carid)
-			fs = fs..mtos.theme:get_label("3.7,1.8","Name")
+			fs = fs..mtos.theme:get_label("0.5,0.5",S("EDIT CONNECTION"))
+			fs = fs..mtos.theme:get_label("0.7,1.8",S("ID: @1",mem.connections[mem.selectedconnection].carid))
+			fs = fs..mtos.theme:get_label("3.7,1.8",S("Name"))
 			fs = fs..string.format("field[4,2.5;4,1;name;;%s]",core.formspec_escape(mem.connections[mem.selectedconnection].name))
-			fs = fs..mtos.theme:get_button("3,4;3,1","major","save","Save")
-			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel","Cancel")
+			fs = fs..mtos.theme:get_button("3,4;3,1","major","save",S("Save"))
+			fs = fs..mtos.theme:get_button("3,5.5;3,1","major","cancel",S("Cancel"))
 		elseif ram.screenstate == "notfound" then
-			fs = fs..mtos.theme:get_label("0.5,0.5","Error")
-			fs = fs..mtos.theme:get_label("0.5,1","Could not find a controller or dispatcher with the given ID.")
-			fs = fs..mtos.theme:get_label("0.5,1.3","Please check the ID number and try again.")
-			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
+			fs = fs..mtos.theme:get_label("0.5,0.5",S("Error"))
+			fs = fs..mtos.theme:get_label("0.5,1",S("Could not find a controller or dispatcher with the given ID."))
+			fs = fs..mtos.theme:get_label("0.5,1.3",S("Please check the ID number and try again."))
+			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok",S("OK"))
 		elseif ram.screenstate == "protected" then
-			fs = fs..mtos.theme:get_label("0.5,0.5","Error")
-			fs = fs..mtos.theme:get_label("0.5,1","Controller or dispatcher is protected.")
-			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok","OK")
+			fs = fs..mtos.theme:get_label("0.5,0.5",S("Error"))
+			fs = fs..mtos.theme:get_label("0.5,1",S("Controller or dispatcher is protected."))
+			fs = fs..mtos.theme:get_button("0.5,3;2,1","major","ok",S("OK"))
 		elseif ram.screenstate == "dispatcherstatus" then
 			local connection = mem.connections[mem.selectedconnection]
 			local pos = connection.pos
@@ -73,20 +75,20 @@ laptop.register_app("celevator",{
 				local dmem = core.deserialize(meta:get_string("mem"))
 				if not dmem then return end
 				fs = fs.."background9[-0.1,0.4;15.2,10.05;celevator_fs_bg.png;false;3]"
-				fs = fs.."label[0.5,0.5;"..string.format("Connected to %s (ID %d)",connection.name,connection.carid).."]"
-				fs = fs.."button[1,1;2,1;disconnect;Disconnect]"
+				fs = fs.."label[0.5,0.5;"..S("Connected to @1 (ID @2)",connection.name,connection.carid).."]"
+				fs = fs.."button[1,1;2,1;disconnect;"..S("Disconnect").."]"
 				fs = fs.."box[0.5,1;0.1,9;#AAAAAAFF]"
 				fs = fs.."box[14.25,1;0.1,9;#AAAAAAFF]"
 				fs = fs.."style_type[label;font_size=*0.75]"
-				fs = fs.."label[0.05,10;UP]"
-				fs = fs.."label[14.35,10;DOWN]"
+				fs = fs.."label[0.05,10;^]"
+				fs = fs.."label[14.35,10;v]"
 				fs = fs.."style_type[image_button;font=mono;font_size=*0.66]"
 				for car=1,#dmem.params.carids,1 do
 					local xp = (car-1)*0.75+1
 					local carid = dmem.params.carids[car]
 					local carstate = dmem.carstatus[carid].state
-					fs = fs..string.format("label[%f,9.8;CAR %d]",xp,car)
-					fs = fs..string.format("label[%f,10;%s]",xp+0.1,core.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT")))
+					fs = fs..string.format("label[%f,9.8;%s]",xp,S("CAR @1",car))
+					fs = fs..string.format("label[%f,10;%s]",xp+0.1,core.colorize("#ff5555",(carstate == "normal" and S(" IN") or S("OUT"))))
 				end
 				local lowestfloor = (mem.screenpage-1)*10+1
 				local maxfloor = #dmem.params.floornames
@@ -190,29 +192,29 @@ laptop.register_app("celevator",{
 				local cmem = core.deserialize(meta:get_string("mem"))
 				if not cmem then return end
 				local modenames = {
-					normal = "Normal Operation",
-					uninit = "Uninitialized",
-					resync = "Position Sync - Floor",
-					bfdemand = "Position Sync - Terminal",
-					fault = "Fault",
-					stop = "Emergency Stop",
-					mrinspect = "Machine Room Inspection",
-					carinspect = "Car Top Inspection",
-					inspconflict = "Inspection Conflict",
-					fs1 = "Fire Service - Phase 1",
-					fs2 = "Fire Service - Phase 2",
-					fs2hold = "Fire Service - Phase 2 Hold",
-					indep = "Independent Service",
-					capture = "Captured",
-					test = "Test Mode",
-					swing = "Swing Operation",
+					normal = S("Normal Operation"),
+					uninit = S("Uninitialized"),
+					resync = S("Position Sync - Floor"),
+					bfdemand = S("Position Sync - Terminal"),
+					fault = S("Fault"),
+					stop = S("Emergency Stop"),
+					mrinspect = S("Machine Room Inspection"),
+					carinspect = S("Car Top Inspection"),
+					inspconflict = "Inspection Conflict", -- No longer used
+					fs1 = S("Fire Service - Phase 1"),
+					fs2 = S("Fire Service - Phase 2"),
+					fs2hold = S("Fire Service - Phase 2 Hold"),
+					indep = S("Independent Service"),
+					capture = S("Captured"),
+					test = S("Test Mode"),
+					swing = S("Swing Operation"),
 				}
 				local doorstates = {
-					open = "Open",
-					opening = "Opening",
-					closing = "Closing",
-					closed = "Closed",
-					testtiming = "Closed",
+					open = S("Doors Open"),
+					opening = S("Doors Opening"),
+					closing = S("Doors Closing"),
+					closed = S("Doors Closed"),
+					testtiming = S("Doors Closed"),
 				}
 				local carpos = 0
 				local carfloor = 0
@@ -224,15 +226,18 @@ laptop.register_app("celevator",{
 						break
 					end
 				end
-				fs = fs..mtos.theme:get_label("1,1",string.format("Connected to %s (ID %d)",connection.name,connection.carid))
+				fs = fs..mtos.theme:get_label("1,1",S("Connected to @1 (ID @2)",connection.name,connection.carid))
 				fs = fs..mtos.theme:get_label("1,2",modenames[cmem.carstate])
-				fs = fs..mtos.theme:get_label("1,2.5",string.format("Doors %s",doorstates[cmem.doorstate]))
+				fs = fs..mtos.theme:get_label("1,2.5",doorstates[cmem.doorstate])
 				local pi = core.formspec_escape(cmem.params.floornames[carfloor])
-				fs = fs..mtos.theme:get_label("1,3",string.format("Position: %0.02fm Speed: %+0.02fm/s PI: %s",cmem.drive.status.apos,cmem.drive.status.vel,pi))
+				local posfmt = string.format("%0.02f",cmem.drive.status.apos)
+				local speedfmt = string.format("%+0.02f",cmem.drive.status.vel)
+				local posmsg = S("Position: @1m Speed: @2m/s PI: @3",posfmt,speedfmt,pi)
+				fs = fs..mtos.theme:get_label("1,3",posmsg)
 				if #cmem.faultlog > 0 then
-					fs = fs..mtos.theme:get_label("1,3.5","Fault(s) Active")
+					fs = fs..mtos.theme:get_label("1,3.5",S("Fault(s) Active"))
 				else
-					fs = fs..mtos.theme:get_label("1,3.5","No Current Faults")
+					fs = fs..mtos.theme:get_label("1,3.5",S("No Current Faults"))
 				end
 				fs = fs.."background9[8,0.3;6.2,10;celevator_fs_bg.png;false;3]"
 				fs = fs.."style_type[image_button;font=mono;font_size=*0.75]"
@@ -240,14 +245,14 @@ laptop.register_app("celevator",{
 				fs = fs.."box[11.808,0.75;0.05,9;#AAAAAAFF]"
 				fs = fs.."box[12.708,0.75;0.05,9;#AAAAAAFF]"
 				fs = fs.."box[13.725,0.75;0.1,9;#AAAAAAFF]"
-				fs = fs.."label[11.25,0.3;UP]"
-				fs = fs.."label[12.042,0.3;CAR]"
-				fs = fs.."label[12.825,0.3;DOWN]"
+				fs = fs.."label[11.25,0.3;^]"
+				fs = fs.."label[12.042,0.3;"..S("CAR").."]"
+				fs = fs.."label[12.825,0.3;v]"
 				if mem.scrollfollowscar then mem.screenpage = math.floor((carfloor-1)/10)+1 end
 				local maxfloor = #cmem.params.floornames
 				local bottom = (mem.screenpage-1)*10+1
 				if maxfloor > 10 then
-					fs = fs..string.format("checkbox[8.4,1.5;scrollfollowscar;Follow Car;%s]",tostring(mem.scrollfollowscar))
+					fs = fs..string.format("checkbox[8.4,1.5;scrollfollowscar;"..S("Follow Car")..";%s]",tostring(mem.scrollfollowscar))
 					if bottom+9 < maxfloor then
 						fs = fs.."image_button[8.5,1;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]"
 					end
@@ -297,7 +302,7 @@ laptop.register_app("celevator",{
 			else
 				ram.screenstate = "notfound"
 			end
-			fs = fs..mtos.theme:get_button("1,8;3,1","major","disconnect","Disconnect")
+			fs = fs..mtos.theme:get_button("1,8;3,1","major","disconnect",S("Disconnect"))
 		end
 		return fs
 	end,

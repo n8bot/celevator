@@ -1,8 +1,9 @@
 celevator.dbdkiosk = {}
 
+local S = core.get_translator("celevator")
+
 function celevator.dbdkiosk.checkprot(pos,name)
 	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-		core.chat_send_player(name,"Can't open cabinet - cabinet is locked.")
 		core.record_protection_violation(pos,name)
 		return false
 	end
@@ -16,15 +17,15 @@ function celevator.dbdkiosk.updatefields(pos)
 	if screenstate == "connect" then
 		meta:set_string("formspec","formspec_version[7]"..
 		                           "size[8,5]"..
-		                           "field[0.5,0.5;7,1;carid;Dispatcher ID;]"..
-		                           "field[0.5,2;7,1;landing;Landing Number;]"..
-		                           "button[3,3.5;2,1;save;Save]"
+		                           "field[0.5,0.5;7,1;carid;"..S("Dispatcher ID")..";]"..
+		                           "field[0.5,2;7,1;landing;"..S("Landing Number")..";]"..
+		                           "button[3,3.5;2,1;save;"..S("Save").."]"
 		               )
 	elseif screenstate == "main" then
 		local landing = meta:get_int("landing")
 		local fs = "formspec_version[7]"
 		fs = fs.."size[8,14]"
-		fs = fs.."label[3,0.5;Please select a floor\\:]"
+		fs = fs.."label[3,0.5;"..core.formspec_escape(S("Please select a floor:")).."]"
 		local floornames = core.deserialize(meta:get_string("floornames"))
 		local floorsavailable = core.deserialize(meta:get_string("floorsavailable"))
 		local showfloors = {}
@@ -51,16 +52,16 @@ function celevator.dbdkiosk.updatefields(pos)
 	elseif screenstate == "assignment" then
 		local fs = "formspec_version[7]"
 		fs = fs.."size[8,14]"
-		fs = fs.."label[3,3;Please use elevator]"
+		fs = fs.."label[3,3;"..S("Please use elevator").."]"
 		fs = fs.."style_type[label;font_size=*4]"
 		fs = fs.."label[3.5,5;"..meta:get_string("assignedcar").."]"
 		meta:set_string("formspec",fs)
 	elseif screenstate == "error" then
 		local fs = "formspec_version[7]"
 		fs = fs.."size[8,14]"
-		fs = fs.."label[3.5,0.5;ERROR]"
-		fs = fs.."label[2.5,3;Could not find a suitable elevator]"
-		fs = fs.."label[2.5,3.5;Please try again later]"
+		fs = fs.."label[3.5,0.5;"..S("ERROR").."]"
+		fs = fs.."label[2.5,3;"..S("Could not find a suitable elevator").."]"
+		fs = fs.."label[2.5,3.5;"..S("Please try again later").."]"
 		meta:set_string("formspec",fs)
 	end
 end
@@ -146,7 +147,7 @@ function celevator.dbdkiosk.showassignment(pos,assignment)
 end
 
 core.register_node("celevator:dbdkiosk",{
-	description = "Elevator Destination Entry Kiosk",
+	description = S("Elevator Destination Entry Kiosk"),
 	drawtype = "nodebox",
 	paramtype = "light",
 	paramtype2 = "4dir",

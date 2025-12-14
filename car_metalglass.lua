@@ -1,3 +1,5 @@
+local S = core.get_translator("celevator")
+
 local pieces = {
 	{
 		_position = "000",
@@ -333,7 +335,7 @@ celevator.car.register("metal_glassback",pieces,vector.new(2,3,3))
 
 
 core.register_node("celevator:car_metal_glassback",{
-	description = "Metal Glass-Back Elevator Car",
+	description = S("Metal Glass-Back Elevator Car"),
 	paramtype2 = "4dir",
 	buildable_to = true,
 	inventory_image = "celevator_car_metal_glassback_inventory.png",
@@ -351,17 +353,18 @@ core.register_node("celevator:car_metal_glassback",{
 		for x=0,1,1 do
 			for y=0,2,1 do
 				for z=0,2,1 do
-					local offsetdesc = string.format("%dm to the right, %dm up, and %dm back",x,y,z)
 					local placeoffset = vector.new(x,y,z)
 					local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
 					local replaces = core.get_node(placepos).name
 					if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
-						core.chat_send_player(name,string.format("Can't place car here - position %s is blocked!",offsetdesc))
+						local message = S("Can't place car here - position @1m to the right, @2m up, and @3m back is blocked!",x,y,z)
+						core.chat_send_player(name,message)
 						core.remove_node(pos)
 						return true
 					end
 					if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-						core.chat_send_player(name,string.format("Can't place car here - position %s is protected!",offsetdesc))
+						local message = S("Can't place car here - position @1m to the right, @2m up, and @3m back is protected!",x,y,z)
+						core.chat_send_player(name,message)
 						core.record_protection_violation(placepos,name)
 						core.remove_node(pos)
 						return true

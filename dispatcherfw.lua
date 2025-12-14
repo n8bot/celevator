@@ -1,5 +1,7 @@
 local pos,event,mem = ...
 
+local S = core.get_translator("celevator")
+
 local changedinterrupts = {}
 
 local function interrupt(time,iid)
@@ -930,134 +932,138 @@ fs("background9[0,0;16,12;celevator_fs_bg.png;true;3]")
 
 if mem.screenstate == "oobe_welcome" then
 	fs("image[6,1;4,2;celevator_logo.png]")
-	fs("label[1,4;Welcome to your new MTronic XT elevator dispatcher!]")
-	fs("label[1,4.5;Before continuing, make sure you have at least two controllers in group operation mode and ready to connect.]")
-	fs("label[1,5.5;Press Next to begin.]")
-	fs("button[1,10;2,1;license;License Info]")
-	fs("button[13,10;2,1;next;Next >]")
+	fs("label[1,4;"..S("Welcome to your new MTronic XT elevator dispatcher!").."]")
+	fs("label[1,4.5;"..S("Before continuing, make sure you have at least two controllers in group operation mode and ready to connect.").."]")
+	fs("label[1,5.5;"..S("Press Next to begin.").."]")
+	fs("button[1,10;3,1;license;"..S("License Info").."]")
+	fs("button[13,10;2,1;next;"..S("Next >").."]")
 elseif mem.screenstate == "oobe_license" then
 	local licensefile = io.open(core.get_modpath("celevator").."/LICENSE")
 	local license = core.formspec_escape(licensefile:read("*all"))
 	licensefile:close()
-	fs("textarea[1,1;14,8;license;This applies to the whole celevator mod\\, not just this dispatcher:;"..license.."]")
+	fs("textarea[1,1;14,8;license;"..core.formspec_escape(S("This applies to the whole celevator mod, not just this dispatcher:"))..";"..license.."]")
 	fs("button[7,10.5;2,1;back;OK]")
 elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
 	if mem.screenstate == "oobe_floortable" then
-		fs("label[1,1;Enter details of all floors this group will serve, then press Next.]")
-		fs("label[1,1.3;Include all floors served by any car in the group, even if not served by all cars.]")
-		fs("button[1,10;2,1;back;< Back]")
-		fs("button[13,10;2,1;next;Next >]")
+		fs("label[1,1;"..S("Enter details of all floors this group will serve, then press Next.").."]")
+		fs("label[1,1.3;"..S("Include all floors served by any car in the group, even if not served by all cars.").."]")
+		fs("button[1,10;2,1;back;"..S("< Back").."]")
+		fs("button[13,10;2,1;next;"..S("Next >").."]")
 	else
-		fs("label[1,1;EDIT FLOOR TABLE]")
-		fs("button[1,10;2,1;next;Done]")
+		fs("label[1,1;"..S("EDIT FLOOR TABLE").."]")
+		fs("button[1,10;2,1;next;"..S("Done").."]")
 	end
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(core.formspec_escape(string.format("%d - Height: %d - PI: %s",i,mem.params.floorheights[i],mem.params.floornames[i]))..(i==1 and "" or ","))
+		local floortext = S("@1 - Height: @2 - PI: @3",i,mem.params.floorheights[i],mem.params.floornames[i])
+		fs(core.formspec_escape(floortext)..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
-	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;New Floor]") end
-	fs("button[8,3.5;2,1;edit;Edit Floor]")
-	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;Remove Floor]") end
-	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;Move Up]") end
-	if mem.editingfloor > 1 then fs("button[8,8;2,1;movedown;Move Down") end
+	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;"..S("New Floor").."]") end
+	fs("button[8,3.5;2,1;edit;"..S("Edit Floor").."]")
+	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;"..S("Remove Floor").."]") end
+	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;"..S("Move Up").."]") end
+	if mem.editingfloor > 1 then fs("button[8,8;2,1;movedown;"..S("Move Down").."]") end
 elseif mem.screenstate == "oobe_floortable_edit" or mem.screenstate == "floortable_edit" then
 	if mem.screenstate == "oobe_floortable_edit" then
-		fs("button[7,10.5;2,1;back;OK]")
-		fs("label[1,5;The Floor Height is the distance (in meters/nodes) from the floor level of this floor to the floor level of the next floor.]")
-		fs("label[1,5.5;(not used at the highest floor)]")
-		fs("label[1,6.5;The Floor Name is how the floor will be displayed on the position indicators.]")
+		fs("button[7,10.5;2,1;back;"..S("OK").."]")
+		local help1 = S("The Floor Height is the distance (in meters/nodes) from the floor level of this floor to the floor level of the next floor.")
+		local help2 = S("(not used at the highest floor)")
+		local help3 = S("The Floor Name is how the floor will be displayed on the position indicators.")
+		fs("label[1,5;"..help1.."]")
+		fs("label[1,5.5;"..help2.."]")
+		fs("label[1,6.5;"..help3.."]")
 	else
-		fs("button[7,10.5;2,1;save;Save]")
+		fs("button[7,10.5;2,1;save;"..S("Save").."]")
 	end
-	fs("label[1,1;Editing floor "..tostring(mem.editingfloor).."]")
-	fs("field[1,3;3,1;height;Floor Height;"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
-	fs("field[5,3;3,1;name;Floor Name;"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
+	fs("label[1,1;"..S("Editing Floor @1",tostring(mem.editingfloor)).."]")
+	fs("field[1,3;3,1;height;"..S("Floor Height")..";"..tostring(mem.params.floorheights[mem.editingfloor]).."]")
+	fs("field[5,3;3,1;name;"..S("Floor Name")..";"..core.formspec_escape(mem.params.floornames[mem.editingfloor]).."]")
 elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections" then
 	if mem.screenstate == "oobe_connections" then
-		fs("label[1,1;Connect to each car in the group, then click Done.]")
-		fs("button[1,10;2,1;back;< Back]")
-		if #mem.params.carids > 0 then fs("button[13,10;2,1;next;Done >]") end
+		fs("label[1,1;"..S("Connect to each car in the group, then click Done.").."]")
+		fs("button[1,10;2,1;back;"..S("< Back").."]")
+		if #mem.params.carids > 0 then fs("button[13,10;2,1;next;"..S("Done").."]") end
 	else
-		fs("label[1,1;EDIT CONNECTIONS]")
-		if #mem.params.carids > 0 then fs("button[1,10;2,1;next;Done]") end
+		fs("label[1,1;"..S("EDIT CONNECTIONS").."]")
+		if #mem.params.carids > 0 then fs("button[1,10;2,1;next;"..S("Done").."]") end
 	end
 	if #mem.params.carids > 0 then
 		fs("textlist[1,2;6,7;connection;")
 		for i=#mem.params.carids,1,-1 do
-			fs(string.format("Car %d - ID #%d",i,mem.params.carids[i])..(i==1 and "" or ","))
+			local connectiontext = S("Car @1 - ID #@2",i,mem.params.carids[i])
+			fs(connectiontext..(i==1 and "" or ","))
 		end
 		fs(";"..tostring(#mem.params.carids-mem.editingconnection+1)..";false]")
 	else
-		fs("label[1,2;No Connections]")
+		fs("label[1,2;"..S("No Connections").."]")
 	end
-	if #mem.params.carids < 16 then fs("button[8,2;3,1;add;New Connection]") end
-	if #mem.params.carids > 0 then fs("button[8,3.5;3,1;edit;Edit Connection]") end
-	if #mem.params.carids > 0 then fs("button[8,5;3,1;remove;Remove Connection]") end
+	if #mem.params.carids < 16 then fs("button[8,2;3,1;add;"..S("New Connection").."]") end
+	if #mem.params.carids > 0 then fs("button[8,3.5;3,1;edit;"..S("Edit Connection").."]") end
+	if #mem.params.carids > 0 then fs("button[8,5;3,1;remove;"..S("Remove Connection").."]") end
 elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnection" then
 	local numfloors = 0
 	for _,v in ipairs(mem.newconnfloors) do
 		if v then numfloors = numfloors + 1 end
 	end
 	if mem.screenstate == "oobe_newconnection" then
-		fs("label[1,1;Enter the car ID and select the floors served (click them to toggle), then click Connect.]")
-		fs("label[1,1.3;You must select at least two floors.]")
-		fs("button[1,10;2,1;back;< Back]")
-		if numfloors >= 2 then fs("button[13,10;2,1;connect;Connect >]") end
+		fs("label[1,1;"..S("Enter the car ID and select the floors served (click them to toggle), then click Connect.").."]")
+		fs("label[1,1.3;"..S("You must select at least two floors.").."]")
+		fs("button[1,10;2,1;back;"..S("< Back").."]")
+		if numfloors >= 2 then fs("button[13,10;2,1;connect;"..S("Connect").."]") end
 	else
-		fs("label[1,1;NEW CONNECTION]")
-		fs("button[1,10;2,1;back;Back]")
-		if numfloors >= 2 then fs("button[13,10;2,1;connect;Connect]") end
+		fs("label[1,1;"..S("NEW CONNECTION").."]")
+		fs("button[1,10;2,1;back;"..S("Back").."]")
+		if numfloors >= 2 then fs("button[13,10;2,1;connect;"..S("Connect").."]") end
 	end
 	fs("textlist[8,2;6,7;floors;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
+		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and S("YES") or S("NO"))..(i==1 and "" or ","))
 	end
 	fs(";0;false]")
-	fs("field[2,3;4,1;carid;Car ID;]")
+	fs("field[2,3;4,1;carid;"..S("Car ID")..";]")
 elseif mem.screenstate == "oobe_connection" or mem.screenstate == "connection" then
 	local numfloors = 0
 	for _,v in ipairs(mem.newconnfloors) do
 		if v then numfloors = numfloors + 1 end
 	end
 	if mem.screenstate == "oobe_newconnection" then
-		fs("label[1,1;Enter the car ID and select the floors served (click them to toggle), then click Connect.]")
-		fs("label[1,1.3;You must select at least two floors.]")
-		fs("button[1,10;2,1;back;< Back]")
-		if numfloors >= 2 then fs("button[13,10;2,1;save;Save >]") end
+		fs("label[1,1;"..S("Enter the car ID and select the floors served (click them to toggle), then click Connect.").."]")
+		fs("label[1,1.3;"..S("You must select at least two floors.").."]")
+		fs("button[1,10;2,1;back;"..S("< Back").."]")
+		if numfloors >= 2 then fs("button[13,10;2,1;save;"..S("Save").."]") end
 	else
-		fs("label[1,1;EDIT CONNECTION]")
-		fs("button[1,10;2,1;back;< Back]")
-		if numfloors >= 2 then fs("button[13,10;2,1;save;Save >]") end
+		fs("label[1,1;"..S("EDIT CONNECTION").."]")
+		fs("button[1,10;2,1;back;"..S("< Back").."]")
+		if numfloors >= 2 then fs("button[13,10;2,1;save;"..S("Save").."]") end
 	end
 	fs("textlist[8,2;6,7;floors;")
 	for i=#mem.params.floornames,1,-1 do
-		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and "YES" or "NO")..(i==1 and "" or ","))
+		fs(string.format("%s - %s",core.formspec_escape(mem.params.floornames[i]),mem.newconnfloors[i] and S("YES") or S("NO"))..(i==1 and "" or ","))
 	end
 	fs(";0;false]")
-	fs("label[2,3;Car ID: "..mem.params.carids[mem.editingconnection].."]")
+	fs("label[2,3;"..S("Car ID: @1",mem.params.carids[mem.editingconnection]).."]")
 elseif mem.screenstate == "oobe_connecting" or mem.screenstate == "connecting" then
-	fs("label[1,1;Connecting to controller...]")
+	fs("label[1,1;"..S("Connecting to controller...").."]")
 elseif mem.screenstate == "oobe_connectionfailed" or mem.screenstate == "connectionfailed" then
-	fs("label[4,4;Connection timed out!]")
-	fs("label[4,5;Make sure the car ID is correct and]")
-	fs("label[4,5.5;that the controller is ready to pair.]")
-	fs("button[1,10;2,1;back;< Back]")
+	fs("label[4,4;"..S("Connection timed out!").."]")
+	fs("label[4,5;"..S("Make sure the car ID is correct and\nthat the controller is ready to connect.").."]")
+	fs("button[1,10;2,1;back;"..S("< Back").."]")
 elseif mem.screenstate == "status" then
 	if not mem.screenpage then mem.screenpage = 1 end
-	fs("label[1,1;GROUP DISPLAY]")
+	fs("label[1,1;"..S("GROUP DISPLAY").."]")
 	fs("box[1.5,1.5;0.1,10;#AAAAAAFF]")
 	fs("box[18.5,1.5;0.1,10;#AAAAAAFF]")
-	fs("label[0.55,11.5;UP]")
-	fs("label[18.85,11.5;DOWN]")
-	fs("button[15,0.5;2,1;menu;Menu]")
+	fs("label[0.55,11.5;^]")
+	fs("label[19.2,11.5;v]")
+	fs("button[15,0.5;2,1;menu;"..S("Menu").."]")
 	fs("style_type[image_button;font=mono;font_size=*0.75]")
 	for car=1,#mem.params.carids,1 do
 		local xp = 1.7+(car-1)
 		local carid = mem.params.carids[car]
 		local carstate = mem.carstatus[carid].state
-		fs(string.format("label[%f,11;CAR %d]",xp,car))
-		fs(string.format("label[%f,11.35;%s]",xp+0.1,core.colorize("#ff5555",(carstate == "normal" and " IN" or "OUT"))))
+		fs(string.format("label[%f,11;%s]",xp,S("CAR @1",car)))
+		fs(string.format("label[%f,11.35;%s]",xp+0.1,core.colorize("#ff5555",(carstate == "normal" and S(" IN") or S("OUT")))))
 	end
 	local lowestfloor = (mem.screenpage-1)*10+1
 	for i=1,math.min(10,#mem.params.floornames-lowestfloor+1),1 do
@@ -1108,12 +1114,12 @@ elseif mem.screenstate == "status" then
 		fs("image_button[5,0.5;0.75,0.75;celevator_menu_arrow.png;scrollup;;false;false;celevator_menu_arrow.png]")
 	end
 	elseif mem.screenstate == "menu" then
-		fs("label[1,1;MAIN MENU]")
-		fs("button[1,3;3,1;floortable;Edit Floor Table]")
-		fs("button[1,4.5;3,1;connections;Edit Connections]")
-		fs("button[1,10;3,1;back;< Back]")
+		fs("label[1,1;"..S("MAIN MENU").."]")
+		fs("button[1,3;3,1;floortable;"..S("Edit Floor Table").."]")
+		fs("button[1,4.5;3,1;connections;"..S("Edit Connections").."]")
+		fs("button[1,10;3,1;back;"..S("< Back").."]")
 end
 
-mem.infotext = string.format("ID: %d",mem.carid)
+mem.infotext = S("ID: @1",mem.carid)
 
 return pos,mem,changedinterrupts

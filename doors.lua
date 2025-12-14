@@ -1,5 +1,7 @@
 celevator.doors = {}
 
+local S = core.get_translator("celevator")
+
 celevator.doors.erefs = {}
 
 --These get overwritten on globalstep and aren't settings.
@@ -24,7 +26,7 @@ local function placesill(pos,node)
 end
 
 core.register_node("celevator:hwdoor_fast_glass_bottom",{
-	description = "Glass Hoistway Door (fast, bottom - you hacker you!)",
+	description = S("Glass Hoistway Door (fast, bottom - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -76,7 +78,7 @@ core.register_node("celevator:hwdoor_fast_glass_bottom",{
 })
 
 core.register_node("celevator:hwdoor_fast_glass_middle",{
-	description = "Glass Hoistway Door (fast, middle - you hacker you!)",
+	description = S("Glass Hoistway Door (fast, middle - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -102,7 +104,7 @@ core.register_node("celevator:hwdoor_fast_glass_middle",{
 })
 
 core.register_node("celevator:hwdoor_fast_glass_top",{
-	description = "Glass Hoistway Door (fast, top - you hacker you!)",
+	description = S("Glass Hoistway Door (fast, top - you hacker you!)"),
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -128,7 +130,7 @@ core.register_node("celevator:hwdoor_fast_glass_top",{
 })
 
 core.register_node("celevator:hwdoor_slow_glass_bottom",{
-	description = "Glass Hoistway Door (slow, bottom - you hacker you!)",
+	description = S("Glass Hoistway Door (slow, bottom - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -154,7 +156,7 @@ core.register_node("celevator:hwdoor_slow_glass_bottom",{
 })
 
 core.register_node("celevator:hwdoor_slow_glass_middle",{
-	description = "Glass Hoistway Door (slow, middle - you hacker you!)",
+	description = S("Glass Hoistway Door (slow, middle - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -180,7 +182,7 @@ core.register_node("celevator:hwdoor_slow_glass_middle",{
 })
 
 core.register_node("celevator:hwdoor_slow_glass_top",{
-	description = "Glass Hoistway Door (slow, top - you hacker you!)",
+	description = S("Glass Hoistway Door (slow, top - you hacker you!)"),
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -206,7 +208,7 @@ core.register_node("celevator:hwdoor_slow_glass_top",{
 })
 
 core.register_node("celevator:hwdoor_fast_steel_bottom",{
-	description = "Steel Hoistway Door (fast, bottom - you hacker you!)",
+	description = S("Steel Hoistway Door (fast, bottom - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -257,7 +259,7 @@ core.register_node("celevator:hwdoor_fast_steel_bottom",{
 })
 
 core.register_node("celevator:hwdoor_fast_steel_middle",{
-	description = "Steel Hoistway Door (fast, middle - you hacker you!)",
+	description = S("Steel Hoistway Door (fast, middle - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -282,7 +284,7 @@ core.register_node("celevator:hwdoor_fast_steel_middle",{
 })
 
 core.register_node("celevator:hwdoor_fast_steel_top",{
-	description = "Steel Hoistway Door (fast, top - you hacker you!)",
+	description = S("Steel Hoistway Door (fast, top - you hacker you!)"),
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -307,7 +309,7 @@ core.register_node("celevator:hwdoor_fast_steel_top",{
 })
 
 core.register_node("celevator:hwdoor_slow_steel_bottom",{
-	description = "Steel Hoistway Door (slow, bottom - you hacker you!)",
+	description = S("Steel Hoistway Door (slow, bottom - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_door_glass_edge.png",
@@ -332,7 +334,7 @@ core.register_node("celevator:hwdoor_slow_steel_bottom",{
 })
 
 core.register_node("celevator:hwdoor_slow_steel_middle",{
-	description = "Steel Hoistway Door (slow, middle - you hacker you!)",
+	description = S("Steel Hoistway Door (slow, middle - you hacker you!)"),
 	tiles = {
 		"celevator_transparent.png",
 		"celevator_transparent.png",
@@ -357,7 +359,7 @@ core.register_node("celevator:hwdoor_slow_steel_middle",{
 })
 
 core.register_node("celevator:hwdoor_slow_steel_top",{
-	description = "Steel Hoistway Door (slow, top - you hacker you!)",
+	description = S("Steel Hoistway Door (slow, top - you hacker you!)"),
 	tiles = {
 		"celevator_door_glass_edge.png",
 		"celevator_transparent.png",
@@ -382,7 +384,7 @@ core.register_node("celevator:hwdoor_slow_steel_top",{
 })
 
 core.register_node("celevator:hwdoor_placeholder",{
-	description = "Hoistway Door Open-State Placeholder (you hacker you!)",
+	description = S("Hoistway Door Open-State Placeholder (you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
 	},
@@ -854,7 +856,7 @@ core.register_abm({
 })
 
 core.register_node("celevator:hwdoor_glass",{
-	description = "Glass Elevator Hoistway Door",
+	description = S("Glass Elevator Hoistway Door"),
 	paramtype2 = "4dir",
 	buildable_to = true,
 	inventory_image = "celevator_door_glass_inventory.png",
@@ -880,17 +882,18 @@ core.register_node("celevator:hwdoor_glass",{
 		}
 		for x=0,1,1 do
 			for y=0,2,1 do
-				local offsetdesc = string.format("%dm to the right and %dm up",x,y)
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
 				local replaces = core.get_node(placepos).name
 				if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
-					core.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
+					local errormsg = S("Can't place door here - position @1m to the right and @2m up is blocked!",x,y)
+					core.chat_send_player(name,errormsg)
 					core.remove_node(pos)
 					return true
 				end
 				if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-					core.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
+					local errormsg = S("Can't place door here - position @1m to the right and @2m up is protected!",x,y)
+					core.chat_send_player(name,errormsg)
 					core.record_protection_violation(placepos,name)
 					core.remove_node(pos)
 					return true
@@ -918,7 +921,7 @@ core.register_node("celevator:hwdoor_glass",{
 })
 
 core.register_node("celevator:hwdoor_steel",{
-	description = "Steel Elevator Hoistway Door",
+	description = S("Steel Elevator Hoistway Door"),
 	paramtype2 = "4dir",
 	buildable_to = true,
 	inventory_image = "celevator_door_metal_inventory.png",
@@ -944,17 +947,18 @@ core.register_node("celevator:hwdoor_steel",{
 		}
 		for x=0,1,1 do
 			for y=0,2,1 do
-				local offsetdesc = string.format("%dm to the right and %dm up",x,y)
 				local placeoffset = vector.new(x,y,0)
 				local placepos = vector.add(pos,vector.rotate_around_axis(placeoffset,vector.new(0,1,0),facedir))
 				local replaces = core.get_node(placepos).name
 				if not (core.registered_nodes[replaces] and core.registered_nodes[replaces].buildable_to) then
-					core.chat_send_player(name,string.format("Can't place door here - position %s is blocked!",offsetdesc))
+					local errormsg = S("Can't place door here - position @1m to the right and @2m up is blocked!",x,y)
+					core.chat_send_player(name,errormsg)
 					core.remove_node(pos)
 					return true
 				end
 				if core.is_protected(placepos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-					core.chat_send_player(name,string.format("Can't place door here - position %s is protected!",offsetdesc))
+					local errormsg = S("Can't place door here - position @1m to the right and @2m up is protected!",x,y)
+					core.chat_send_player(name,errormsg)
 					core.record_protection_violation(placepos,name)
 					core.remove_node(pos)
 					return true
@@ -982,7 +986,7 @@ core.register_node("celevator:hwdoor_steel",{
 })
 
 core.register_node("celevator:door_sill_single",{
-	description = "Hoistway Door Sill, Single Track (you hacker you!)",
+	description = S("Hoistway Door Sill, Single Track (you hacker you!)"),
 	drop = "",
 	groups = {
 		not_in_creative_inventory = 1,
@@ -1002,7 +1006,7 @@ core.register_node("celevator:door_sill_single",{
 })
 
 core.register_node("celevator:door_sill_double",{
-	description = "Hoistway Door Sill, Double Track (you hacker you!)",
+	description = S("Hoistway Door Sill, Double Track (you hacker you!)"),
 	drop = "",
 	groups = {
 		not_in_creative_inventory = 1,

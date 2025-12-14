@@ -1,5 +1,7 @@
 celevator.fs1switch = {}
 
+local S = core.get_translator("celevator")
+
 local function maketex(switchpos,lit)
 	local tex = "celevator_fs1switch_"..switchpos..".png"
 	if lit then tex = tex.."^celevator_fs1switch_led.png" end
@@ -29,7 +31,7 @@ local function rightclick(pos,node,player)
 	if meta:get_string("formspec") ~= "" then return end
 	local name = player:get_player_name()
 	if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-		core.chat_send_player(name,"You don't have a key for this switch.")
+		core.chat_send_player(name,S("You don't have a key for this switch."))
 		core.record_protection_violation(pos,name)
 		return
 	end
@@ -110,9 +112,18 @@ end
 
 local switchstates = {"off","on","reset"}
 
+local descriptions = {
+		off = S("Elevator Fire Service Phase 1 Keyswitch"),
+		on = S("Elevator Fire Service Phase 1 Keyswitch (on state - you hacker you!)"),
+		reset = S("Elevator Fire Service Phase 1 Keyswitch (reset state - you hacker you!)"),
+		offlit = S("Elevator Fire Service Phase 1 Keyswitch (lit - you hacker you!)"),
+		onlit = S("Elevator Fire Service Phase 1 Keyswitch (on state, lit - you hacker you!)"),
+		resetlit = S("Elevator Fire Service Phase 1 Keyswitch (reset state, lit - you hacker you!)"),
+}
+
 for _,switchpos in ipairs(switchstates) do
 	core.register_node("celevator:fs1switch_"..switchpos,{
-		description = "Elevator Fire Service Phase 1 Keyswitch"..(switchpos == "off" and "" or string.format(" (%s state - you hacker you!)",switchpos)),
+		description = descriptions[switchpos],
 		groups = {
 			dig_immediate = 2,
 			not_in_creative_inventory = (switchpos == "off" and 0 or 1),
@@ -137,7 +148,7 @@ for _,switchpos in ipairs(switchstates) do
 		},
 		after_place_node = function(pos)
 			local meta = core.get_meta(pos)
-			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;"..S("Car ID")..";]button[3,3.5;2,1;save;"..S("Save").."]")
 		end,
 		on_receive_fields = function(pos,_,fields,player)
 			local carid = tonumber(fields.carid or 0)
@@ -149,7 +160,7 @@ for _,switchpos in ipairs(switchstates) do
 			local name = player:get_player_name()
 			if core.is_protected(controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a controller/dispatcher you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a controller/dispatcher you don't have access to."))
 					core.record_protection_violation(controllerpos,name)
 				end
 				return
@@ -165,7 +176,7 @@ for _,switchpos in ipairs(switchstates) do
 		on_destruct = unpair,
 	})
 	core.register_node("celevator:fs1switch_"..switchpos.."_lit",{
-		description = "Elevator Fire Service Phase 1 Keyswitch"..string.format(" (%s state, lit - you hacker you!)",switchpos),
+		description = descriptions[switchpos.."lit"],
 		groups = {
 			dig_immediate = 2,
 			not_in_creative_inventory = 1,

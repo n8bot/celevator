@@ -1,6 +1,8 @@
 celevator.pi = {}
 celevator.lantern = {}
 
+local S = core.get_translator("celevator")
+
 local boringside = "[combine:64x64"..
                    ":0,0=celevator_cabinet_sides.png"..
                    ":32,0=celevator_cabinet_sides.png"..
@@ -146,7 +148,7 @@ function celevator.pi.setarrow(pos,which,active)
 end
 
 core.register_node("celevator:pi",{
-	description = "Elevator Position Indicator",
+	description = S("Elevator Position Indicator"),
 	groups = {
 		dig_immediate = 2,
 		_celevator_pi = 1,
@@ -172,7 +174,7 @@ core.register_node("celevator:pi",{
 	},
 	after_place_node = function(pos)
 		local meta = core.get_meta(pos)
-		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]button[3,3.5;2,1;save;Save]")
+		meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;"..S("Car ID")..";]button[3,3.5;2,1;save;"..S("Save").."]")
 	end,
 	on_receive_fields = function(pos,_,fields)
 		if tonumber(fields.carid) then
@@ -328,15 +330,25 @@ local function makeverticallanterntex(dir,upon,downon)
 	return(tex)
 end
 
+local upname = S("Elevator Up Lantern")
+local upvname = S("Elevator Up Lantern (vertical)")
+local upcname = S("Elevator Up Position Indicator / Lantern Combo")
+local downname = S("Elevator Down Lantern")
+local downvname = S("Elevator Down Lantern (vertical)")
+local downcname = S("Elevator Down Position Indicator / Lantern Combo")
+local bothname = S("Elevator Up and Down Lantern")
+local bothvname = S("Elevator Up and Down Lantern (vertical)")
+local bothcname = S("Elevator Up and Down Position Indicator / Lantern Combo")
+
 local validstates = {
-	{"up",false,false,"Up"},
-	{"up",true,false,"Up"},
-	{"down",false,false,"Down"},
-	{"down",false,true,"Down"},
-	{"both",false,false,"Up and Down"},
-	{"both",true,false,"Up and Down"},
-	{"both",false,true,"Up and Down"},
-	{"both",true,true,"Up and Down"},
+	{"up",false,false,upname,upvname,upcname},
+	{"up",true,false,upname,upvname,upcname},
+	{"down",false,false,downname,downvname,downcname},
+	{"down",false,true,downname,downvname,downcname},
+	{"both",false,false,bothname,bothvname,bothcname},
+	{"both",true,false,bothname,bothvname,bothcname},
+	{"both",false,true,bothname,bothvname,bothcname},
+	{"both",true,true,bothname,bothvname,bothcname},
 }
 
 for _,state in ipairs(validstates) do
@@ -352,7 +364,7 @@ for _,state in ipairs(validstates) do
 		light = light + 4
 	end
 	local idle = not (state[2] or state[3])
-	local description = string.format("Elevator %s Position Indicator/Lantern Combo%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	local description = state[6]
 	core.register_node(nname,{
 		description = description,
 		groups = {
@@ -387,7 +399,11 @@ for _,state in ipairs(validstates) do
 		},
 		after_place_node = function(pos)
 			local meta = core.get_meta(pos)
-			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+			local fs = "formspec_version[7]size[8,5]"
+			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
+			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
+			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
+			meta:set_string("formspec",fs)
 		end,
 		on_receive_fields = function(pos,_,fields)
 			if tonumber(fields.carid) and tonumber(fields.landing) then
@@ -435,7 +451,7 @@ for _,state in ipairs(validstates) do
 	if state[2] then nname = nname.."_upon" end
 	if state[3] then nname = nname.."_downon" end
 	idle = not (state[2] or state[3])
-	description = string.format("Elevator %s Lantern%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	description = state[4]
 	core.register_node(nname,{
 		description = description,
 		inventory_image = string.format("[combine:32x32:0,5=celevator_lantern_background_%s.png",(state[1] == "both" and "updown" or state[1])),
@@ -459,7 +475,11 @@ for _,state in ipairs(validstates) do
 		},
 		after_place_node = function(pos)
 			local meta = core.get_meta(pos)
-			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+			local fs = "formspec_version[7]size[8,5]"
+			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
+			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
+			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
+			meta:set_string("formspec",fs)
 		end,
 		on_receive_fields = function(pos,_,fields)
 			if tonumber(fields.carid) and tonumber(fields.landing) then
@@ -502,7 +522,7 @@ for _,state in ipairs(validstates) do
 	dropname = nname
 	if state[2] then nname = nname.."_upon" end
 	if state[3] then nname = nname.."_downon" end
-	description = string.format("Elevator %s Lantern (vertical)%s",state[4],(idle and "" or " (on state, you hacker you!)"))
+	description = state[5]
 	core.register_node(nname,{
 		description = description,
 		inventory_image = string.format("[combine:40x40:10,0=celevator_lantern_vertical_background_%s.png",(state[1] == "both" and "updown" or state[1])),
@@ -527,7 +547,11 @@ for _,state in ipairs(validstates) do
 		},
 		after_place_node = function(pos)
 			local meta = core.get_meta(pos)
-			meta:set_string("formspec","formspec_version[7]size[8,5]field[0.5,0.5;7,1;carid;Car ID;]field[0.5,2;7,1;landing;Landing Number;]button[3,3.5;2,1;save;Save]")
+			local fs = "formspec_version[7]size[8,5]"
+			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
+			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
+			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
+			meta:set_string("formspec",fs)
 		end,
 		on_receive_fields = function(pos,_,fields)
 			if tonumber(fields.carid) and tonumber(fields.landing) then

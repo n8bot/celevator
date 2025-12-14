@@ -1,3 +1,5 @@
+local S = core.get_translator("celevator")
+
 local iorules = {
 	vector.new(-1,0,0),
 	vector.new(1,0,0),
@@ -20,7 +22,7 @@ end
 local outputoptions = {
 	{
 		id = "normal",
-		desc = "Normal Operation",
+		desc = S("Normal Operation"),
 		func = function(mem)
 			return (mem.carstate == "normal")
 		end,
@@ -28,7 +30,7 @@ local outputoptions = {
 	},
 	{
 		id = "fault",
-		desc = "Fault",
+		desc = S("Fault"),
 		func = function(mem)
 			return (mem.carstate == "fault")
 		end,
@@ -36,7 +38,7 @@ local outputoptions = {
 	},
 	{
 		id = "estop",
-		desc = "Emergency Stop",
+		desc = S("Emergency Stop"),
 		func = function(mem)
 			return (mem.carstate == "stop")
 		end,
@@ -44,7 +46,7 @@ local outputoptions = {
 	},
 	{
 		id = "inspect",
-		desc = "Inspection (Any)",
+		desc = S("Inspection (Any)"),
 		func = function(mem)
 			return (mem.carstate == "mrinspect" or mem.carstate == "inspconflict" or mem.carstate == "carinspect")
 		end,
@@ -52,7 +54,7 @@ local outputoptions = {
 	},
 	{
 		id = "fire",
-		desc = "Fire Service",
+		desc = S("Fire Service"),
 		func = function(mem)
 			return (mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "fs2hold")
 		end,
@@ -60,7 +62,7 @@ local outputoptions = {
 	},
 	{
 		id = "fire1",
-		desc = "Fire Service Phase 1",
+		desc = S("Fire Service Phase 1"),
 		func = function(mem)
 			return (mem.carstate == "fs1")
 		end,
@@ -68,7 +70,7 @@ local outputoptions = {
 	},
 	{
 		id = "fire2",
-		desc = "Fire Service Phase 2",
+		desc = S("Fire Service Phase 2"),
 		func = function(mem)
 			return (mem.carstate == "fs2" or mem.carstate == "fs2hold")
 		end,
@@ -76,7 +78,7 @@ local outputoptions = {
 	},
 	{
 		id = "independent",
-		desc = "Independent Service",
+		desc = S("Independent Service"),
 		func = function(mem)
 			return (mem.carstate == "indep")
 		end,
@@ -84,7 +86,7 @@ local outputoptions = {
 	},
 	{
 		id = "swing",
-		desc = "Swing Operation",
+		desc = S("Swing Operation"),
 		func = function(mem)
 			return (mem.carstate == "swing")
 		end,
@@ -92,7 +94,7 @@ local outputoptions = {
 	},
 	{
 		id = "opening",
-		desc = "Doors Opening",
+		desc = S("Doors Opening"),
 		func = function(mem)
 			return (mem.doorstate == "opening")
 		end,
@@ -100,7 +102,7 @@ local outputoptions = {
 	},
 	{
 		id = "open",
-		desc = "Doors Open",
+		desc = S("Doors Open"),
 		func = function(mem)
 			return (mem.doorstate == "open")
 		end,
@@ -108,7 +110,7 @@ local outputoptions = {
 	},
 	{
 		id = "closing",
-		desc = "Doors Closing",
+		desc = S("Doors Closing"),
 		func = function(mem)
 			return (mem.doorstate == "closing")
 		end,
@@ -116,7 +118,7 @@ local outputoptions = {
 	},
 	{
 		id = "closed",
-		desc = "Doors Closed",
+		desc = S("Doors Closed"),
 		func = function(mem)
 			return (mem.doorstate == "closed")
 		end,
@@ -124,7 +126,7 @@ local outputoptions = {
 	},
 	{
 		id = "moveup",
-		desc = "Moving Up",
+		desc = S("Moving Up"),
 		func = function(mem)
 			return (mem.drive.status and mem.drive.status.vel > 0)
 		end,
@@ -132,7 +134,7 @@ local outputoptions = {
 	},
 	{
 		id = "movedown",
-		desc = "Moving Down",
+		desc = S("Moving Down"),
 		func = function(mem)
 			return (mem.drive.status and mem.drive.status.vel < 0)
 		end,
@@ -140,7 +142,7 @@ local outputoptions = {
 	},
 	{
 		id = "moving",
-		desc = "Moving (Any Direction)",
+		desc = S("Moving (Any Direction)"),
 		func = function(mem)
 			return (mem.drive.status and mem.drive.status.vel ~= 0)
 		end,
@@ -148,7 +150,7 @@ local outputoptions = {
 	},
 	{
 		id = "collectorup",
-		desc = "Collecting Up Calls",
+		desc = S("Collecting Up Calls"),
 		func = function(mem)
 			return (mem.carstate == "normal" and mem.direction == "up")
 		end,
@@ -156,7 +158,7 @@ local outputoptions = {
 	},
 	{
 		id = "collectordown",
-		desc = "Collecting Down Calls",
+		desc = S("Collecting Down Calls"),
 		func = function(mem)
 			return (mem.carstate == "normal" and mem.direction == "down")
 		end,
@@ -164,7 +166,7 @@ local outputoptions = {
 	},
 	{
 		id = "lightsw",
-		desc = "Car Light Switch",
+		desc = S("Car Light Switch"),
 		func = function(mem)
 			return mem.lightsw
 		end,
@@ -172,7 +174,7 @@ local outputoptions = {
 	},
 	{
 		id = "fansw",
-		desc = "Car Fan Switch",
+		desc = S("Car Fan Switch"),
 		func = function(mem)
 			return mem.fansw
 		end,
@@ -180,7 +182,7 @@ local outputoptions = {
 	},
 	{
 		id = "upcall",
-		desc = "Up Call Exists at Landing:",
+		desc = S("Up Call Exists at Landing:"),
 		func = function(mem,floor)
 			return mem.upcalls[floor]
 		end,
@@ -188,7 +190,7 @@ local outputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call Exists at Landing:",
+		desc = S("Down Call Exists at Landing:"),
 		func = function(mem,floor)
 			return mem.dncalls[floor]
 		end,
@@ -196,7 +198,7 @@ local outputoptions = {
 	},
 	{
 		id = "carcall",
-		desc = "Car Call Exists at Landing:",
+		desc = S("Car Call Exists at Landing:"),
 		func = function(mem,floor)
 			return mem.carcalls[floor]
 		end,
@@ -204,7 +206,7 @@ local outputoptions = {
 	},
 	{
 		id = "apos",
-		desc = "Car at Landing:",
+		desc = S("Car at Landing:"),
 		func = function(mem,floor)
 			if mem.drive.status then
 				return (getpos(mem,nil,true) == floor)
@@ -214,7 +216,7 @@ local outputoptions = {
 	},
 	{
 		id = "dpos",
-		desc = "Moving to Landing:",
+		desc = S("Moving to Landing:"),
 		func = function(mem,floor)
 			if mem.drive.status then
 				return (getpos(mem,mem.drive.status.dpos) == floor)
@@ -227,7 +229,7 @@ local outputoptions = {
 local doutputoptions = {
 	{
 		id = "fire",
-		desc = "Fire Service",
+		desc = S("Fire Service"),
 		func = function(mem)
 			return mem.fs1led
 		end,
@@ -235,7 +237,7 @@ local doutputoptions = {
 	},
 	{
 		id = "upcall",
-		desc = "Up Call Exists at Landing:",
+		desc = S("Up Call Exists at Landing:"),
 		func = function(mem,floor)
 			return mem.upcalls[floor]
 		end,
@@ -243,7 +245,7 @@ local doutputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call Exists at Landing:",
+		desc = S("Down Call Exists at Landing:"),
 		func = function(mem,floor)
 			return mem.dncalls[floor]
 		end,
@@ -254,7 +256,7 @@ local doutputoptions = {
 local inputoptions = {
 	{
 		id = "carcall",
-		desc = "Car Call at Landing:",
+		desc = S("Car Call at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -266,7 +268,7 @@ local inputoptions = {
 	},
 	{
 		id = "upcall",
-		desc = "Up Call (simplex car) at Landing:",
+		desc = S("Up Call (simplex car) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -278,7 +280,7 @@ local inputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call (simplex car) at Landing:",
+		desc = S("Down Call (simplex car) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -290,7 +292,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingupcall",
-		desc = "Up Call (swing) at Landing:",
+		desc = S("Up Call (swing) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -302,7 +304,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingdowncall",
-		desc = "Down Call (swing) at Landing:",
+		desc = S("Down Call (swing) at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -314,7 +316,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1off",
-		desc = "Deactivate Fire Service Phase 1",
+		desc = S("Deactivate Fire Service Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -325,7 +327,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1on",
-		desc = "Activate Fire Service (main landing) Phase 1",
+		desc = S("Activate Fire Service (main landing) Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -336,7 +338,7 @@ local inputoptions = {
 	},
 	{
 		id = "fs1onalt",
-		desc = "Activate Fire Service (alternate landing) Phase 1",
+		desc = S("Activate Fire Service (alternate landing) Phase 1"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "fs1switch",
@@ -348,7 +350,7 @@ local inputoptions = {
 	},
 	{
 		id = "mrsmoke",
-		desc = "Machine Room or Hoistway Smoke Detector",
+		desc = S("Machine Room or Hoistway Smoke Detector"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "mrsmoke",
@@ -358,7 +360,7 @@ local inputoptions = {
 	},
 	{
 		id = "secdeny",
-		desc = "Lock Car Calls at Landing:",
+		desc = S("Lock Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -373,7 +375,7 @@ local inputoptions = {
 	},
 	{
 		id = "secauth",
-		desc = "Require Auth for Car Calls at Landing:",
+		desc = S("Require Auth for Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -388,7 +390,7 @@ local inputoptions = {
 	},
 	{
 		id = "secallow",
-		desc = "Unlock Car Calls at Landing:",
+		desc = S("Unlock Car Calls at Landing:"),
 		func_on = function(controllerpos,floor)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -403,7 +405,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingon",
-		desc = "Activate Swing Operation",
+		desc = S("Activate Swing Operation"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -415,7 +417,7 @@ local inputoptions = {
 	},
 	{
 		id = "swingoff",
-		desc = "Deactivate Swing Operation",
+		desc = S("Deactivate Swing Operation"),
 		func_on = function(controllerpos)
 			celevator.controller.run(controllerpos,{
 				type = "remotemsg",
@@ -430,7 +432,7 @@ local inputoptions = {
 local dinputoptions = {
 	{
 		id = "upcall",
-		desc = "Up Call at Landing:",
+		desc = S("Up Call at Landing:"),
 		func_on = function(dispatcherpos,floor)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "remotemsg",
@@ -442,7 +444,7 @@ local dinputoptions = {
 	},
 	{
 		id = "downcall",
-		desc = "Down Call at Landing:",
+		desc = S("Down Call at Landing:"),
 		func_on = function(dispatcherpos,floor)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "remotemsg",
@@ -454,7 +456,7 @@ local dinputoptions = {
 	},
 	{
 		id = "fs1off",
-		desc = "Deactivate Fire Service Phase 1",
+		desc = S("Deactivate Fire Service Phase 1"),
 		func_on = function(dispatcherpos)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "fs1switch",
@@ -465,7 +467,7 @@ local dinputoptions = {
 	},
 	{
 		id = "fs1on",
-		desc = "Activate Fire Service Phase 1",
+		desc = S("Activate Fire Service Phase 1"),
 		func_on = function(dispatcherpos)
 			celevator.dispatcher.run(dispatcherpos,{
 				type = "fs1switch",
@@ -479,9 +481,9 @@ local dinputoptions = {
 local function updateoutputform(pos)
 	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
-	local fs = "formspec_version[7]size[8,6.5]"
-	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
-	fs = fs.."dropdown[1,0.5;6,1;signal;"
+	local fs = "formspec_version[7]size[9,6.5]"
+	fs = fs.."tabheader[0,0;1;tab;"..S("Controller")..","..S("Dispatcher")..";"..(dmode and "2" or "1")..";true;true]"
+	fs = fs.."dropdown[1,0.5;7,1;signal;"
 	local selected = 1
 	local currentid = meta:get_string("signal")
 	for k,v in ipairs(dmode and doutputoptions or outputoptions) do
@@ -490,10 +492,10 @@ local function updateoutputform(pos)
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected..";false]"
-	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and "Dispatcher ID" or "Car ID")..";${carid}]"
-	fs = fs.."field[4.5,2.5;3,1;floor;Landing Number;${floor}]"
-	fs = fs.."label[1.5,4;Not all signal options require a landing number.]"
-	fs = fs.."button_exit[2.5,5;3,1;save;Save]"
+	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and S("Dispatcher ID") or S("Car ID"))..";${carid}]"
+	fs = fs.."field[4.5,2.5;3,1;floor;"..S("Landing Number")..";${floor}]"
+	fs = fs.."label[1.5,4;"..S("Not all signal options require a landing number.").."]"
+	fs = fs.."button_exit[2.5,5;3,1;save;"..S("Save").."]"
 	meta:set_string("formspec",fs)
 end
 
@@ -518,7 +520,7 @@ local function handleoutputfields(pos,_,fields,player)
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
 			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a dispatcher you don't have access to."))
 					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
@@ -528,7 +530,7 @@ local function handleoutputfields(pos,_,fields,player)
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a controller you don't have access to."))
 					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
@@ -546,11 +548,11 @@ local function handleoutputfields(pos,_,fields,player)
 		if def.needsfloor and not floor then return end
 		meta:set_string("signal",def.id)
 		updateoutputform(pos)
-		local infotext = carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
+		local infotext = " - "..def.desc..(def.needsfloor and " "..floor or "")
 		if dmode then
-			infotext = "Dispatcher: "..infotext
+			infotext = S("Dispatcher: @1",carid)..infotext
 		else
-			infotext = "Car: "..infotext
+			infotext = S("Car: @1",carid)..infotext
 		end
 		meta:set_string("infotext",infotext)
 	elseif fields.tab then
@@ -560,7 +562,7 @@ local function handleoutputfields(pos,_,fields,player)
 end
 
 core.register_node("celevator:mesecons_output_off",{
-	description = "Elevator Mesecons Output",
+	description = S("Elevator Mesecons Output"),
 	tiles = {
 		"celevator_meseconsoutput_top_off.png",
 		"celevator_cabinet_sides.png",
@@ -592,7 +594,7 @@ core.register_node("celevator:mesecons_output_off",{
 })
 
 core.register_node("celevator:mesecons_output_on",{
-	description = "Elevator Mesecons Output (on state - you hacker you!)",
+	description = S("Elevator Mesecons Output (on state - you hacker you!)"),
 	tiles = {
 		"celevator_meseconsoutput_top_on.png",
 		"celevator_cabinet_sides.png",
@@ -671,9 +673,9 @@ core.register_abm({
 local function updateinputform(pos)
 	local meta = core.get_meta(pos)
 	local dmode = meta:get_int("dispatcher") == 1
-	local fs = "formspec_version[7]size[8,6.5]"
-	fs = fs.."tabheader[0,0;1;tab;Controller,Dispatcher;"..(dmode and "2" or "1")..";true;true]"
-	fs = fs.."dropdown[1,0.5;6,1;signal;"
+	local fs = "formspec_version[7]size[9,6.5]"
+	fs = fs.."tabheader[0,0;1;tab;"..S("Controller")..","..S("Dispatcher")..";"..(dmode and "2" or "1")..";true;true]"
+	fs = fs.."dropdown[1,0.5;7,1;signal;"
 	local selected = 1
 	local currentid = meta:get_string("signal")
 	for k,v in ipairs(dmode and dinputoptions or inputoptions) do
@@ -682,10 +684,10 @@ local function updateinputform(pos)
 	end
 	fs = string.sub(fs,1,-2)
 	fs = fs..";"..selected..";false]"
-	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and "Dispatcher ID" or "Car ID")..";${carid}]"
-	fs = fs.."field[4.5,2.5;3,1;floor;Landing Number;${floor}]"
-	fs = fs.."label[1.5,4;Not all signal options require a landing number.]"
-	fs = fs.."button_exit[2.5,5;3,1;save;Save]"
+	fs = fs.."field[0.5,2.5;3,1;carid;"..(dmode and S("Dispatcher ID") or S("Car ID"))..";${carid}]"
+	fs = fs.."field[4.5,2.5;3,1;floor;"..S("Landing Number")..";${floor}]"
+	fs = fs.."label[1.5,4;"..S("Not all signal options require a landing number.").."]"
+	fs = fs.."button_exit[2.5,5;3,1;save;"..S("Save").."]"
 	meta:set_string("formspec",fs)
 end
 
@@ -710,7 +712,7 @@ local function handleinputfields(pos,_,fields,player)
 			if not celevator.dispatcher.isdispatcher(carinfo.dispatcherpos) then return end
 			if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a dispatcher you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a dispatcher you don't have access to."))
 					core.record_protection_violation(carinfo.dispatcherpos,name)
 				end
 				return
@@ -720,7 +722,7 @@ local function handleinputfields(pos,_,fields,player)
 			if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
 			if core.is_protected(carinfo.controllerpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
 				if player:is_player() then
-					core.chat_send_player(name,"Can't connect to a controller you don't have access to.")
+					core.chat_send_player(name,S("Can't connect to a controller you don't have access to."))
 					core.record_protection_violation(carinfo.controllerpos,name)
 				end
 				return
@@ -738,11 +740,11 @@ local function handleinputfields(pos,_,fields,player)
 		if def.needsfloor and not floor then return end
 		meta:set_string("signal",def.id)
 		updateinputform(pos)
-		local infotext = carid.." - "..def.desc..(def.needsfloor and " "..floor or "")
+		local infotext = " - "..def.desc..(def.needsfloor and " "..floor or "")
 		if dmode then
-			infotext = "Dispatcher: "..infotext
+			infotext = S("Dispatcher: @1",carid)..infotext
 		else
-			infotext = "Car: "..infotext
+			infotext = S("Car: @1",carid)..infotext
 		end
 		meta:set_string("infotext",infotext)
 	elseif fields.tab then
@@ -790,7 +792,7 @@ local function handleinput(pos,on)
 end
 
 core.register_node("celevator:mesecons_input_off",{
-	description = "Elevator Mesecons Input",
+	description = S("Elevator Mesecons Input"),
 	tiles = {
 		"celevator_meseconsinput_top_off.png",
 		"celevator_cabinet_sides.png",
@@ -826,7 +828,7 @@ core.register_node("celevator:mesecons_input_off",{
 })
 
 core.register_node("celevator:mesecons_input_on",{
-	description = "Elevator Mesecons Input (on state - you hacker you!)",
+	description = S("Elevator Mesecons Input (on state - you hacker you!)"),
 	tiles = {
 		"celevator_meseconsinput_top_on.png",
 		"celevator_cabinet_sides.png",

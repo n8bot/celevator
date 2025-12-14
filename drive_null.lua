@@ -1,6 +1,8 @@
+local S = core.get_translator("celevator")
+
 celevator.drives.null = {
-	name = "Null Drive",
-	description = "Simulation only, no movement, for testing and demonstration",
+	name = S("Null Drive"),
+	description = S("Simulation only, no movement, for testing and demonstration"),
 	nname = "celevator:drive_null",
 	soundhandles = {},
 	step_enabled = true, --Not a setting, is overwritten on globalstep, true here to check for running drives on startup
@@ -9,14 +11,18 @@ celevator.drives.null = {
 local function update_ui(pos)
 	local meta = core.get_meta(pos)
 	local apos = tonumber(meta:get_string("apos")) or 0
-	local status = "Idle"
+	local status
 	local vel = tonumber(meta:get_string("vel")) or 0
+	local velstr = string.format("%0.02f",math.abs(vel))
+	local aposstr = string.format("%0.02f",apos)
 	if vel > 0 then
-		status = string.format("Running: Up, %0.02f m/s",vel)
+		status = S("Null Drive - Running: Up, @1m/s - Position: @2m",velstr,aposstr)
 	elseif vel < 0 then
-		status = string.format("Running: Down, %0.02f m/s",math.abs(vel))
+		status = S("Null Drive - Running: Down, @1m/s - Position: @2m",velstr,aposstr)
+	else
+		status = S("Null Drive - Idle")
 	end
-	meta:set_string("infotext",string.format("Null Drive - %s - Position: %0.02f m",status,apos))
+	meta:set_string("infotext",status)
 end
 
 local function playbuzz(pos)
