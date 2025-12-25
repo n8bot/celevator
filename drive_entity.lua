@@ -999,7 +999,7 @@ core.register_node("celevator:machine",{
 			local oldmachinepos = carinfo.machinepos
 			if oldmachinepos then
 				local oldmachine = celevator.get_node(oldmachinepos)
-				if oldmachine.name == "celevator:machine" then
+				if oldmachine.name == "celevator:machine" and not vector.equals(pos,oldmachinepos) then
 					return
 				end
 			end

@@ -397,7 +397,7 @@ elseif event.type == "ui" then
 			table.remove(mem.params.floorheights,mem.editingfloor)
 			table.remove(mem.params.floornames,mem.editingfloor)
 			mem.editingfloor = math.max(1,mem.editingfloor-1)
-		elseif event.fields.moveup then
+		elseif event.fields.moveup and mem.editingfloor < #mem.params.floornames then
 			local height = mem.params.floorheights[mem.editingfloor]
 			local name = mem.params.floornames[mem.editingfloor]
 			table.remove(mem.params.floorheights,mem.editingfloor)
@@ -405,7 +405,7 @@ elseif event.type == "ui" then
 			table.insert(mem.params.floorheights,mem.editingfloor+1,height)
 			table.insert(mem.params.floornames,mem.editingfloor+1,name)
 			mem.editingfloor = mem.editingfloor + 1
-		elseif event.fields.movedown then
+		elseif event.fields.movedown and mem.editingfloor > 1 then
 			local height = mem.params.floorheights[mem.editingfloor]
 			local name = mem.params.floornames[mem.editingfloor]
 			table.remove(mem.params.floorheights,mem.editingfloor)
@@ -955,7 +955,7 @@ elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" t
 	end
 	fs("textlist[1,2;6,7;floor;")
 	for i=#mem.params.floornames,1,-1 do
-		local floortext = S("@1 - Height: @2 - PI: @3",i,mem.params.floorheights[i],mem.params.floornames[i])
+		local floortext = S("@1 - Height: @2 - PI: @3",i,mem.params.floorheights[i] or "??",mem.params.floornames[i] or "??")
 		fs(core.formspec_escape(floortext)..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")

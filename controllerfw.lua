@@ -368,7 +368,7 @@ elseif event.type == "ui" then
 			table.remove(mem.params.floorheights,mem.editingfloor)
 			table.remove(mem.params.floornames,mem.editingfloor)
 			mem.editingfloor = math.max(1,mem.editingfloor-1)
-		elseif event.fields.moveup then
+		elseif event.fields.moveup and mem.editingfloor < #mem.params.floornames then
 			local height = mem.params.floorheights[mem.editingfloor]
 			local name = mem.params.floornames[mem.editingfloor]
 			table.remove(mem.params.floorheights,mem.editingfloor)
@@ -376,7 +376,7 @@ elseif event.type == "ui" then
 			table.insert(mem.params.floorheights,mem.editingfloor+1,height)
 			table.insert(mem.params.floornames,mem.editingfloor+1,name)
 			mem.editingfloor = mem.editingfloor + 1
-		elseif event.fields.movedown then
+		elseif event.fields.movedown and mem.editingfloor > 1 then
 			local height = mem.params.floorheights[mem.editingfloor]
 			local name = mem.params.floornames[mem.editingfloor]
 			table.remove(mem.params.floorheights,mem.editingfloor)
@@ -521,10 +521,26 @@ elseif event.type == "ui" then
 		if event.fields.back then
 			mem.screenstate = "status"
 		elseif event.fields.clear then
+			local wasfatalfaulted = mem.fatalfault
 			mem.faultlog = {}
 			mem.activefaults = {}
 			mem.fatalfault = false
 			drivecmd({command = "resetfault"})
+			if wasfatalfaulted then
+				mem.carstate = "bfdemand"
+				if mem.doorstate == "closed" then
+					drivecmd({
+						command = "setmaxvel",
+						maxvel = mem.params.contractspeed,
+					})
+					drivecmd({command = "resetpos"})
+					interrupt(0.1,"checkdrive")
+					mem.carmotion = true
+					juststarted = true
+				else
+					close()
+				end
+			end
 		end
 	elseif mem.screenstate == "carcallsecurity" then
 		if event.fields.indepunlock then

@@ -73,6 +73,7 @@ function celevator.dbdkiosk.handlefields(pos,_,fields,player)
 	if screenstate == "connect" then
 		if not (fields.save and celevator.dbdkiosk.checkprot(pos,name)) then return end
 		if not (tonumber(fields.carid) and tonumber(fields.landing)) then return end
+		if tonumber(fields.landing) ~= math.floor(tonumber(fields.landing)) then return end
 		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",fields.carid)))
 		if not carinfo then return end
 		if not (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos)) then return end
