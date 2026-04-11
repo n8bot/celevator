@@ -25,6 +25,7 @@ local integrations = {
 	"laptop",
 	"mesecons",
 	"digilines",
+	"digistuff",
 }
 
 for _,i in ipairs(integrations) do

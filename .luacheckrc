@@ -14,4 +14,5 @@ read_globals = {
 	"mesecon",
 	"digilines",
 	"xcompat",
+	"digistuff",
 }
