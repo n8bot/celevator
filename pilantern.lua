@@ -1,6 +1,17 @@
 celevator.pi = {}
 celevator.lantern = {}
 
+celevator.lantern.chimesounds = {
+	{
+		up = "celevator_chime_up",
+		down = "celevator_chime_down",
+	},
+	{
+		up = {name="celevator_chime2_up",gain=0.7},
+		down = {name="celevator_chime2_down",gain=0.7},
+	},
+}
+
 local S = core.get_translator("celevator")
 
 local boringside = "[combine:64x64"..
@@ -211,6 +222,9 @@ core.register_node("celevator:pi",{
 })
 
 function celevator.lantern.setlight(pos,dir,newstate)
+	local soundset = core.get_meta(pos):get_int("sound") or 1
+	local sounds = celevator.lantern.chimesounds[soundset]
+	if not sounds then sounds = celevator.lantern.chimesounds[1] end
 	local node = celevator.get_node(pos)
 	if core.get_item_group(node.name,"_celevator_lantern") ~= 1 then return end
 	if dir == "up" then
@@ -227,7 +241,7 @@ function celevator.lantern.setlight(pos,dir,newstate)
 		end
 		if newstate then
 			newname = newname.."_upon"
-			core.sound_play("celevator_chime_up",{pos = pos},true)
+			core.sound_play(sounds.up,{pos = pos},true)
 		end
 		if core.get_item_group(node.name,"_celevator_lantern_down_lit") == 1 then
 			newname = newname.."_downon"
@@ -251,7 +265,7 @@ function celevator.lantern.setlight(pos,dir,newstate)
 		end
 		if newstate then
 			newname = newname.."_downon"
-			core.sound_play("celevator_chime_down",{pos = pos},true)
+			core.sound_play(sounds.down,{pos = pos},true)
 		end
 		node.name = newname
 		core.swap_node(pos,node)
@@ -351,6 +365,38 @@ local validstates = {
 	{"both",true,true,bothname,bothvname,bothcname},
 }
 
+function celevator.lantern.makeformspec(pos)
+	local meta = core.get_meta(pos)
+	local fs = "formspec_version[7]size[8,5]"
+	fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
+	fs = fs.."field[0.5,2;3.25,1;landing;"..S("Landing Number")..";]"
+	fs = fs.."label[4.25,1.85;"..S("Sound").."]"
+	fs = fs.."dropdown[4.25,2;3.25,1;sound;"
+	for i=1,#celevator.lantern.chimesounds do
+		fs = fs..tostring(i)..","
+	end
+	fs = string.sub(fs,1,-2)
+	fs = fs..";1;true]"
+	fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
+	meta:set_string("formspec",fs)
+end
+
+function celevator.lantern.handlefields(pos,_,fields)
+	if not fields.save then return end
+	if tonumber(fields.carid) and tonumber(fields.landing) then
+		local carid = tonumber(fields.carid)
+		local landing = tonumber(fields.landing)
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not (carinfo and carinfo.lanterns) then return end
+		table.insert(carinfo.lanterns,{pos=pos,landing=landing})
+		celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
+		local meta = core.get_meta(pos)
+		meta:set_int("carid",carid)
+		meta:set_string("formspec","")
+		meta:set_int("sound",tonumber(fields.sound) or 1)
+	end
+end
+
 for _,state in ipairs(validstates) do
 	local nname = "celevator:pilantern_"..state[1]
 	local dropname = nname
@@ -397,15 +443,9 @@ for _,state in ipairs(validstates) do
 				{-0.25,-0.5,0.475,0.25,0.125,0.5},
 			},
 		},
-		after_place_node = function(pos)
-			local meta = core.get_meta(pos)
-			local fs = "formspec_version[7]size[8,5]"
-			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
-			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
-			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
-			meta:set_string("formspec",fs)
-		end,
+		after_place_node = celevator.lantern.makeformspec,
 		on_receive_fields = function(pos,_,fields)
+			if not fields.save then return end
 			if tonumber(fields.carid) and tonumber(fields.landing) then
 				local carid = tonumber(fields.carid)
 				local landing = tonumber(fields.landing)
@@ -418,6 +458,7 @@ for _,state in ipairs(validstates) do
 				meta:set_int("carid",carid)
 				meta:set_string("formspec","")
 				celevator.pi.settext(pos,carinfo.pitext)
+				meta:set_int("sound",tonumber(fields.sound) or 1)
 			end
 		end,
 		on_destruct = function(pos)
@@ -473,27 +514,8 @@ for _,state in ipairs(validstates) do
 			boringside,
 			makelanterntex(state[1],state[2],state[3])
 		},
-		after_place_node = function(pos)
-			local meta = core.get_meta(pos)
-			local fs = "formspec_version[7]size[8,5]"
-			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
-			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
-			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
-			meta:set_string("formspec",fs)
-		end,
-		on_receive_fields = function(pos,_,fields)
-			if tonumber(fields.carid) and tonumber(fields.landing) then
-				local carid = tonumber(fields.carid)
-				local landing = tonumber(fields.landing)
-				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not (carinfo and carinfo.lanterns) then return end
-				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
-				celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
-				local meta = core.get_meta(pos)
-				meta:set_int("carid",carid)
-				meta:set_string("formspec","")
-			end
-		end,
+		after_place_node = celevator.lantern.makeformspec,
+		on_receive_fields = celevator.lantern.handlefields,
 		on_destruct = function(pos)
 			local meta = core.get_meta(pos)
 			local carid = meta:get_int("carid")
@@ -545,27 +567,8 @@ for _,state in ipairs(validstates) do
 			boringside,
 			makeverticallanterntex(state[1],state[2],state[3])
 		},
-		after_place_node = function(pos)
-			local meta = core.get_meta(pos)
-			local fs = "formspec_version[7]size[8,5]"
-			fs = fs.."field[0.5,0.5;7,1;carid;"..S("Car ID")..";]"
-			fs = fs.."field[0.5,2;7,1;landing;"..S("Landing Number")..";]"
-			fs = fs.."button[3,3.5;2,1;save;"..S("Save").."]"
-			meta:set_string("formspec",fs)
-		end,
-		on_receive_fields = function(pos,_,fields)
-			if tonumber(fields.carid) and tonumber(fields.landing) then
-				local carid = tonumber(fields.carid)
-				local landing = tonumber(fields.landing)
-				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not (carinfo and carinfo.lanterns) then return end
-				table.insert(carinfo.lanterns,{pos=pos,landing=landing})
-				celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
-				local meta = core.get_meta(pos)
-				meta:set_int("carid",carid)
-				meta:set_string("formspec","")
-			end
-		end,
+		after_place_node = celevator.lantern.makeformspec,
+		on_receive_fields = celevator.lantern.handlefields,
 		on_destruct = function(pos)
 			local meta = core.get_meta(pos)
 			local carid = meta:get_int("carid")

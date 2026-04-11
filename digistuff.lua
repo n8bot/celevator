@@ -20,6 +20,8 @@ local nbsounds = {
 	"celevator_motor_fast",
 	"celevator_motor_slow",
 	"celevator_pi_beep",
+	"celevator_chime2_up",
+	"celevator_chime2_down",
 }
 
 for _,i in ipairs(nbsounds) do digistuff.register_nb_sound(i,i) end
