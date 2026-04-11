@@ -595,7 +595,7 @@ function celevator.controller.run(pos,event)
 			celevator.storage:set_string("controller_equeue",core.serialize(celevator.controller.equeue))
 			if #celevator.controller.equeue[hash] > 5 then
 				local pstring = core.pos_to_string(pos)
-				local queuelen = #celevator.controller.queue[hash]
+				local queuelen = #celevator.controller.equeue[hash]
 				local message = string.format("[celevator] [controller] Async process for controller at %s is falling behind, %d events in queue",pstring,queuelen)
 				core.log("warning",message)
 			end
