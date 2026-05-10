@@ -436,6 +436,7 @@ elseif event.type == "ui" then
 		elseif exp.type == "DCL" then
 			mem.editingconnection = #mem.params.carids-exp.index+1
 			mem.screenstate = (mem.screenstate == "oobe_connections" and "oobe_connection" or "connection")
+			mem.newconnfloors = mem.params.floorsserved[mem.params.carids[mem.editingconnection]]
 		elseif event.fields.edit then
 			mem.screenstate = (mem.screenstate == "oobe_connections" and "oobe_connection" or "connection")
 			mem.newconnfloors = mem.params.floorsserved[mem.params.carids[mem.editingconnection]]
