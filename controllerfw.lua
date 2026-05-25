@@ -843,19 +843,19 @@ elseif event.type == "dispatchermsg" then
 		end
 	elseif event.channel == "getstatus" then
 		send(event.source,"status",mem)
-	elseif event.channel == "groupupcall" and mem.carstate == "normal" then
+	elseif event.channel == "groupupcall" and mem.carstate == "normal" and event.msg then
 		mem.groupupcalls[event.msg] = true
-	elseif event.channel == "groupdncall" and mem.carstate == "normal" then
+	elseif event.channel == "groupdncall" and mem.carstate == "normal" and event.msg then
 		mem.groupdncalls[event.msg] = true
-	elseif event.channel == "groupupcancel" then
+	elseif event.channel == "groupupcancel" and event.msg then
 		mem.groupupcalls[event.msg] = nil
-	elseif event.channel == "groupdncancel" then
+	elseif event.channel == "groupdncancel" and event.msg then
 		mem.groupdncalls[event.msg] = nil
-	elseif event.channel == "swingupcall" and swingstateok then
+	elseif event.channel == "swingupcall" and swingstateok and event.msg then
 		mem.swingupcalls[event.msg] = true
-	elseif event.channel == "swingdncall" and swingstateok then
+	elseif event.channel == "swingdncall" and swingstateok and event.msg then
 		mem.swingdncalls[event.msg] = true
-	elseif event.channel == "carcall" and (mem.carstate == "normal" or mem.carstate == "swing") then
+	elseif event.channel == "carcall" and (mem.carstate == "normal" or mem.carstate == "swing") and event.msg then
 		mem.carcalls[event.msg] = true
 		send(event.source,"status",mem)
 	elseif event.channel == "fs1switch" then

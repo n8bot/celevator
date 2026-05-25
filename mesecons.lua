@@ -657,6 +657,10 @@ core.register_abm({
 			end
 		end
 		if not def then return end
+		if not mem.upcalls then
+			--Memory ended up blank somehow
+			return
+		end
 		local newstate = def.func(mem,floor)
 		if newstate ~= oldstate then
 			node.name = (newstate and "celevator:mesecons_output_on" or "celevator:mesecons_output_off")
