@@ -189,6 +189,15 @@ core.register_craft({
 })
 
 core.register_craft({
+	output = "celevator:car_fullglass",
+	recipe = {
+		{m.glass,m.glass,m.glass},
+		{m.button,"celevator:hwdoor_glass",m.glass},
+		{m.switch,m.steel_ingot,m.steel_ingot},
+	},
+})
+
+core.register_craft({
 	output = "celevator:car_metal",
 	recipe = {
 		{"",m.steel_strip,""},

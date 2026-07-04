@@ -5,6 +5,7 @@ local components = {
 	"car_glassback",
 	"car_metal",
 	"car_metalglass",
+	"car_fullglass",
 	"doors",
 	"drive_null",
 	"drive_entity",
