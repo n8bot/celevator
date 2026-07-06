@@ -313,6 +313,24 @@ core.register_craft({
 })
 
 core.register_craft({
+	output = "celevator:hwdoor_centerglass",
+	recipe = {
+		{m.steel_bar,"",m.steel_bar},
+		{m.glass,m.steel_bar,m.glass},
+		{m.steel_bar,m.steel_bar,m.steel_bar},
+	},
+})
+
+core.register_craft({
+	output = "celevator:hwdoor_centersteel",
+	recipe = {
+		{m.steel_bar,"",m.steel_bar},
+		{m.steel_strip,m.steel_bar,m.steel_strip},
+		{m.steel_bar,m.steel_bar,m.steel_bar},
+	},
+})
+
+core.register_craft({
 	output = "celevator:lantern_up",
 	recipe = {
 		{m.steel_strip,m.lightstone_green},
