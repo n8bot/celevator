@@ -235,6 +235,8 @@ if mem.params and not mem.params.inspectionspeed then mem.params.inspectionspeed
 if mem.params and not mem.params.indepunlock then mem.params.indepunlock = {} end
 if mem.params and not mem.params.secoverrideusers then mem.params.secoverrideusers = {} end
 if mem.params and mem.params.swingcallwhennotswing == nil then mem.params.swingcallwhennotswing = true end
+if mem.params and not mem.params.suppressbeep then mem.params.suppressbeep = {} end
+if mem.params and not mem.params.hiddenbuttons then mem.params.hiddenbuttons = {} end
 if not mem.editinguser then mem.editinguser = 1 end
 
 if mem.params and #mem.params.floornames < 2 then
@@ -301,6 +303,8 @@ if event.type == "program" then
 			indepunlock = {},
 			secoverrideusers = {},
 			swingcallwhennotswing = true,
+			suppressbeep = {},
+			hiddenbuttons = {},
 		}
 	end
 elseif event.type == "ui" then
@@ -414,6 +418,7 @@ elseif event.type == "ui" then
 			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
 				mem.params.mainlanding = math.floor(mainlanding)
 				mem.params.carcallsecurity[math.floor(mainlanding)] = nil
+				mem.params.hiddenbuttons[math.floor(mainlanding)] = nil
 			end
 			local altrecalllanding = tonumber(event.fields.altrecalllanding)
 			if altrecalllanding and altrecalllanding >= 1 and altrecalllanding <= #mem.params.floorheights then
@@ -545,6 +550,12 @@ elseif event.type == "ui" then
 	elseif mem.screenstate == "carcallsecurity" then
 		if event.fields.indepunlock then
 			mem.params.indepunlock[mem.editingfloor] = (event.fields.indepunlock == "true")
+		end
+		if event.fields.suppressbeep then
+			mem.params.suppressbeep[mem.editingfloor] = (event.fields.suppressbeep == "true")
+		end
+		if event.fields.hidebutton then
+			mem.params.hiddenbuttons[mem.editingfloor] = (event.fields.hidebutton == "true")
 		end
 		if event.fields.swingcallwhennotswing then
 			mem.params.swingcallwhennotswing = (event.fields.swingcallwhennotswing == "true")
@@ -1573,25 +1584,29 @@ elseif mem.screenstate == "carcallsecurity" then
 			fs("1;true]")
 		end
 		if mem.params.carcallsecurity[mem.editingfloor] then
-			fs(string.format("checkbox[8,3.5;indepunlock;"..S("Unlock in Independent")..";%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
-			fs("label[8,4.7;"..S("Extra Allowed Users").."]")
+			fs(string.format("checkbox[8,4.5;indepunlock;"..S("Unlock in Independent")..";%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
+			fs("label[8,5.7;"..S("Extra Allowed Users").."]")
 			if not mem.params.secoverrideusers[mem.editingfloor] then mem.params.secoverrideusers[mem.editingfloor] = {} end
 			if #mem.params.secoverrideusers[mem.editingfloor] > 0 then
-				fs("textlist[8,6;4,2;user;")
+				fs("textlist[8,7;4,2;user;")
 				for i=1,#mem.params.secoverrideusers[mem.editingfloor],1 do
 					fs(core.formspec_escape(mem.params.secoverrideusers[mem.editingfloor][i])..(i==#mem.params.secoverrideusers[mem.editingfloor] and "" or ","))
 				end
 				fs(";"..tostring(mem.editinguser)..";false]")
 			else
-				fs("label[8,6.25;"..S("(none)").."]")
+				fs("label[8,7.25;"..S("(none)").."]")
 			end
-			fs("field[8,5;3,1;username;;]")
-			fs("button[11.25,5;0.5,1;adduser;+]")
-			fs("button[12,5;0.5,1;deluser;-]")
+			fs("field[8,6;3,1;username;;]")
+			fs("button[11.25,6;0.5,1;adduser;+]")
+			fs("button[12,6;0.5,1;deluser;-]")
 		end
+		local hidden = mem.params.hiddenbuttons[mem.editingfloor] and "true" or "false"
+		fs("checkbox[8,4;hidebutton;"..S("Hide Button")..";"..hidden.."]")
 	else
 		fs("label[8,2;"..S("Main landing cannot be locked").."]")
 	end
+	local suppressed = mem.params.suppressbeep[mem.editingfloor] and "true" or "false"
+	fs("checkbox[8,3.5;suppressbeep;"..S("Suppress Beep Sound")..";"..suppressed.."]")
 end
 
 local arrow = " "
@@ -1626,7 +1641,9 @@ local hidepi = {
 if hidepi[mem.carstate] then mem.pifloor = "--" end
 
 if mem.pifloor ~= oldpifloor and (mem.carstate == "normal" or mem.carstate == "swing") then
-	drivecmd({command="pibeep"})
+	if not mem.params.suppressbeep[getpos(true)] then
+		drivecmd({command="pibeep"})
+	end
 end
 
 local arrowenabled = {
@@ -1669,7 +1686,15 @@ elseif (mem.carstate == "normal" or mem.carstate == "swing") and mem.doorstate =
 end
 
 mem.copformspec = "formspec_version[7]"
-local floorcount = #mem.params.floornames
+local displayedfloors = {}
+local realfloors = {}
+for k,v in pairs(mem.params.floornames) do
+	if not mem.params.hiddenbuttons[k] then
+		table.insert(displayedfloors,v)
+		realfloors[#displayedfloors] = k
+	end
+end
+local floorcount = #displayedfloors
 local copcols = math.floor((floorcount-1)/10)+1
 local coprows = math.floor((floorcount-1)/copcols)+1
 local litimg = "celevator_copbutton_lit.png"
@@ -1678,13 +1703,14 @@ mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,
 mem.copformspec = mem.copformspec.."no_prepend[]"
 mem.copformspec = mem.copformspec.."background9[0,0;16,12;celevator_fs_bg.png;true;3]"
 for i=1,floorcount,1 do
+	local landing = realfloors[i]
 	local row = math.floor((i-1)/copcols)+1
 	local col = ((i-1)%copcols)+1
 	local yp = (coprows-row+1)*1.25+1
 	local xp = col*1.25
-	local tex = mem.carcalls[i] and litimg or unlitimg
-	local star = (i == (mem.params.mainlanding or 1) and "*" or "")
-	local label = core.formspec_escape(star..mem.params.floornames[i])
+	local tex = mem.carcalls[landing] and litimg or unlitimg
+	local star = (landing == (mem.params.mainlanding or 1) and "*" or "")
+	local label = core.formspec_escape(star..displayedfloors[i])
 	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,label,litimg)
 end
 
