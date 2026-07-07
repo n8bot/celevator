@@ -237,6 +237,7 @@ if mem.params and not mem.params.secoverrideusers then mem.params.secoverrideuse
 if mem.params and mem.params.swingcallwhennotswing == nil then mem.params.swingcallwhennotswing = true end
 if mem.params and not mem.params.suppressbeep then mem.params.suppressbeep = {} end
 if mem.params and not mem.params.hiddenbuttons then mem.params.hiddenbuttons = {} end
+if mem.params and not mem.params.alwayshiddenbuttons then mem.params.alwayshiddenbuttons = {} end
 if not mem.editinguser then mem.editinguser = 1 end
 
 if mem.params and #mem.params.floornames < 2 then
@@ -305,6 +306,7 @@ if event.type == "program" then
 			swingcallwhennotswing = true,
 			suppressbeep = {},
 			hiddenbuttons = {},
+			alwayshiddenbuttons = {},
 		}
 	end
 elseif event.type == "ui" then
@@ -419,6 +421,7 @@ elseif event.type == "ui" then
 				mem.params.mainlanding = math.floor(mainlanding)
 				mem.params.carcallsecurity[math.floor(mainlanding)] = nil
 				mem.params.hiddenbuttons[math.floor(mainlanding)] = nil
+				mem.params.alwayshiddenbuttons[math.floor(mainlanding)] = nil
 			end
 			local altrecalllanding = tonumber(event.fields.altrecalllanding)
 			if altrecalllanding and altrecalllanding >= 1 and altrecalllanding <= #mem.params.floorheights then
@@ -556,6 +559,9 @@ elseif event.type == "ui" then
 		end
 		if event.fields.hidebutton then
 			mem.params.hiddenbuttons[mem.editingfloor] = (event.fields.hidebutton == "true")
+		end
+		if event.fields.alwayshidebutton then
+			mem.params.alwayshiddenbuttons[mem.editingfloor] = (event.fields.alwayshidebutton == "true")
 		end
 		if event.fields.swingcallwhennotswing then
 			mem.params.swingcallwhennotswing = (event.fields.swingcallwhennotswing == "true")
@@ -1584,7 +1590,7 @@ elseif mem.screenstate == "carcallsecurity" then
 			fs("1;true]")
 		end
 		if mem.params.carcallsecurity[mem.editingfloor] then
-			fs(string.format("checkbox[8,4.5;indepunlock;"..S("Unlock in Independent")..";%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
+			fs(string.format("checkbox[8,5;indepunlock;"..S("Unlock in Independent")..";%s]",(mem.params.indepunlock[mem.editingfloor] and "true" or "false")))
 			fs("label[8,5.7;"..S("Extra Allowed Users").."]")
 			if not mem.params.secoverrideusers[mem.editingfloor] then mem.params.secoverrideusers[mem.editingfloor] = {} end
 			if #mem.params.secoverrideusers[mem.editingfloor] > 0 then
@@ -1602,6 +1608,10 @@ elseif mem.screenstate == "carcallsecurity" then
 		end
 		local hidden = mem.params.hiddenbuttons[mem.editingfloor] and "true" or "false"
 		fs("checkbox[8,4;hidebutton;"..S("Hide Button")..";"..hidden.."]")
+		if hidden == "true" then
+			local veryhidden = mem.params.alwayshiddenbuttons[mem.editingfloor] and "true" or "false"
+			fs("checkbox[8,4.5;alwayshidebutton;"..S("Also Hide in Fire/Independent Service")..";"..veryhidden.."]")
+		end
 	else
 		fs("label[8,2;"..S("Main landing cannot be locked").."]")
 	end
@@ -1688,10 +1698,19 @@ end
 mem.copformspec = "formspec_version[7]"
 local displayedfloors = {}
 local realfloors = {}
-for k,v in pairs(mem.params.floornames) do
-	if not mem.params.hiddenbuttons[k] then
-		table.insert(displayedfloors,v)
-		realfloors[#displayedfloors] = k
+if mem.carstate == "fs2" or mem.carstate == "fs2hold" or mem.carstate == "indep" then
+	for k,v in pairs(mem.params.floornames) do
+		if not (mem.params.hiddenbuttons[k] and mem.params.alwayshiddenbuttons[k]) then
+			table.insert(displayedfloors,v)
+			realfloors[#displayedfloors] = k
+		end
+	end
+else
+	for k,v in pairs(mem.params.floornames) do
+		if not mem.params.hiddenbuttons[k] then
+			table.insert(displayedfloors,v)
+			realfloors[#displayedfloors] = k
+		end
 	end
 end
 local floorcount = #displayedfloors
@@ -1711,7 +1730,7 @@ for i=1,floorcount,1 do
 	local tex = mem.carcalls[landing] and litimg or unlitimg
 	local star = (landing == (mem.params.mainlanding or 1) and "*" or "")
 	local label = core.formspec_escape(star..displayedfloors[i])
-	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,i,label,litimg)
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;carcall%d;%s;false;false;%s]",xp,yp,tex,landing,label,litimg)
 end
 
 local doxp = (copcols == 1) and 0.5 or 1.25
