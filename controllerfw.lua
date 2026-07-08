@@ -738,6 +738,9 @@ elseif event.type == "cop" then
 			open()
 		elseif fields.callcancel and (mem.carstate == "indep" or mem.carstate == "fs2") then
 			mem.carcalls = {}
+		elseif fields.phone then
+			mem.phoneactive = true
+			interrupt(15,"phonedone")
 		end
 	end
 elseif event.type == "copswitches" then
@@ -958,6 +961,8 @@ elseif event.type == "mrsmoke" then
 		end
 		if not mem.recallto then mem.recallto = getpos() end
 	end
+elseif event.iid == "phonedone" then
+	mem.phoneactive = false
 end
 
 local oldstate = mem.carstate
@@ -1718,7 +1723,7 @@ local copcols = math.floor((floorcount-1)/10)+1
 local coprows = math.floor((floorcount-1)/copcols)+1
 local litimg = "celevator_copbutton_lit.png"
 local unlitimg = "celevator_copbutton_unlit.png"
-mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+5)
+mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+6)
 mem.copformspec = mem.copformspec.."no_prepend[]"
 mem.copformspec = mem.copformspec.."background9[0,0;16,12;celevator_fs_bg.png;true;3]"
 for i=1,floorcount,1 do
@@ -1745,6 +1750,18 @@ elseif copcols == 2 then
 end
 local closelabel = core.formspec_escape(">|<")
 mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;close;%s;false;false;%s]",dcxp,coprows*1.25+2.5,unlitimg,closelabel,litimg)
+
+local alarmunlitimg = unlitimg.."^celevator_copbutton_alarm.png"
+local alarmlitimg = litimg.."^celevator_copbutton_alarm.png"
+mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;alarm;;false;false;%s]",doxp,coprows*1.25+4,alarmunlitimg,alarmlitimg)
+
+local phoneunlitimg = unlitimg.."^celevator_copbutton_phone.png"
+local phonelitimg = litimg.."^celevator_copbutton_phone.png"
+if mem.phoneactive then
+	mem.copformspec = mem.copformspec..string.format("image[%f,%f;1.2,1.2;%s]",dcxp,coprows*1.25+4,phonelitimg)
+else
+	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;phone;;false;false;%s]",dcxp,coprows*1.25+4,phoneunlitimg,phonelitimg)
+end
 
 local callcancellabel = S("Call\nCancel")
 mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;"..callcancellabel..";false;false;%s]",unlitimg,litimg)

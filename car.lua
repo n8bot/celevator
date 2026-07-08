@@ -125,6 +125,11 @@ function celevator.car.register(name,defs,size)
 					player = playername,
 					protected = protected,
 				}
+				if fields.alarm then
+					core.sound_play({name="celevator_alarm"},{pos=pos,max_hear_distance=32,ephemeral=true})
+				elseif fields.phone then
+					core.sound_play({name="celevator_phone"},{pos=pos,gain=0.3,max_hear_distance=8,ephemeral=true})
+				end
 				celevator.controller.run(carinfo.controllerpos,event)
 			end
 		elseif def._keyswitches then
