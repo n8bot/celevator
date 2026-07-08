@@ -420,8 +420,6 @@ elseif event.type == "ui" then
 			if mainlanding and mainlanding >= 1 and mainlanding <= #mem.params.floorheights then
 				mem.params.mainlanding = math.floor(mainlanding)
 				mem.params.carcallsecurity[math.floor(mainlanding)] = nil
-				mem.params.hiddenbuttons[math.floor(mainlanding)] = nil
-				mem.params.alwayshiddenbuttons[math.floor(mainlanding)] = nil
 			end
 			local altrecalllanding = tonumber(event.fields.altrecalllanding)
 			if altrecalllanding and altrecalllanding >= 1 and altrecalllanding <= #mem.params.floorheights then
@@ -1611,14 +1609,14 @@ elseif mem.screenstate == "carcallsecurity" then
 			fs("button[11.25,6;0.5,1;adduser;+]")
 			fs("button[12,6;0.5,1;deluser;-]")
 		end
-		local hidden = mem.params.hiddenbuttons[mem.editingfloor] and "true" or "false"
-		fs("checkbox[8,4;hidebutton;"..S("Hide Button")..";"..hidden.."]")
-		if hidden == "true" then
-			local veryhidden = mem.params.alwayshiddenbuttons[mem.editingfloor] and "true" or "false"
-			fs("checkbox[8,4.5;alwayshidebutton;"..S("Also Hide in Fire/Independent Service")..";"..veryhidden.."]")
-		end
 	else
 		fs("label[8,2;"..S("Main landing cannot be locked").."]")
+	end
+	local hidden = mem.params.hiddenbuttons[mem.editingfloor] and "true" or "false"
+	fs("checkbox[8,4;hidebutton;"..S("Hide Button")..";"..hidden.."]")
+	if hidden == "true" then
+		local veryhidden = mem.params.alwayshiddenbuttons[mem.editingfloor] and "true" or "false"
+		fs("checkbox[8,4.5;alwayshidebutton;"..S("Also Hide in Fire/Independent Service")..";"..veryhidden.."]")
 	end
 	local suppressed = mem.params.suppressbeep[mem.editingfloor] and "true" or "false"
 	fs("checkbox[8,3.5;suppressbeep;"..S("Suppress Beep Sound")..";"..suppressed.."]")
@@ -1719,8 +1717,8 @@ else
 	end
 end
 local floorcount = #displayedfloors
-local copcols = math.floor((floorcount-1)/10)+1
-local coprows = math.floor((floorcount-1)/copcols)+1
+local copcols = math.max(1,math.floor((floorcount-1)/10)+1)
+local coprows = math.max(1,math.floor((floorcount-1)/copcols)+1)
 local litimg = "celevator_copbutton_lit.png"
 local unlitimg = "celevator_copbutton_unlit.png"
 mem.copformspec = mem.copformspec..string.format("size[%f,%f]",copcols*1.25+2.5,coprows*1.25+6)
@@ -1763,14 +1761,22 @@ else
 	mem.copformspec = mem.copformspec..string.format("image_button[%f,%f;1.2,1.2;%s;phone;;false;false;%s]",dcxp,coprows*1.25+4,phoneunlitimg,phonelitimg)
 end
 
-local callcancellabel = S("Call\nCancel")
-mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;"..callcancellabel..";false;false;%s]",unlitimg,litimg)
+local hatxp = 1.2
+
+if floorcount > 0 then
+	--If all floors are hidden, this is probably a DBD setup and all of the car call buttons are in a cabinet that is not currently open.
+	--Call cancel would be in there too, so hide it in that case
+	local callcancellabel = S("Call\nCancel")
+	mem.copformspec = mem.copformspec..string.format("image_button[0.4,0.5;1.4,1.4;%s;callcancel;"..callcancellabel..";false;false;%s]",unlitimg,litimg)
+	--Also center the hat in that case (un-center it here if there are buttons)
+	hatxp = 2.2
+end
 
 if mem.flashfirehat then
-	mem.copformspec = mem.copformspec.."animated_image[2.2,0.5;1.4,1.4;firehat;celevator_fire_hat_flashing.png;2;750]"
+	mem.copformspec = mem.copformspec..string.format("animated_image[%f,0.5;1.4,1.4;firehat;celevator_fire_hat_flashing.png;2;750]",hatxp)
 else
 	local firehat = mem.flash_fs and "celevator_fire_hat_lit.png" or "celevator_fire_hat_unlit.png"
-	mem.copformspec = mem.copformspec..string.format("image[2.2,0.5;1.4,1.4;%s]",firehat)
+	mem.copformspec = mem.copformspec..string.format("image[%f,0.5;1.4,1.4;%s]",hatxp,firehat)
 end
 
 local switchboilerplate = ";false;false;celevator_button_rect_active.png"
