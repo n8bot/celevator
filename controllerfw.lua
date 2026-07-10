@@ -336,6 +336,7 @@ elseif event.type == "ui" then
 		end
 	elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" then
 		local exp = event.fields.floor and core.explode_textlist_event(event.fields.floor) or {}
+		local maxfloors = tonumber(core.settings:get("celevator.max_landings")) or 100
 		if event.fields.back then
 			mem.screenstate = "oobe_groupmode"
 		elseif event.fields.next then
@@ -367,7 +368,7 @@ elseif event.type == "ui" then
 			mem.screenstate = (mem.screenstate == "oobe_floortable" and "oobe_floortable_edit" or "floortable_edit")
 		elseif event.fields.edit then
 			mem.screenstate = (mem.screenstate == "oobe_floortable" and "oobe_floortable_edit" or "floortable_edit")
-		elseif event.fields.add then
+		elseif event.fields.add and #mem.params.floornames < maxfloors then
 			table.insert(mem.params.floorheights,5)
 			table.insert(mem.params.floornames,tostring(#mem.params.floornames+1))
 		elseif event.fields.remove and #mem.params.floornames > 2 then
@@ -409,7 +410,8 @@ elseif event.type == "ui" then
 				mem.params.doortimer = doortimer
 			end
 			local contractspeed = tonumber(event.fields.contractspeed)
-			if contractspeed and contractspeed >= 0.1 and contractspeed <= 20 then
+			local maxspeed = tonumber(core.settings:get("celevator.max_speed")) or 20
+			if contractspeed and contractspeed >= 0.1 and contractspeed <= maxspeed then
 				mem.params.contractspeed = contractspeed
 			end
 			local nudgetimer = tonumber(event.fields.nudgetimer)
@@ -1392,7 +1394,8 @@ elseif mem.screenstate == "oobe_floortable" or mem.screenstate == "floortable" t
 		fs(core.formspec_escape(floortext)..(i==1 and "" or ","))
 	end
 	fs(";"..tostring(#mem.params.floornames-mem.editingfloor+1)..";false]")
-	if #mem.params.floornames < 100 then fs("button[8,2;2,1;add;"..S("New Floor").."]") end
+	local maxfloors = tonumber(core.settings:get("celevator.max_landings")) or 100
+	if #mem.params.floornames < maxfloors then fs("button[8,2;2,1;add;"..S("New Floor").."]") end
 	fs("button[8,3.5;2,1;edit;"..S("Edit Floor").."]")
 	if #mem.params.floornames > 2 then fs("button[8,5;2,1;remove;"..S("Remove Floor").."]") end
 	if mem.editingfloor < #mem.params.floornames then fs("button[8,6.5;2,1;moveup;"..S("Move Up").."]") end

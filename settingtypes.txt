@@ -1,0 +1,32 @@
+[Limits]
+
+# The maximum distance that will be checked for a car when configuring a hoist machine.
+# This determines the height of the tallest possible elevator.
+# Reducing this value does not affect existing elevators.
+# NOTE: In the worst case, a vertical column of mapblocks this tall may have to be emerged.
+celevator.max_height (Maximum height) int 500 3 65535
+
+# The highest number of landings that any one elevator or group can serve.
+# Values much higher than 100 are likely to not fit on most screens.
+# Reducing this value does not remove landings from existing elevators or groups.
+celevator.max_landings (Maximum landings) int 100 2 1000
+
+# The maximum number of cars in a group.
+# Reducing this value does not remove cars from existing groups.
+celevator.max_group (Maximum group size) int 16 2 16
+
+# The maximum speed of an elevator, in meters/nodes per second.
+# Depending on the server's active block range and mapblock load speed,
+# setting an elevator to a speed too high may cause players to fall out.
+celevator.max_speed (Maximum speed) float 20.0 1.0 100.0
+
+[Protection]
+
+# Car top inspection controls require area access to operate
+celevator.cartop_protected (Car top controls protected) bool false
+
+# Controller and dispatcher cabinets require area access to open
+celevator.controller_cabinet_protected (Controller cabinet protected) bool true
+
+# Open controllers/dispatchers require area access to interact with
+celevator.controller_screen_protected (Controller screen protected) bool false

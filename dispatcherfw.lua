@@ -426,6 +426,7 @@ elseif event.type == "ui" then
 		end
 	elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections" then
 		local exp = event.fields.connection and core.explode_textlist_event(event.fields.connection) or {}
+		local maxcars = tonumber(core.settings:get("celevator.max_group")) or 16
 		if event.fields.back then
 			mem.screenstate = "oobe_floortable"
 		elseif event.fields.next and #mem.params.carids > 0 then
@@ -440,7 +441,7 @@ elseif event.type == "ui" then
 		elseif event.fields.edit then
 			mem.screenstate = (mem.screenstate == "oobe_connections" and "oobe_connection" or "connection")
 			mem.newconnfloors = mem.params.floorsserved[mem.params.carids[mem.editingconnection]]
-		elseif event.fields.add then
+		elseif event.fields.add and #mem.params.carids < maxcars then
 			mem.newconnfloors = {}
 			for i in ipairs(mem.params.floornames) do
 				mem.newconnfloors[i] = true
@@ -999,7 +1000,8 @@ elseif mem.screenstate == "oobe_connections" or mem.screenstate == "connections"
 	else
 		fs("label[1,2;"..S("No Connections").."]")
 	end
-	if #mem.params.carids < 16 then fs("button[8,2;3,1;add;"..S("New Connection").."]") end
+	local maxcars = tonumber(core.settings:get("celevator.max_group")) or 16
+	if #mem.params.carids < maxcars then fs("button[8,2;3,1;add;"..S("New Connection").."]") end
 	if #mem.params.carids > 0 then fs("button[8,3.5;3,1;edit;"..S("Edit Connection").."]") end
 	if #mem.params.carids > 0 then fs("button[8,5;3,1;remove;"..S("Remove Connection").."]") end
 elseif mem.screenstate == "oobe_newconnection" or mem.screenstate == "newconnection" then

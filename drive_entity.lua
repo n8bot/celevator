@@ -837,7 +837,9 @@ function celevator.drives.entity.pibeep(drivepos)
 end
 
 local function carsearch(pos)
-	for i=1,500,1 do
+	local maxdistance = tonumber(core.settings:get("celevator.max_height")) or 500
+	maxdistance = math.max(1,maxdistance)
+	for i=1,maxdistance,1 do
 		local searchpos = vector.subtract(pos,vector.new(0,i,0))
 		local node = celevator.get_node(searchpos)
 		if core.get_item_group(node.name,"_celevator_car") == 1 then

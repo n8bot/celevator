@@ -4,6 +4,13 @@ local S = core.get_translator("celevator")
 
 local function disambiguatecartopbutton(pos,facedir,player)
 	if player and not player.is_fake_player then
+		local playername = player:get_player_name()
+		if core.settings:get_bool("celevator.cartop_protected",false) then
+			if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+				core.record_protection_violation(pos,playername)
+				return
+			end
+		end
 		local eyepos = vector.add(player:get_pos(),vector.add(player:get_eye_offset(),vector.new(0,1.5,0)))
 		local lookdir = player:get_look_dir()
 		local distance = vector.distance(eyepos,pos)

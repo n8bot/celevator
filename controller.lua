@@ -86,6 +86,12 @@ end
 
 local function handlefields(pos,_,fields,sender)
 	local playername = sender and sender:get_player_name() or ""
+	if core.settings:get_bool("celevator.controller_screen_protected",false) then
+		if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+			core.record_protection_violation(pos,playername)
+			return
+		end
+	end
 	local event = {}
 	event.type = "ui"
 	event.fields = fields
@@ -178,10 +184,12 @@ core.register_node("celevator:controller",{
 			return
 		end
 		local name = puncher:get_player_name()
-		if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
-			core.chat_send_player(name,S("Can't open cabinet - cabinet is locked."))
-			core.record_protection_violation(pos,name)
-			return
+		if core.settings:get_bool("celevator.controller_cabinet_protected",true) then
+			if core.is_protected(pos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+				core.chat_send_player(name,S("Can't open cabinet - cabinet is locked."))
+				core.record_protection_violation(pos,name)
+				return
+			end
 		end
 		node.name = "celevator:controller_open"
 		core.swap_node(pos,node)
