@@ -369,8 +369,9 @@ elseif event.type == "ui" then
 		elseif event.fields.edit then
 			mem.screenstate = (mem.screenstate == "oobe_floortable" and "oobe_floortable_edit" or "floortable_edit")
 		elseif event.fields.add and #mem.params.floornames < maxfloors then
-			table.insert(mem.params.floorheights,5)
-			table.insert(mem.params.floornames,tostring(#mem.params.floornames+1))
+			table.insert(mem.params.floorheights,mem.params.floorheights[#mem.params.floorheights] or 5)
+			local previous = tonumber(mem.params.floornames[#mem.params.floornames]) or #mem.params.floornames
+			table.insert(mem.params.floornames,tostring(math.floor(previous)+1))
 		elseif event.fields.remove and #mem.params.floornames > 2 then
 			table.remove(mem.params.floorheights,mem.editingfloor)
 			table.remove(mem.params.floornames,mem.editingfloor)
