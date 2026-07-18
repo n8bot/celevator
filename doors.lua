@@ -58,9 +58,8 @@ core.register_node("celevator:hwdoor_placeholder",{
 
 core.register_entity("celevator:hwdoor_moving",{
 	initial_properties = {
-		visual = "wielditem",
-		visual_size = vector.new(0.667,0.667,0.667),
-		wield_item = "default:dirt",
+		visual = "node",
+		node = {name="air"},
 		static_save = false,
 		pointable = false,
 	},

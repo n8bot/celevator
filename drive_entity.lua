@@ -1,5 +1,9 @@
 local S = core.get_translator("celevator")
 
+local copfscontext = {}
+
+local keyswitchfscontext = {}
+
 celevator.drives.entity = {
 	name = S("Elevator Drive"),
 	description = S("Normal entity-based drive"),
@@ -231,9 +235,8 @@ core.register_node("celevator:drive",{
 
 core.register_entity("celevator:car_moving",{
 	initial_properties = {
-		visual = "wielditem",
-		visual_size = vector.new(0.667,0.667,0.667),
-		wield_item = "default:dirt",
+		visual = "node",
+		node = {name="air"},
 		static_save = false,
 		glow = core.LIGHT_MAX,
 		pointable = false,
@@ -251,8 +254,6 @@ core.register_entity("celevator:player_holder",{
 			"blank.png",
 			"blank.png",
 		},
-		--I have no idea where this magic number comes from, but it seems about right and that's good enough
-		visual_size = vector.new(3,3,3),
 		static_save = false,
 		pointable = false,
 	},
@@ -276,7 +277,7 @@ core.register_entity("celevator:player_holder",{
 		local attachrot = vector.new(0,(caryaw-playeryaw)*57.296,0)
 		local control = player:get_player_control()
 		if (control.up or control.down or control.left or control.right) then
-			local walkspeed = 120
+			local walkspeed = 40
 			local walkamount = walkspeed*dtime
 			local displacement = vector.new(0,0,0)
 			if control.up then
@@ -295,7 +296,7 @@ core.register_entity("celevator:player_holder",{
 			displacement = vector.rotate_around_axis(displacement,vector.new(0,-1,0),caryaw)
 			local oldattachoffset = vector.copy(attachoffset)
 			attachoffset = vector.add(attachoffset,displacement)
-			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset,1/30),vector.new(0,1,0),caryaw)
+			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset,1/10),vector.new(0,1,0),caryaw)
 			local newpos = vector.add(car:get_pos(),realattachoffset)
 			local limits = playerposlimits[player:get_player_name()] or {}
 			if limits.xmin and limits.xmax and limits.xmin < limits.xmax then
@@ -357,11 +358,32 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 		local attach = core.get_objects_inside_radius(pos,0.9)
 		local eref = core.add_entity(pos,(ename or "celevator:car_moving"))
 		eref:set_properties({
-			wield_item = node.name,
+			node = {name = node.name},
 		})
 		eref:set_yaw(core.dir_to_yaw(core.fourdir_to_dir(node.param2)))
+		eref:set_armor_groups({
+			immortal = 1,
+		})
 		table.insert(refs,eref)
 		local ndef = core.registered_nodes[node.name] or {}
+		local nbox = ndef.selection_box or ndef.node_box
+		if nbox and nbox.fixed then
+			local selbox = {0,0,0,0,0,0}
+			if type(nbox.fixed[1]) ~= "table" then
+				selbox = table.copy(nbox.fixed)
+			else
+				for _,box in ipairs(nbox.fixed) do
+					for i=1,3 do
+						selbox[i] = math.min(selbox[i],box[i])
+					end
+					for i=4,6 do
+						selbox[i] = math.max(selbox[i],box[i])
+					end
+				end
+			end
+			selbox.rotate = true
+			eref:set_properties({selectionbox=selbox})
+		end
 		if ndef._cartopbox or ndef._tapehead then
 			local toppos = vector.add(pos,vector.new(0,1,0))
 			local topattach = core.get_objects_inside_radius(toppos,0.75)
@@ -385,7 +407,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 					local attachoffset = vector.subtract(attachpos,basepos)
 					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
 					local holder = core.add_entity(attachpos,"celevator:player_holder")
-					holder:set_attach(eref,"",vector.multiply(attachoffset,30),vector.new(0,0,0))
+					holder:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
 					attachref:set_attach(holder,"")
 					local extra = 0.25 --To allow getting closer to walls
 					playerposlimits[attachref:get_player_name()] = {
@@ -398,8 +420,26 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 					local attachpos = attachref:get_pos()
 					local basepos = eref:get_pos()
 					local attachoffset = vector.subtract(attachpos,basepos)
-					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
-					attachref:set_attach(eref,"",vector.multiply(attachoffset,30),vector.new(0,0,0))
+					attachref:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
+				end
+			end
+			local meta = celevator.get_meta(pos)
+			local carid = meta:get_int("carid")
+			if carid ~= 0 then
+				if core.get_item_group(node.name,"_has_cop") == 1 then
+					eref:set_properties({
+						pointable = true,
+					})
+					eref:get_luaentity().on_rightclick = function(self,player)
+						celevator.drives.entity.coprightclick(carid,player,self.object:get_pos())
+					end
+				elseif core.get_item_group(node.name,"_has_keyswitches") == 1 then
+					eref:set_properties({
+						pointable = true,
+					})
+					eref:get_luaentity().on_rightclick = function(self,player)
+						celevator.drives.entity.keyswitchrightclick(carid,player,self.object:get_pos())
+					end
 				end
 			end
 		end
@@ -416,11 +456,9 @@ function celevator.drives.entity.entitiestonodes(refs,carid)
 		local ename = eref:get_luaentity() and eref:get_luaentity().name
 		if pos and (ename == "celevator:car_moving" or ename == "celevator:hwdoor_moving") then
 			pos = vector.round(pos)
-			local node = {
-				name = eref:get_properties().wield_item,
-				param2 = core.dir_to_fourdir(core.yaw_to_dir(eref:get_yaw()))
-			}
-			if core.get_item_group(eref:get_properties().wield_item,"_connects_yp") ~= 1 then top = true end
+			local node = eref:get_properties().node or {name="air"}
+			node.param2 = core.dir_to_fourdir(core.yaw_to_dir(eref:get_yaw()))
+			if core.get_item_group(node.name,"_connects_yp") ~= 1 then top = true end
 			core.set_node(pos,node)
 			eref:remove()
 			if carid then celevator.get_meta(pos):set_int("carid",carid) end
@@ -1165,25 +1203,87 @@ function celevator.drives.entity.updatecopformspec(drivepos)
 	if not carinfo then return end
 	local copformspec = celevator.get_meta(carinfo.controllerpos):get_string("copformspec")
 	local switchformspec = celevator.get_meta(carinfo.controllerpos):get_string("switchformspec")
-	local origin = core.string_to_pos(drivemeta:get_string("origin"))
-	if not origin then
-		core.log("error","[celevator] [entity drive] Invalid origin for drive at "..core.pos_to_string(drivepos))
-		drivemeta:set_string("fault","badorigin")
-		return
+	for playername,context in pairs(copfscontext) do
+		if carid == context.carid then
+			core.show_formspec(playername,"celevator:cop",copformspec)
+		end
 	end
-	local apos = tonumber(drivemeta:get_string("apos")) or 0
-	if apos == math.floor(apos) then
-		local carpos = vector.add(origin,vector.new(0,apos,0))
-		local carnodes = celevator.drives.entity.gathercar(carpos,core.dir_to_yaw(core.fourdir_to_dir(celevator.get_node(carpos).param2)))
-		for hash in pairs(carnodes) do
-			local piecepos = core.get_position_from_hash(hash)
-			local piece = celevator.get_node(piecepos)
-			local ndef = core.registered_nodes[piece.name] or {}
-			if ndef._cop then
-				celevator.get_meta(piecepos):set_string("formspec",copformspec)
-			elseif ndef._keyswitches then
-				celevator.get_meta(piecepos):set_string("formspec",switchformspec)
-			end
+	for playername,context in pairs(keyswitchfscontext) do
+		if carid == context.carid then
+			core.show_formspec(playername,"celevator:keyswitches",switchformspec)
 		end
 	end
 end
+
+function celevator.drives.entity.coprightclick(carid,player,pos)
+	if type(player) == "userdata" then player = player:get_player_name() end
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.controllerpos) then return end
+	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	local meta = celevator.get_meta(carinfo.controllerpos)
+	local formspec = meta:get_string("copformspec")
+	core.show_formspec(player,"celevator:cop",formspec)
+	copfscontext[player] = {carid = carid,pos = pos}
+end
+
+function celevator.drives.entity.keyswitchrightclick(carid,player,pos)
+	if type(player) == "userdata" then player = player:get_player_name() end
+	local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+	if not (carinfo and carinfo.controllerpos) then return end
+	if not celevator.controller.iscontroller(carinfo.controllerpos) then return end
+	local meta = celevator.get_meta(carinfo.controllerpos)
+	local formspec = meta:get_string("switchformspec")
+	core.show_formspec(player,"celevator:keyswitches",formspec)
+	keyswitchfscontext[player] = {carid = carid,pos = pos}
+end
+
+core.register_on_player_receive_fields(function(player,formname,fields)
+	local playername = player:get_player_name()
+	if formname == "celevator:cop" then
+		if fields.quit then
+			copfscontext[playername] = nil
+		end
+		local carid = (copfscontext[playername] or {}).carid
+		if not carid then return end
+		local coppos = copfscontext[playername].pos
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then return end
+		local protected = core.is_protected(vector.round(coppos),playername) and not core.check_player_privs(playername,{protection_bypass=true})
+		local event = {
+			type = "cop",
+			fields = fields,
+			player = playername,
+			protected = protected,
+		}
+		if fields.alarm then
+			core.sound_play({name="celevator_alarm"},{pos=coppos,max_hear_distance=32,ephemeral=true})
+		elseif fields.phone then
+			core.sound_play({name="celevator_phone"},{pos=coppos,gain=0.3,max_hear_distance=8,ephemeral=true})
+		end
+		celevator.controller.run(carinfo.controllerpos,event)
+		return true
+	elseif formname == "celevator:keyswitches" then
+		if fields.quit then
+			keyswitchfscontext[playername] = nil
+		end
+		local carid = (keyswitchfscontext[playername] or {}).carid
+		if not carid then return end
+		local switchpos = keyswitchfscontext[playername].pos
+		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
+		if not carinfo then return end
+		if core.is_protected(switchpos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+			core.chat_send_player(playername,S("You don't have access to these switches."))
+			core.record_protection_violation(switchpos,playername)
+			return
+		end
+		local event = {
+			type = "copswitches",
+			fields = fields,
+			player = playername,
+		}
+		celevator.controller.run(carinfo.controllerpos,event)
+		return true
+	else
+		return false
+	end
+end)

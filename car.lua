@@ -118,47 +118,18 @@ function celevator.car.register(name,defs,size)
 		def.light_source = 9
 		def.drop = ""
 		if def._cop then
-			def.on_receive_fields = function(pos,_,fields,player)
+			def.groups._has_cop = 1
+			def.on_rightclick = function(pos,_,player)
 				local meta = core.get_meta(pos)
 				local carid = meta:get_int("carid")
-				if carid == 0 then return end
-				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not carinfo then return end
-				local playername = player:get_player_name()
-				local protected = core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true})
-				local event = {
-					type = "cop",
-					fields = fields,
-					player = playername,
-					protected = protected,
-				}
-				if fields.alarm then
-					core.sound_play({name="celevator_alarm"},{pos=pos,max_hear_distance=32,ephemeral=true})
-				elseif fields.phone then
-					core.sound_play({name="celevator_phone"},{pos=pos,gain=0.3,max_hear_distance=8,ephemeral=true})
-				end
-				celevator.controller.run(carinfo.controllerpos,event)
+				if carid ~= 0 then celevator.drives.entity.coprightclick(carid,player,pos) end
 			end
 		elseif def._keyswitches then
-			def.on_receive_fields = function(pos,_,fields,player)
-				if fields.quit then return end
+			def.groups._has_keyswitches = 1
+			def.on_rightclick = function(pos,_,player)
 				local meta = core.get_meta(pos)
 				local carid = meta:get_int("carid")
-				if carid == 0 then return end
-				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
-				if not carinfo then return end
-				local playername = player:get_player_name()
-				if core.is_protected(pos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
-					core.chat_send_player(playername,S("You don't have access to these switches."))
-					core.record_protection_violation(pos,playername)
-					return
-				end
-				local event = {
-					type = "copswitches",
-					fields = fields,
-					player = name,
-				}
-				celevator.controller.run(carinfo.controllerpos,event)
+				if carid ~= 0 then celevator.drives.entity.keyswitchrightclick(carid,player,pos) end
 			end
 		end
 		if def._cartopbox then
