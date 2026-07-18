@@ -747,7 +747,7 @@ elseif event.type == "cop" then
 					end
 				end
 			elseif mem.drive.status.vel < 0 then
-				for i=#mem.params.floornames,getpos(),-1 do
+				for i=getpos(),1,-1 do
 					if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
 						gotofloor(i)
 						break
