@@ -739,6 +739,21 @@ elseif event.type == "cop" then
 			open()
 		elseif fields.callcancel and (mem.carstate == "indep" or mem.carstate == "fs2") then
 			mem.carcalls = {}
+			if mem.drive.status.vel > 0 then
+				for i=getpos(),#mem.params.floornames,1 do
+					if mem.drive.status.neareststop < gettarget(i) and mem.drive.status.dpos > gettarget(i) then
+						gotofloor(i)
+						break
+					end
+				end
+			elseif mem.drive.status.vel < 0 then
+				for i=#mem.params.floornames,getpos(),-1 do
+					if mem.drive.status.neareststop > gettarget(i) and mem.drive.status.dpos < gettarget(i) then
+						gotofloor(i)
+						break
+					end
+				end
+			end
 		elseif fields.phone then
 			mem.phoneactive = true
 			interrupt(15,"phonedone")
@@ -1165,6 +1180,7 @@ if mem.carmotion then
 		local hallcall = mem.upcalls[getpos()] or mem.dncalls[getpos()]
 		if mem.carstate == "normal" or mem.carstate == "indep" or mem.carstate == "fs1" or mem.carstate == "fs2" or mem.carstate == "swing" then
 			mem.carcalls[getpos()] = nil
+			if mem.carstate == "fs2" then mem.carcalls = {} end
 			if mem.direction == "up" then
 				mem.upcalls[getpos()] = nil
 				mem.swingupcalls[getpos()] = nil
