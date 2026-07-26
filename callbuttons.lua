@@ -242,11 +242,22 @@ for _,state in ipairs(validstates) do
 			fs = fs.."button[3,3.5;2,1;save;"..savemsg.."]"
 			meta:set_string("formspec",fs)
 		end,
-		on_receive_fields = function(pos,_,fields)
+		on_receive_fields = function(pos,_,fields,player)
 			if tonumber(fields.carid) and tonumber(fields.landing) then
 				local carid = tonumber(fields.carid)
 				local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",carid)))
 				if not carinfo then return end
+				local controllerpos = carinfo.controllerpos or carinfo.dispatcherpos
+				local playername = player and player:get_player_name() or ""
+				if core.is_protected(controllerpos,playername) and not core.check_player_privs(playername,{protection_bypass=true}) then
+					core.record_protection_violation(controllerpos,playername)
+					if carinfo.controllerpos then
+						core.chat_send_player(playername,S("Can't connect to a controller you don't have access to."))
+					else
+						core.chat_send_player(playername,S("Can't connect to a dispatcher you don't have access to."))
+					end
+					return
+				end
 				table.insert(carinfo.callbuttons,{pos=pos,landing=tonumber(fields.landing)})
 				celevator.storage:set_string(string.format("car%d",carid),core.serialize(carinfo))
 				local meta = core.get_meta(pos)

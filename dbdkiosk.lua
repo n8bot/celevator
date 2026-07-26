@@ -77,6 +77,11 @@ function celevator.dbdkiosk.handlefields(pos,_,fields,player)
 		local carinfo = core.deserialize(celevator.storage:get_string(string.format("car%d",fields.carid)))
 		if not carinfo then return end
 		if not (carinfo.dispatcherpos and celevator.dispatcher.isdispatcher(carinfo.dispatcherpos)) then return end
+		if core.is_protected(carinfo.dispatcherpos,name) and not core.check_player_privs(name,{protection_bypass=true}) then
+			core.record_protection_violation(carinfo.dispatcherpos,name)
+			core.chat_send_player(name,S("Can't connect to a dispatcher you don't have access to."))
+			return
+		end
 		local dmem = core.deserialize(core.get_meta(carinfo.dispatcherpos):get_string("mem"))
 		if not dmem then return end
 		local floornames = dmem.params.floornames
