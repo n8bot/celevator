@@ -397,7 +397,7 @@ elseif event.type == "ui" then
 		if event.fields.back or event.fields.save then
 			mem.screenstate = (mem.screenstate == "oobe_floortable_edit" and "oobe_floortable" or "floortable")
 			local height = tonumber(event.fields.height)
-			if height then
+			if height and height < (tonumber(core.settings:get("celevator.max_height")) or 100) then
 				height = math.floor(height+0.5)
 				mem.params.floorheights[mem.editingfloor] = math.max(1,height)
 			end
@@ -481,10 +481,10 @@ elseif event.type == "ui" then
 				end
 			end
 		end
-		if event.fields.scrollup then
+		if event.fields.scrollup and (mem.screenpage-1)*10+1 < #mem.params.floornames then
 			mem.screenpage = mem.screenpage + 1
 			mem.scrollfollowscar = false
-		elseif event.fields.scrolldown then
+		elseif event.fields.scrolldown and mem.screenpage > 1 then
 			mem.screenpage = mem.screenpage - 1
 			mem.scrollfollowscar = false
 		elseif event.fields.scrollfollowscar then

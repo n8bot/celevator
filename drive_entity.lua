@@ -721,7 +721,7 @@ function celevator.drives.entity.moveto(pos,target,inspection)
 		meta:set_string("fault","badorigin")
 		return
 	end
-	if target < 0 or origin.y + target > (carinfo.machinepos.y-3) then
+	if target < 0 or origin.y + target > (carinfo.machinepos.y-3) or target ~= target then
 		meta:set_string("fault","outofbounds")
 		return
 	end
@@ -790,6 +790,7 @@ end
 
 
 function celevator.drives.entity.setmaxvel(pos,maxvel)
+	if maxvel ~= maxvel then return end
 	local meta = celevator.get_meta(pos)
 	meta:set_string("maxvel",tostring(maxvel))
 end
