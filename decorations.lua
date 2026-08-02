@@ -3,7 +3,8 @@ local S = core.get_translator("celevator")
 core.register_node("celevator:buffer_rubber",{
 	description = S("Elevator Elastomeric Buffer"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		bouncy = 60,
 	},
 	paramtype = "light",
@@ -44,7 +45,8 @@ core.register_node("celevator:buffer_rubber",{
 core.register_node("celevator:buffer_oil",{
 	description = S("Elevator Oil-Filled Buffer"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	tiles = {
@@ -101,7 +103,8 @@ core.register_node("celevator:buffer_oil",{
 core.register_node("celevator:buffer_oil_top",{
 	description = S("Elevator Oil-Filled Buffer (top half - you hacker you!)"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -121,7 +124,8 @@ core.register_node("celevator:buffer_oil_top",{
 core.register_node("celevator:guide_rail",{
 	description = S("Elevator Guide Rail"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -145,7 +149,8 @@ core.register_node("celevator:guide_rail",{
 core.register_node("celevator:guide_rail_bracket",{
 	description = S("Elevator Guide Rail with Bracket"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -174,7 +179,8 @@ core.register_node("celevator:guide_rail_bracket",{
 core.register_node("celevator:tape",{
 	description = S("Elevator Positioning System Tape"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -199,7 +205,8 @@ core.register_node("celevator:tape",{
 core.register_node("celevator:tape_magnets",{
 	description = S("Elevator Positioning System Tape with Magnets"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -224,7 +231,8 @@ core.register_node("celevator:tape_magnets",{
 core.register_node("celevator:tape_bracket",{
 	description = S("Elevator Positioning System Tape with Bracket"),
 	groups = {
-		choppy = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -317,6 +325,8 @@ core.register_node("celevator:tapehead",{
 	description = S("Elevator Positioning System Tapehead (off, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",
@@ -344,6 +354,8 @@ core.register_node("celevator:tapehead_ulm",{
 	description = S("Elevator Positioning System Tapehead (ULM on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",
@@ -371,6 +383,8 @@ core.register_node("celevator:tapehead_ulm_dz",{
 	description = S("Elevator Positioning System Tapehead (ULM and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",
@@ -398,6 +412,8 @@ core.register_node("celevator:tapehead_ulm_dlm_dz",{
 	description = S("Elevator Positioning System Tapehead (ULM, DLM, and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",
@@ -425,6 +441,8 @@ core.register_node("celevator:tapehead_dlm_dz",{
 	description = S("Elevator Positioning System Tapehead (DLM and DZ on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",
@@ -452,6 +470,8 @@ core.register_node("celevator:tapehead_dlm",{
 	description = S("Elevator Positioning System Tapehead (DLM on, you hacker you!)"),
 	groups = {
 		not_in_creative_inventory = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	drop = "",
 	paramtype = "light",

@@ -137,7 +137,8 @@ end
 core.register_node("celevator:controller",{
 	description = S("Elevator Controller"),
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -214,7 +215,8 @@ core.register_node("celevator:controller",{
 core.register_node("celevator:controller_open",{
 	description = S("Controller (door open - you hacker you!)"),
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	paramtype = "light",
@@ -275,6 +277,8 @@ core.register_node("celevator:controller_open",{
 core.register_node("celevator:controller_top",{
 	description = S("Controller (top section - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -306,6 +310,8 @@ core.register_node("celevator:controller_top",{
 core.register_node("celevator:controller_top_running",{
 	description = S("Controller (top section, car in motion - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -337,6 +343,8 @@ core.register_node("celevator:controller_top_running",{
 core.register_node("celevator:controller_top_open",{
 	description = S("Controller (top section, open - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -373,6 +381,8 @@ core.register_node("celevator:controller_top_open",{
 core.register_node("celevator:controller_top_open_running",{
 	description = S("Controller (top section, open, car in motion - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",

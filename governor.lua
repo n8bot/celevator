@@ -18,7 +18,8 @@ end
 core.register_node("celevator:governor",{
 	description = S("Elevator Governor"),
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "4dir",
@@ -67,6 +68,8 @@ core.register_node("celevator:governor",{
 core.register_node("celevator:governor_sheave",{
 	description = S("Governor Sheave (you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",

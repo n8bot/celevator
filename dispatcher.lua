@@ -110,7 +110,8 @@ end
 core.register_node("celevator:dispatcher",{
 	description = S("Elevator Dispatcher"),
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -183,7 +184,8 @@ core.register_node("celevator:dispatcher",{
 core.register_node("celevator:dispatcher_open",{
 	description = S("Dispatcher (door open - you hacker you!)"),
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	paramtype = "light",
@@ -243,6 +245,8 @@ core.register_node("celevator:dispatcher_open",{
 core.register_node("celevator:dispatcher_top",{
 	description = S("Dispatcher (top section - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -274,6 +278,8 @@ core.register_node("celevator:dispatcher_top",{
 core.register_node("celevator:dispatcher_top_open",{
 	description = S("Dispatcher (top section, open - you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",

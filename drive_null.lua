@@ -61,7 +61,8 @@ end
 core.register_node("celevator:drive_null",{
 	description = celevator.drives.null.name,
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	tiles = {

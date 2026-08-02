@@ -1057,6 +1057,8 @@ core.register_node("celevator:machine",{
 core.register_node("celevator:motor",{
 	description = S("Hoist Motor (you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -1091,6 +1093,8 @@ core.register_node("celevator:motor",{
 core.register_node("celevator:sheave",{
 	description = S("Sheave (you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",
@@ -1124,6 +1128,8 @@ core.register_node("celevator:sheave",{
 core.register_node("celevator:sheave_centered",{
 	description = S("Centered Sheave (you hacker you!)"),
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	drop = "",

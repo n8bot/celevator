@@ -158,7 +158,8 @@ core.register_node("celevator:dbdkiosk",{
 	paramtype = "light",
 	paramtype2 = "4dir",
 	groups = {
-		cracky = 1,
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 	},
 	node_box = {
 		type = "fixed",

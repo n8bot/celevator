@@ -296,6 +296,8 @@ core.register_node("celevator:car_top_box_off",{
 	description = S("Car-top Inspection Box, Off State (you hacker you!)"),
 	drop = "",
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	paramtype = "light",
@@ -316,6 +318,8 @@ core.register_node("celevator:car_top_box_on",{
 	description = S("Car-top Inspection Box, On State (you hacker you!)"),
 	drop = "",
 	groups = {
+		cracky = 3,
+		oddly_breakable_by_hand = 1,
 		not_in_creative_inventory = 1,
 	},
 	paramtype = "light",
