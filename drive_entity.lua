@@ -417,10 +417,12 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 						zmax = zmax+extra,
 					}
 				else
-					local attachpos = attachref:get_pos()
-					local basepos = eref:get_pos()
-					local attachoffset = vector.subtract(attachpos,basepos)
-					attachref:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
+					if not attachref:get_attach() then
+						local attachpos = attachref:get_pos()
+						local basepos = eref:get_pos()
+						local attachoffset = vector.subtract(attachpos,basepos)
+						attachref:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
+					end
 				end
 			end
 			local meta = celevator.get_meta(pos)
