@@ -399,9 +399,12 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 					["celevator:car_door"] = true,
 					["celevator:tapehead"] = true,
 				}
+				local donotattach = {
+					["bike:bike"] = true, -- This mod crashes if this entity is attached
+				}
 				if attachref:get_luaentity() and included[attachref:get_luaentity().name] then
 					table.insert(refs,attachref)
-				elseif attachref:is_player() then
+				elseif attachref:is_player() and not attachref:get_attach() then
 					local attachpos = attachref:get_pos()
 					local basepos = eref:get_pos()
 					local attachoffset = vector.subtract(attachpos,basepos)
@@ -416,7 +419,7 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 						zmin = zmin-extra,
 						zmax = zmax+extra,
 					}
-				else
+				elseif attachref:get_luaentity() and not (attachref:get_attach() or donotattach[attachref:get_luaentity().name or ""]) then
 					local attachpos = attachref:get_pos()
 					local basepos = eref:get_pos()
 					local attachoffset = vector.subtract(attachpos,basepos)
