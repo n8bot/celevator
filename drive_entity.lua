@@ -241,6 +241,115 @@ core.register_entity("celevator:car_moving",{
 		glow = core.LIGHT_MAX,
 		pointable = false,
 	},
+	on_step = function(self, dtime)
+		local pos = self.object:get_pos()
+		if not pos then return end
+		
+		local node_prop = self.object:get_properties().node
+		if not (node_prop and node_prop.name) then return end
+		if not string.match(node_prop.name, "_020$") then return end
+
+		local limits = self.car_limits
+		if not limits then return end
+
+		for _, obj in ipairs(core.get_objects_inside_radius(pos, 5.0)) do
+			if not obj:get_attach() then
+				local is_player = obj:is_player()
+				local ent = obj:get_luaentity()
+				
+				if is_player or (ent and not string.match(ent.name, "^celevator:")) then
+					
+					if is_player then
+						-- PLAYER LOGIC
+						local vel = obj:get_velocity()
+						
+						if vel and vel.y < 0.0 then
+							local attachpos = obj:get_pos()
+							local inside_x = attachpos.x >= limits.xmin - 0.25 and attachpos.x <= limits.xmax + 0.25
+							local inside_z = attachpos.z >= limits.zmin - 0.25 and attachpos.z <= limits.zmax + 0.25
+							local inside_y = attachpos.y > pos.y - 3.0 and attachpos.y < pos.y + 1.2
+							
+							if inside_x and inside_z and inside_y then
+								local offset = vector.subtract(attachpos, pos)
+								
+								-- ALWAYS force to roof for mid-ride catches
+								offset.y = 0.55
+								
+								local attachoffset = vector.rotate_around_axis(offset, vector.new(0, -1, 0), self.object:get_yaw())
+								local holder = core.add_entity(attachpos, "celevator:player_holder")
+								
+								if holder then
+									holder:set_attach(self.object, "", vector.multiply(attachoffset, 10), vector.new(0,0,0))
+									obj:set_attach(holder, "")
+									
+									-- Fetch the name ONLY when we actually need to save the limits
+									local player_name = obj:get_player_name()
+									
+									playerposlimits[player_name] = {
+										xmin = limits.xmin - 0.25, xmax = limits.xmax + 0.25,
+										zmin = limits.zmin - 0.25, zmax = limits.zmax + 0.25,
+										is_roof = true,
+										attach_time = core.get_us_time()
+									}
+								end
+							end
+						end
+					else
+						-- MOB/ITEM LOGIC
+						if not ent._celevator_catching then
+							local attachpos = obj:get_pos()
+							
+							local inside_x = attachpos.x >= limits.xmin and attachpos.x <= limits.xmax
+							local inside_z = attachpos.z >= limits.zmin and attachpos.z <= limits.zmax
+							local inside_y = attachpos.y > pos.y - 4.0 and attachpos.y < pos.y + 2.5
+							
+							if inside_x and inside_z and inside_y then
+								ent._celevator_catching = true
+								
+								local offset = vector.subtract(attachpos, pos)
+								local is_roof_cached = (offset.y > -0.1)
+								
+								-- Guarantee execution on the very next frame
+								core.after(0.15, function()
+									if not (obj and obj:get_pos() and self.object and self.object:get_pos()) then
+										if ent then ent._celevator_catching = nil end
+										return
+									end
+									
+									local final_pos = obj:get_pos()
+									local elev_pos = self.object:get_pos()
+									
+									final_pos.x = math.max(limits.xmin, math.min(limits.xmax, final_pos.x))
+									final_pos.z = math.max(limits.zmin, math.min(limits.zmax, final_pos.z))
+									
+									local props = obj:get_properties()
+									local bottom_offset = (props and props.collisionbox and props.collisionbox[2]) or 0
+									
+									local final_offset = vector.subtract(final_pos, elev_pos)
+									
+									if is_roof_cached then
+										final_offset.y = 0.55 - bottom_offset
+									else
+										final_offset.y = -2.48 - bottom_offset
+									end
+									
+									local attachoffset = vector.rotate_around_axis(final_offset, vector.new(0, -1, 0), self.object:get_yaw())
+									
+									local holder = core.add_entity(final_pos, "celevator:object_holder")
+									if holder then
+										holder:set_attach(self.object, "", vector.multiply(attachoffset, 10), vector.new(0,0,0))
+										obj:set_attach(holder, "")
+									end
+									
+									ent._celevator_catching = nil
+								end)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
 })
 
 core.register_entity("celevator:player_holder",{
@@ -260,45 +369,65 @@ core.register_entity("celevator:player_holder",{
 	on_step = function(self,dtime)
 		local obj = self.object
 		local car,_,attachoffset = obj:get_attach()
-		if not car then
-			obj:remove()
-			return
-		end
 		local children = obj:get_children()
 		local player
-		for _,i in pairs(children) do
-			if i:is_player() then
-				player = i
-			end
+		for _, i in pairs(children) do
+			if i:is_player() then player = i end
 		end
-		if not player then return end
+		if not player then 
+			obj:remove()
+			return 
+		end
+
+		local player_name = player:get_player_name()
+		local limits = playerposlimits[player_name] or {}
+
+		if not car then 
+			player:set_detach()
+			if limits.is_roof and self.last_world_pos then
+				local ppos = self.last_world_pos
+				core.after(0, function()
+					if player:is_player() then
+						player:set_pos(vector.new(ppos.x, ppos.y + 0.1, ppos.z))
+					end
+				end)
+			end
+			obj:remove() 
+			playerposlimits[player_name] = nil
+			return 
+		end
+		
 		local caryaw = car:get_yaw()
 		local playeryaw = player:get_look_horizontal()
-		local attachrot = vector.new(0,(caryaw-playeryaw)*57.296,0)
 		local control = player:get_player_control()
-		if (control.up or control.down or control.left or control.right) then
-			local walkspeed = 40
-			local walkamount = walkspeed*dtime
-			local displacement = vector.new(0,0,0)
-			if control.up then
-				displacement = vector.add(displacement,vector.new(0,0,walkamount))
-			end
-			if control.down then
-				displacement = vector.add(displacement,vector.new(0,0,0-walkamount))
-			end
-			if control.left then
-				displacement = vector.add(displacement,vector.new(0-walkamount,0,0))
-			end
-			if control.right then
-				displacement = vector.add(displacement,vector.new(walkamount,0,0))
-			end
-			displacement = vector.rotate_around_axis(displacement,vector.new(0,1,0),playeryaw)
+
+		if control.jump and limits.is_roof and core.get_us_time() > (limits.attach_time or 0) + 500000 then
+			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset, 0.1), vector.new(0, 1, 0), caryaw)
+			local current_world_pos = vector.add(car:get_pos(), realattachoffset)
+			
+			player:set_detach()
+			obj:remove()
+			playerposlimits[player_name] = nil
+			
+			core.after(0, function()
+				if player:is_player() then
+					player:set_pos(vector.new(current_world_pos.x, current_world_pos.y + 2.0, current_world_pos.z))
+				end
+			end)
+			return
+		end
+
+		if control.up or control.down or control.left or control.right then
+			local walkamount = 40 * dtime
+			local move_x = (control.right and 1 or 0) - (control.left and 1 or 0)
+			local move_z = (control.up and 1 or 0) - (control.down and 1 or 0)
+			
+			local displacement = vector.rotate_around_axis(vector.new(move_x * walkamount, 0, move_z * walkamount),vector.new(0,1,0),playeryaw)
 			displacement = vector.rotate_around_axis(displacement,vector.new(0,-1,0),caryaw)
 			local oldattachoffset = vector.copy(attachoffset)
 			attachoffset = vector.add(attachoffset,displacement)
-			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset,1/10),vector.new(0,1,0),caryaw)
-			local newpos = vector.add(car:get_pos(),realattachoffset)
-			local limits = playerposlimits[player:get_player_name()] or {}
+			local realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset,0.1),vector.new(0,1,0),caryaw)
+			local newpos = vector.add(car:get_pos(),realattachoffset)			
 			if limits.xmin and limits.xmax and limits.xmin < limits.xmax then
 				if newpos.x > limits.xmax or newpos.x < limits.xmin then
 					attachoffset = oldattachoffset
@@ -310,8 +439,58 @@ core.register_entity("celevator:player_holder",{
 				end
 			end
 		end
+		
+		local final_realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset, 0.1), vector.new(0, 1, 0), caryaw)
+		self.last_world_pos = vector.add(car:get_pos(), final_realattachoffset)
+		
 		obj:set_attach(car,"",attachoffset,vector.new(0,0,0))
-		player:set_attach(obj,"",vector.new(0,0,0),attachrot)
+		player:set_attach(obj,"",vector.new(0,0,0),vector.new(0,(caryaw - playeryaw) * 57.296, 0))
+	end,
+})
+
+core.register_entity("celevator:object_holder",{
+	initial_properties = {
+		visual = "cube",
+		textures = { "blank.png", "blank.png", "blank.png", "blank.png", "blank.png", "blank.png" },
+		static_save = false,
+		pointable = false,
+	},
+	on_step = function(self, dtime)
+		local obj = self.object
+		local car, _, attachoffset = obj:get_attach()
+		
+		local children = obj:get_children()
+		local passenger
+		for _, i in pairs(children) do
+			passenger = i
+			break
+		end
+		
+		if not passenger then 
+			obj:remove()
+			return 
+		end
+		
+		if not car then 
+			passenger:set_detach()
+			if self.last_world_pos then
+				local ppos = self.last_world_pos
+				core.after(0, function()
+					if passenger and passenger:get_pos() then
+						passenger:set_pos(vector.new(ppos.x, ppos.y + 0.1, ppos.z))
+					end
+				end)
+			end
+			obj:remove() 
+			return 
+		end
+		
+		local caryaw = car:get_yaw()
+		local final_realattachoffset = vector.rotate_around_axis(vector.multiply(attachoffset, 0.1), vector.new(0, 1, 0), caryaw)
+		self.last_world_pos = vector.add(car:get_pos(), final_realattachoffset)
+		
+		obj:set_attach(car, "", attachoffset, vector.new(0, 0, 0))
+		passenger:set_attach(obj, "", vector.new(0, 0, 0), vector.new(0, 0, 0))
 	end,
 })
 
@@ -365,6 +544,13 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 			immortal = 1,
 		})
 		table.insert(refs,eref)
+		local luaent = eref:get_luaentity()
+		if luaent then
+			luaent.car_limits = {
+				xmin = xmin, xmax = xmax,
+				zmin = zmin, zmax = zmax
+			}
+		end
 		local ndef = core.registered_nodes[node.name] or {}
 		local nbox = ndef.selection_box or ndef.node_box
 		if nbox and nbox.fixed then
@@ -407,8 +593,19 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 				elseif attachref:is_player() and not attachref:get_attach() then
 					local attachpos = attachref:get_pos()
 					local basepos = eref:get_pos()
-					local attachoffset = vector.subtract(attachpos,basepos)
-					attachoffset = vector.rotate_around_axis(attachoffset,vector.new(0,-1,0),eref:get_yaw())
+					local offset = vector.subtract(attachpos,basepos)
+					
+					local y_level = tonumber(string.match(node.name, "_%d(%d)%d$")) or 0
+					local player_is_on_roof = (y_level >= 2)
+					
+					if player_is_on_roof then
+						offset.y = math.max(offset.y, 0.55)
+					else
+						-- Enforce exact floor height for passengers departing inside the cabin
+						offset.y = -0.45
+					end
+					
+					local attachoffset = vector.rotate_around_axis(offset,vector.new(0,-1,0),eref:get_yaw())
 					local holder = core.add_entity(attachpos,"celevator:player_holder")
 					holder:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
 					attachref:set_attach(holder,"")
@@ -418,12 +615,28 @@ function celevator.drives.entity.nodestoentities(nodes,ename)
 						xmax = xmax+extra,
 						zmin = zmin-extra,
 						zmax = zmax+extra,
+						is_roof = player_is_on_roof,
+						attach_time = core.get_us_time()
 					}
 				elseif attachref:get_luaentity() and not (attachref:get_attach() or donotattach[attachref:get_luaentity().name or ""]) then
-					local attachpos = attachref:get_pos()
-					local basepos = eref:get_pos()
-					local attachoffset = vector.subtract(attachpos,basepos)
-					attachref:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
+					local ent = attachref:get_luaentity()
+					if ent and not string.match(ent.name, "^celevator:") then
+						local attachpos = attachref:get_pos()
+						local basepos = eref:get_pos()
+						local offset = vector.subtract(attachpos,basepos)
+						local y_level = tonumber(string.match(node.name, "_%d(%d)%d$")) or 0
+						
+						if y_level >= 2 then
+							offset.y = math.max(offset.y, 0.55)
+						end
+						
+						local attachoffset = vector.rotate_around_axis(offset, vector.new(0,-1,0), eref:get_yaw())
+						local holder = core.add_entity(attachpos, "celevator:object_holder")
+						if holder then
+							holder:set_attach(eref,"",vector.multiply(attachoffset,10),vector.new(0,0,0))
+							attachref:set_attach(holder, "")
+						end
+					end
 				end
 			end
 			local meta = celevator.get_meta(pos)
